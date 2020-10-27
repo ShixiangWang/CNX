@@ -1,7 +1,7 @@
-name: "CNX"
+name: CNX
 output_dir: ../docs
 navbar:
-  title: "CNX"
+  title: CNX
   left:
   - text: Home
     href: index.html
@@ -9,6 +9,10 @@ navbar:
     href: about.html
   - text: License
     href: license.html
+  right:
+  - icon: fa-github
+    text: Source code
+    href: https://github.com/ShixiangWang/CNX
 output:
   workflowr::wflow_html:
     toc: yes
