@@ -6,3 +6,7 @@ if (requireNamespace("workflowr", quietly = TRUE)) {
 } else {
   message("workflowr package not installed, please run install.packages(\"workflowr\") to use the workflowr functions")
 }
+
+##
+message("Loading ~/.Rprofile for the current workflowr project")
+source("~/.Rprofile")
