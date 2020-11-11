@@ -14,6 +14,7 @@ sigs <- sig_auto_extract(
   nrun = 100,
   strategy = "stable",
   cores = 16,
+  optimize = TRUE,
   skip = TRUE)
 saveRDS(sigs, file = "data/TCGA/tcga_cn_sigs_CN176_SA.rds")
 
@@ -25,5 +26,6 @@ sigs2 <- sig_auto_extract(
   nrun = 100,
   strategy = "stable",
   cores = 16,
+  optimize = TRUE,
   skip = TRUE)
 saveRDS(sigs2, file = "data/TCGA/tcga_cn_sigs_CN136_SA.rds")
