@@ -68,3 +68,13 @@ p <- show_catalogue(tally_X_noLOH, mode = "copynumber", method = "X",
                     y_lab = "log10(count +1)")
 p
 ggplot2::ggsave("output/tcga_catalogs_tally_X_noLOH.pdf", plot = p, width = 16, height = 2.5)
+
+
+# Phenotype ---------------------------------------------------------------
+
+download.file("https://pancanatlas.xenahubs.net/download/Survival_SupplementalTable_S1_20171025_xena_sp.gz",
+              "Xena/Survival_SupplementalTable_S1_20171025_xena_sp.gz")
+
+tcga_cli <- data.table::fread("Xena/Survival_SupplementalTable_S1_20171025_xena_sp.gz")
+table(tcga_cli$`cancer type abbreviation`)
+saveRDS(tcga_cli, file = "data/TCGA/tcga_cli.rds")
