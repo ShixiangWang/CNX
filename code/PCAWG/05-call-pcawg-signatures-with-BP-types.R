@@ -11,7 +11,7 @@ pcawg_types <- readRDS("pcawg_type_info.rds")
 for (i in unique(pcawg_types$cancer_type)) {
   message("handling type: ", i)
 
-  fn <- file.path("BP", paste0("PCAWG_CN176_", i, ".rds"))
+  fn <- file.path("BP", paste0("PCAWG_CN176_", gsub("/", "-", i), ".rds"))
 
   if (!file.exists(fn)) {
     type_samples <- pcawg_types %>%
@@ -36,7 +36,7 @@ for (i in unique(pcawg_types$cancer_type)) {
 
   message("handling type: ", i)
 
-  fn <- file.path("BP", paste0("PCAWG_CN136_", i, ".rds"))
+  fn <- file.path("BP", paste0("PCAWG_CN136_", gsub("/", "-", i), ".rds"))
 
   if (!file.exists(fn)) {
     type_samples <- pcawg_types %>%
