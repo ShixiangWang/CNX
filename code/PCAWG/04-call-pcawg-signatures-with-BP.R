@@ -97,3 +97,23 @@ saveRDS(pcawg_expo, file = "data/pcawg_cn_sigs_CN176_activity.rds")
 pcawg_expo$abs_activity
 summary(pcawg_expo$similarity)
 
+hist(pcawg_expo$similarity, breaks = 100)
+
+scount <- apply(as.matrix(pcawg_expo$rel_activity[, -1]), 1, function(x) {
+  sum(x > 0.001)
+})
+
+hist(scount, breaks = 100)
+
+saveRDS(solution1000$object$K11, file = "data/pcawg_cn_sigs_CN176_signature.rds")
+
+# Signature profile -------------------------------------------------------
+
+p <- show_sig_profile_loop(solution1000$object$K11,
+                           mode = "copynumber",
+                           method = "X", style = "cosmic", font_scale = 0.8
+)
+ggplot2::ggsave("output/pcawg_cn_sigs_loop_c176_BP.pdf", plot = p, width = 14, height = 18)
+
+show_cor(pcawg_expo$abs_activity[, -1])
+show_cor(pcawg_expo$rel_activity[, -1])
