@@ -1,6 +1,6 @@
 ---
 title: "Pan-Cancer Copy Number Signature Identification and Analysis"
-author: ["Shixiang Wang", "Xue-Song Liu (Corresponding author)"]
+author: ["Shixiang Wang, Ziyu Tao, Xue-Song Liu (Corresponding author)"]
 date: "`r Sys.Date()`"
 output:
   rmdformats::downcute:
@@ -13,22 +13,25 @@ output:
 library(knitr)
 library(rmdformats)
 ## Global options
-options(max.print="75")
-opts_chunk$set(echo=FALSE,
-	             cache=FALSE,
-               prompt=FALSE,
-               tidy=TRUE,
-               comment=NA,
-               dpi = 300,
-               message=FALSE,
-               warning=FALSE)
-opts_knit$set(width=75)
+options(max.print = "75")
+opts_chunk$set(
+  echo = FALSE,
+  cache = FALSE,
+  prompt = FALSE,
+  tidy = "styler",
+  comment = NA,
+  dpi = 300,
+  message = FALSE,
+  warning = FALSE,
+  echo = TRUE
+)
+opts_knit$set(width = 75)
 Sys.setenv("LANGUAGE" = "EN")
 ```
 
 <br>
 
-This document is compiled from an Rmarkdown file which contains all code or description necessary to reproduce the analysis for the accompanying project. Each section below describes a different component of the analysis and most of numbers and figures are generated directly from the underlying data on compilation.
+This document is compiled from an RMarkdown file which contains all code or description necessary to reproduce the analysis for the accompanying project. Each section below describes a different component of the analysis and most of numbers and figures are generated directly from the underlying data on compilation.
 
 # LICENSE
 
@@ -36,18 +39,72 @@ This document is compiled from an Rmarkdown file which contains all code or desc
 
 The code is made available for non commercial research purposes only under the MIT. However, notwithstanding any provision of the MIT License, the software currently may not be used for commercial purposes without explicit written permission after contacting Shixiang Wang <wangshx@shanghaitech.edu.cn> or Xue-Song Liu <liuxs@shanghaitech.edu.cn>.
 
+# PART 0: Data preprocessing
 
-# PART 1:
+## Prepare PCAWG dataset
 
-# PART 2:
+```{r, eval=FALSE}
+dir.create("Xena")
 
-# PART 3:
+# Phenotype (Specimen Centric) -----------------------------------------------
+
+library(UCSCXenaTools)
+pcawg_phenotype <- XenaData %>%
+  dplyr::filter(XenaHostNames == "pcawgHub") %>%
+  XenaScan("phenotype") %>%
+  XenaScan("specimen centric") %>%
+  XenaGenerate() %>%
+  XenaQuery()
+pcawg_phenotype <- pcawg_phenotype %>%
+  XenaDownload(destdir = "Xena", trans_slash = TRUE)
+
+phenotype_list <- XenaPrepare(pcawg_phenotype)
+pcawg_samp_info_sp <- phenotype_list[1:4]
+
+saveRDS(pcawg_samp_info_sp, file = "data/pcawg_samp_info_sp.rds")
+
+# PCAWG (Specimen Centric) ------------------------------------------------
+
+download.file(
+  "https://pcawg.xenahubs.net/download/20170119_final_consensus_copynumber_sp.gz",
+  "Xena/pcawg_copynumber_sp.gz"
+)
+
+pcawg_cn <- data.table::fread("Xena/pcawg_copynumber_sp.gz")
+pcawg_samp_info_sp <- readRDS("data/pcawg_samp_info_sp.rds")
+
+sex_dt <- pcawg_samp_info_sp$pcawg_donor_clinical_August2016_v9_sp %>%
+  dplyr::select(xena_sample, donor_sex) %>%
+  purrr::set_names(c("sample", "sex")) %>%
+  data.table::as.data.table()
+
+saveRDS(sex_dt, file = "data/pcawg_sex_sp.rds")
+
+pcawg_cn <- pcawg_cn[!is.na(total_cn)]
+pcawg_cn$value <- NULL
+pcawg_cn <- pcawg_cn[, c(1:5, 7)]
+colnames(pcawg_cn)[1:5] <- c("sample", "Chromosome", "Start.bp", "End.bp", "modal_cn")
+
+saveRDS(pcawg_cn, file = "data/pcawg_copynumber_sp.rds")
+```
+
+
+# PART 1: Copy number signature identification and activity attribution
+
+# PART 2: Signature profile visualization and analysis
+
+# PART 3: Pan-Cancer Signature Distribution
+
+# PART 4: Cancer subtyping and prognosis analysis
+
+# PART 5: Inference of copy number signature etiologies
+
+# Supplementary Analyses
 
 # R Session:
 
-*Many thanks to authors and contributors of all packages used here*.
+*Many thanks to authors and contributors of all packages used in this project*.
 
 ```{r}
 devtools::session_info()
 ```
-
