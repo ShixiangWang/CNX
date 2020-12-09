@@ -1,11 +1,53 @@
 ---
-title: "Home"
-site: workflowr::wflow_site
+title: "Pan-Cancer Copy Number Signature Identification and Analysis"
+author: ["Shixiang Wang", "Xue-Song Liu (Corresponding author)"]
+date: "`r Sys.Date()`"
 output:
-  workflowr::wflow_html:
-    toc: false
-editor_options:
-  chunk_output_type: console
+  rmdformats::downcute:
+    self_contained: true
+    toc_depth: 3
 ---
 
-Welcome to my copy number signature research website.
+
+```{r setup, include=FALSE}
+library(knitr)
+library(rmdformats)
+## Global options
+options(max.print="75")
+opts_chunk$set(echo=FALSE,
+	             cache=FALSE,
+               prompt=FALSE,
+               tidy=TRUE,
+               comment=NA,
+               dpi = 300,
+               message=FALSE,
+               warning=FALSE)
+opts_knit$set(width=75)
+Sys.setenv("LANGUAGE" = "EN")
+```
+
+<br>
+
+This document is compiled from an Rmarkdown file which contains all code or description necessary to reproduce the analysis for the accompanying project. Each section below describes a different component of the analysis and most of numbers and figures are generated directly from the underlying data on compilation.
+
+# LICENSE
+
+**I am very glad to share my code and analysis procedure like I always do, but please note the License below should be followed**.
+
+The code is made available for non commercial research purposes only under the MIT. However, notwithstanding any provision of the MIT License, the software currently may not be used for commercial purposes without explicit written permission after contacting Shixiang Wang <wangshx@shanghaitech.edu.cn> or Xue-Song Liu <liuxs@shanghaitech.edu.cn>.
+
+
+# PART 1:
+
+# PART 2:
+
+# PART 3:
+
+# R Session:
+
+*Many thanks to authors and contributors of all packages used here*.
+
+```{r}
+devtools::session_info()
+```
+
