@@ -4,10 +4,8 @@
 .Ruserdata
 .Rapp.history
 .DS_Store
-analysis/figure
-analysis/*png
-analysis/*_cache
-analysis/site_libs
+docs/*_cache
+docs/site_libs
 .vscode
 SA/
 SP/

@@ -16,7 +16,7 @@
 # Generate segment counting matrices
 library(sigminer)
 
-# Only focus autosome
+# Only focus autosomes
 tcga_cn = readRDS("data/TCGA/tcga_cn.rds")
 table(tcga_cn$chromosome)
 tcga_cn = tcga_cn[!chromosome %in% c("chrX", "chrY")]

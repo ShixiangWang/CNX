@@ -1,0 +1,54 @@
+---
+title: "PART 1: Copy number signature identification and activity attribution"
+author: ["Shixiang Wang, Ziyu Tao, Tao Wu, Xue-Song Liu (Corresponding author)"]
+date: "`r Sys.Date()`"
+output:
+  rmdformats::downcute:
+    self_contained: true
+    toc_depth: 3
+bibliography: ref.bib
+link-citations: yes
+---
+
+
+```{r setup-01, include=FALSE}
+library(knitr)
+library(rmdformats)
+## Global options
+options(max.print = "75")
+opts_chunk$set(
+  echo = FALSE,
+  cache = FALSE,
+  prompt = FALSE,
+  tidy = "styler",
+  comment = NA,
+  dpi = 300,
+  message = FALSE,
+  warning = FALSE,
+  echo = TRUE
+)
+opts_knit$set(width = 75)
+Sys.setenv("LANGUAGE" = "EN")
+```
+
+In this part, how the copy number signatures are identified and how the corresponding signature activities (a.k.a. exposures) are attributed are described in sections below.
+
+*The work of this part has been done by setting root path of the project repository as work directory. Therefore, keep in mind the work directory should be properly set if you are interested in reproducing the analysis procedure.*
+
+## Copy number signature identification
+
+The signature identification pipeline is adopted from @degasperiPracticalFrameworkOnline2020, we implemented the procedure in our package sigminer by following the method description. [A benchmark](https://github.com/ShixiangWang/sigminer#key-interfaces-and-their-performances) has been done to make sure our implementation works properly.
+
+### Identification pipeline
+
+To make the signature identification procedure more clear, we drew a flowchart.
+
+> TODO: add flowchart
+
+### Apply to PCAWG catalog matrix
+
+## Signature activity attribution
+
+### Attribution pipeline
+
+### Apply to PCAWG catalog matrix and signatures
