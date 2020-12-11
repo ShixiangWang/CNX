@@ -33,7 +33,27 @@ Sys.setenv("LANGUAGE" = "EN")
 
 In this part, how the copy number signatures are identified and how the corresponding signature activities (a.k.a. exposures) are attributed are described in sections below.
 
-*The work of this part has been done by setting root path of the project repository as work directory. Therefore, keep in mind the work directory should be properly set if you are interested in reproducing the analysis procedure.*
+*The work of this part has been done by either setting root path of the project repository as work directory or moving data and code to the same path (see below). Therefore, keep in mind the work directory/data path should be properly set if you are interested in reproducing the analysis procedure.*
+
+*The signature identification work cannot be done in local machine, we used HPC of ShanghaiTech University to submit computation jobs to HPC clusters. Input data files, R scripts and PBS job scripts are stored in a same path, the structure can be viewed as:*
+
+```sh
+.
+├── 04-call-tcga-signatures-with-BP-types.R
+├── 05-call-pcawg-signatures-with-BP-types.R
+├── bp_pcawg.pbs
+├── bp_pcawg_types.pbs
+├── bp_tcga.pbs
+├── bp_tcga_types.pbs
+├── call_pcawg_bp.R
+├── call_pcawg_sp.R
+├── call_tcga_bp.R
+├── call_tcga.R
+├── pcawg_cn_tally_X.rds
+├── pcawg.pbs
+├── tcga_cn_tally_X.rds
+├── tcga.pbs
+```
 
 ## Copy number signature identification
 
