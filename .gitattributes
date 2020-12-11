@@ -1,4 +1,6 @@
 # Classify R Markdown files as R code for GitHub language statistics
 # https://github.com/github/linguist#overrides
 *.[Rr]md linguist-language=R
-*.rds filter=lfs diff=lfs merge=lfs -text
+data/pcawg_cn_sigs_CN176_BP.rds filter=lfs diff=lfs merge=lfs -text
+data/pcawg_cn_sigs_CN136_BP.rds filter=lfs diff=lfs merge=lfs -text
+data/TCGA/tcga_cn_sigs_CN176_BP.rds filter=lfs diff=lfs merge=lfs -text
