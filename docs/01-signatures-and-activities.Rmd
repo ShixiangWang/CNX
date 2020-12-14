@@ -245,3 +245,32 @@ bp_show_survey(tcga_solutions, add_score = FALSE, fixed_ratio = FALSE,)
 ```
 Also `11` signatures are determined based on survey plot.
 
+Similarly, we apply the attribution pipeline to TCGA.
+
+```{r, eval=FALSE}
+library(sigminer)
+
+tcga_solutions <- readRDS("data/TCGA/tcga_cn_sigs_CN176_BP.rds")
+
+tcga_expo <- bp_attribute_activity(
+  tcga_solutions$object$K11,
+  sample_class = sc,
+  nmf_matrix = tally_X$nmf_matrix,
+  return_class = "data.table"
+)
+
+saveRDS(tcga_expo, file = "data/TCGA/tcga_cn_sigs_CN176_activity.rds")
+```
+
+```{r}
+tcga_expo <- readRDS("../data/TCGA/tcga_cn_sigs_CN176_activity.rds")
+summary(tcga_expo$similarity)
+```
+
+```{r}
+hist(tcga_expo$similarity, breaks = 100, xlab = "Reconstructed similarity", main = NA)
+```
+```{r include=FALSE}
+rm(list = ls())
+```
+

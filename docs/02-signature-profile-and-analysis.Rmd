@@ -1,0 +1,160 @@
+---
+title: "PART 2: Signature profile visualization and analysis"
+author: ["Shixiang Wang, Ziyu Tao, Tao Wu, Xue-Song Liu (Corresponding author)"]
+date: "`r Sys.Date()`"
+output:
+  rmdformats::downcute:
+    self_contained: true
+    toc_depth: 3
+bibliography: ref.bib
+link-citations: yes
+---
+
+
+```{r setup-02, include=FALSE}
+library(knitr)
+library(rmdformats)
+## Global options
+options(max.print = "75")
+opts_chunk$set(
+  echo = FALSE,
+  cache = FALSE,
+  prompt = FALSE,
+  tidy = "styler",
+  comment = NA,
+  dpi = 300,
+  message = FALSE,
+  warning = FALSE,
+  echo = TRUE
+)
+opts_knit$set(width = 75)
+Sys.setenv("LANGUAGE" = "EN")
+```
+
+In this part, we would like to visualize and analyze all tumor samples as a whole.
+
+## Signature profile visualization
+
+```{r}
+library(tidyverse)
+library(sigminer)
+
+pcawg_sigs <- readRDS(file = "../data/pcawg_cn_sigs_CN176_signature.rds")
+```
+
+Show signature profile with relative contribution value for each component.
+
+```{r, fig.height=10, fig.width=14}
+show_sig_profile(
+  pcawg_sigs,
+  mode = "copynumber",
+  method = "X",
+  style = "cosmic"
+)
+```
+
+Show signature profile with absolute contribution value (estimated segment count) for each component.
+
+```{r, fig.height=10, fig.width=14}
+show_sig_profile(
+  pcawg_sigs,
+  mode = "copynumber",
+  method = "X",
+  style = "cosmic",
+  normalize = "raw"
+)
+```
+
+Filter out samples with low reconstructed level (similarity < `0.75`).
+
+```{r}
+pcawg_expo <- readRDS("../data/pcawg_cn_sigs_CN176_activity.rds")
+keep_samples <- pcawg_expo$similarity >= 0.75
+pcawg_expo$abs_activity <- pcawg_expo$abs_activity[keep_samples]
+pcawg_expo$rel_activity <- pcawg_expo$rel_activity[keep_samples]
+
+expo_mat <- pcawg_expo$abs_activity %>% 
+  tibble::column_to_rownames("sample") %>% 
+  as.matrix() %>% 
+  t()
+```
+
+Show signature activity profile.
+
+```{r fig.width=14, fig.height=7}
+show_sig_exposure(
+  expo_mat,
+  style = "cosmic",
+  rm_space = TRUE,
+  palette = sigminer:::letter_colors
+)
+```
+
+## Signature analysis
+
+### Signature similarity
+
+Here we explore the similarity between copy number signatures identified in PCAWG data. High cosine similarity will cause some issues in signature assignment and activity attribution [@mauraPracticalGuideMutational2019].
+
+```{r}
+sim <- get_sig_similarity(pcawg_sigs, pcawg_sigs)
+```
+
+```{r, fig.width=5.5, fig.height=5}
+pheatmap::pheatmap(sim$similarity, cluster_cols = F, cluster_rows = F, display_numbers = TRUE)
+```
+
+Most of signature-pairs have similarity around `0.1`.
+
+### Signature activity distribution
+
+Transform data to long format.
+
+```{r}
+df_abs <- pcawg_expo$abs_activity %>% 
+  tidyr::pivot_longer(cols = starts_with("Sig"), names_to = "sig", values_to = "activity") %>% 
+  dplyr::mutate(activity = log10(activity + 1),
+                sig = factor(sig, levels = paste0("Sig", 1:11)))
+
+df_rel <- pcawg_expo$rel_activity %>% 
+  tidyr::pivot_longer(cols = starts_with("Sig"), names_to = "sig", values_to = "activity") %>% 
+  dplyr::mutate(
+    sig = factor(sig, levels = paste0("Sig", 1:11))
+  )
+```
+
+Plot with function in `sigminer`.
+
+```{r}
+show_group_distribution(
+  df_abs,
+  gvar = "sig",
+  dvar = "activity",
+  order_by_fun = FALSE,
+  g_angle = 90,
+  ylab = "log10(activity+1)"
+)
+```
+
+```{r}
+show_group_distribution(
+  df_rel,
+  gvar = "sig",
+  dvar = "activity",
+  order_by_fun = FALSE,
+  g_angle = 90,
+  ylab = "relative activity"
+)
+```
+
+## Copy number profile and signature activity
+
+### Copy number profile for representative samples
+
+
+
+### Ideograph for copy number profile reconstruction
+
+> TODO: select one/two samples and draw copy number profile -> catalog profile -> signature relative activity. **Similar to Nature paper**.
+
+

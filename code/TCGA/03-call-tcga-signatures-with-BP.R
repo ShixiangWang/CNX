@@ -22,3 +22,9 @@ tcga_expo <- bp_attribute_activity(
 )
 
 saveRDS(tcga_expo, file = "data/TCGA/tcga_cn_sigs_CN176_activity.rds")
+
+hist(tcga_expo$similarity, breaks = 100)
+
+# mat <- get_sig_similarity(pcawg_sigs, tcga_solutions$object$K11)
+# pheatmap::pheatmap(mat$similarity, cluster_cols = F, cluster_rows = F)
+# show_sig_profile(tcga_solutions$object$K11, style = "cosmic", mode = "copynumber", method = "X")

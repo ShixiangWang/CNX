@@ -56,13 +56,37 @@ The code is made available for non commercial research purposes only under the M
 
 # PART 2: Signature profile visualization and analysis
 
-# PART 3: Pan-Cancer Signature Distribution
+```{r, child="02-signature-profile-and-analysis.Rmd"}
+
+```
+
+# PART 3: Pan-Cancer signature analysis
+
+```{r, child="03-pancancer-signature-analysis.Rmd"}
+
+```
+
 
 # PART 4: Cancer subtyping and prognosis analysis
 
+```{r, child="04-cancer-subtyping-and-prog-analysis.Rmd"}
+
+```
+
+
 # PART 5: Inference of copy number signature etiologies
 
+```{r, child="05-inference-of-etiologies.Rmd"}
+
+```
+
+
 # Supplementary Analyses
+
+```{r, child="99-supp-analysis.Rmd"}
+
+```
+
 
 # R Session:
 

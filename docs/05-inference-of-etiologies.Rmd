@@ -1,0 +1,74 @@
+---
+title: "PART 5: Inference of copy number signature etiologiess"
+author: ["Shixiang Wang, Ziyu Tao, Tao Wu, Xue-Song Liu (Corresponding author)"]
+date: "`r Sys.Date()`"
+output:
+  rmdformats::downcute:
+    self_contained: true
+    toc_depth: 3
+bibliography: ref.bib
+link-citations: yes
+---
+
+
+```{r setup-05, include=FALSE}
+library(knitr)
+library(rmdformats)
+## Global options
+options(max.print = "75")
+opts_chunk$set(
+  echo = FALSE,
+  cache = FALSE,
+  prompt = FALSE,
+  tidy = "styler",
+  comment = NA,
+  dpi = 300,
+  message = FALSE,
+  warning = FALSE,
+  echo = TRUE
+)
+opts_knit$set(width = 75)
+Sys.setenv("LANGUAGE" = "EN")
+```
+
+In this part, we would like to visualize and analyze all tumor samples as a whole.
+
+## Association analysis for copy number signatures
+
+```{r}
+pcawg_expo <- readRDS("../data/pcawg_cn_sigs_CN176_activity.rds")
+keep_samples <- pcawg_expo$similarity >= 0.75
+pcawg_expo$abs_activity <- pcawg_expo$abs_activity[keep_samples]
+pcawg_expo$rel_activity <- pcawg_expo$rel_activity[keep_samples]
+```
+
+### Signature activity association
+
+For absolute signature activity.
+
+```{r}
+show_cor(pcawg_expo$abs_activity[, -1])
+```
+
+For relative signature activity.
+
+```{r}
+show_cor(pcawg_expo$rel_activity[, -1])
+```
+
+### Signature clustering
+
+We can take a try to cluster signatures based on their relative activities.
+
+```{r}
+expo_mat_rel <- pcawg_expo$rel_activity %>% 
+  tibble::column_to_rownames("sample") %>% 
+  as.matrix() %>% 
+  t()
+
+hc <- hclust(dist(expo_mat_rel))
+```
+
+```{r}
+factoextra::fviz_dend(hc, k = 3, rect = T)
+```
