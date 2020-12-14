@@ -31,11 +31,11 @@ opts_knit$set(width = 75)
 Sys.setenv("LANGUAGE" = "EN")
 ```
 
-In this part, how the copy number signatures are identified and how the corresponding signature activities (a.k.a. exposures) are attributed are described in sections below.
+In this part, how the copy number signatures are identified and how the corresponding signature activities (a.k.a. exposures) are attributed are described in sections below. **The 176 component classification for PCAWG data is our main focus.**
 
 *The work of this part has been done by either setting root path of the project repository as work directory or moving data and code to the same path (see below). Therefore, keep in mind the work directory/data path should be properly set if you are interested in reproducing the analysis procedure.*
 
-*The signature identification work cannot be done in local machine, we used HPC of ShanghaiTech University to submit computation jobs to HPC clusters. Input data files, R scripts and PBS job scripts are stored in a same path, the structure can be viewed as:*
+*The signature identification work cannot be done in local machine because high intensity calculations are required, we used HPC of ShanghaiTech University to submit computation jobs to HPC clusters. Input data files, R scripts and PBS job scripts are stored in a same path, the structure can be viewed as:*
 
 ```sh
 .
@@ -61,16 +61,187 @@ The signature identification pipeline is adopted from @degasperiPracticalFramewo
 
 ### Identification pipeline
 
-To make the signature identification procedure more clear, we drew a flowchart.
+To make the signature identification procedure more clear, we drew a flowchart. We name this pipeline "Best Practice" and use its short name *BP* (or *bp*).
 
 > TODO: add flowchart
 
 ### Apply to PCAWG catalog matrix
 
+PBS file `bp_pcawg.pbs` content:
+
+```sh
+#PBS -l walltime=500:00:00
+#PBS -l nodes=1:ppn=50
+#PBS -S /bin/bash
+#PBS -l mem=300gb
+#PBS -j oe
+#PBS -M w_shixiang@163.com
+#PBS -q slst_pub
+
+# Please set PBS arguments above
+cd /public/home/wangshx/wangshx/PCAWG-TCGA
+module load apps/R/3.6.1
+
+# Following are commands/scripts you want to run
+Rscript call_pcawg_bp.R
+```
+
+R script `call_pcawg_bp.R` content:
+
+```{r, eval=FALSE}
+library(sigminer)
+
+tally_X <- readRDS("pcawg_cn_tally_X.rds")
+tally_X_noLOH <- readRDS("pcawg_cn_tally_X_noLOH.rds")
+
+sigs <- bp_extract_signatures(
+  tally_X$nmf_matrix,
+  range = 2:30,
+  n_bootstrap = 10,
+  n_nmf_run = 10,
+  cores = 50,
+  cache_dir = "pcawg_bp_pynmf",
+  keep_cache = TRUE,
+  cores_solution = 30,
+  pynmf = TRUE,
+  use_conda = TRUE
+)
+
+saveRDS(sigs, file = "pcawg_cn_sigs_CN176_BP.rds")
+```
+
+### Signature number determination
+
+The code above call 100 NMF runs (10 bootstrap catalogs and 10 NMF runs for each bootstrap catalog) for each signature number. Only 1000 NMF runs (20 bootstrap catalogs and 50 NMF runs for each bootstrap catalog) was applied for 176-component classification approach, which has the same arguments proposed by @degasperiPracticalFrameworkOnline2020. 
+
+First, load the results.
+
+```{r}
+library(sigminer)
+solution1000 <- readRDS("../BP/BP_PCAWG_1000_Extraction_Result.rds")
+solution100 <- readRDS("../data/pcawg_cn_sigs_CN176_BP.rds")
+```
+
+Next we compare some important measures for signature number determination. We can see 100 NMF runs and 1000 NMF runs can achieve very similar results.
+
+```{r, fig.height=5, fig.width=10}
+bp_show_survey(solution1000, add_score = F, fixed_ratio = F)
+bp_show_survey(solution100, add_score = F, fixed_ratio = F)
+```
+Basically, the 5 measures can be classified into 3 categories:
+
+1. `silhouette` and `similarity`: these two scores indicate the result stability. *The signature number with value decreases sharply is preferred.*
+2. `distance` and `error`: these two scores indicate the difference between raw matrix and reconstructed matrix for signatures. *The signature number with lower value is better*.
+3. `pos cor`: this is constructed by Prof. Liu and Shixiang to see the average positive correlation between signatures. A signature number should be considered if it has lower value. In practice, we find this measure has referential value sometimes.
+
+*More see `?bp_show_survey` in R console for how they are calculated*.
+
+In previous study, @degasperiPracticalFrameworkOnline2020 used `silhouette` and `error` for signature number determination, @pcawgmutationalsignaturesworkinggroupRepertoireMutationalSignatures2020 used `similarity` and `distance` for signature number determination. For plots above we can see that they very close.
+
+**From plots above, we observe that the stability drops sharply after `11`, so here `11` signatures is selected for this PCAWG dataset**.
+
+### Similarity between two results with different parameter setting
+
+We have two results above, so we can compare the signatures from two different parameter setting by calculating their pairwise cosine similarity.
+
+```{r}
+sim <- get_sig_similarity(solution1000$object$K11, solution100$object$K11)
+ComplexHeatmap::pheatmap(sim$similarity, cluster_rows = FALSE, cluster_cols = FALSE, display_numbers = TRUE)
+```
+
+*We can know that the results contain same signature profile! This practice indicates that 100 NMF runs for each signature number is enough.*
+
+The `Signature` object with 11 signature profiles are stored for further analysis.
+
+```{r, eval=FALSE}
+# Use root directory as work directory
+saveRDS(solution1000$object$K11, file = "data/pcawg_cn_sigs_CN176_signature.rds")
+```
+
+
 ## Signature activity attribution
+
+After signature determination, the activities (a.k.a. exposures) of signatures are attributed to each sample by following a step-wise approach, which adopted from @pcawgmutationalsignaturesworkinggroupRepertoireMutationalSignatures2020. *Of note, the approach is simplified by keeping the implementation of core ideas but discarding the useless steps due to few prior knowledge about copy number signatures*.
 
 ### Attribution pipeline
 
+There are two core steps in this pipeline:
+
+1. step1: initialize a signature set (signatures observed in a cancer type the sample belongs to) for a sample and remove useless signature contribution by setting 0 to a sample if has none or very few contribution (cosine similarity reduces <0.1) to reconstruct the raw catalog from signatures.
+2. step2: add a signature from global signatures if if promote the catalog reconstruction (cosine similarity increases >0.5).
+
+> TODO: add flowchart
+
 ### Apply to PCAWG catalog matrix and signatures
 
+We apply the attribution pipeline above.
+
+```{r, eval=FALSE}
+# Use root directory as work directory
+library(sigminer)
+tally_X <- readRDS("data/pcawg_cn_tally_X.rds")
+pcawg_types <- readRDS("data/pcawg_type_info.rds")
+
+sc <- pcawg_types$cancer_type
+names(sc) <- pcawg_types$sample
+
+pcawg_expo <- bp_attribute_activity(
+  solution1000$object$K11,
+  sample_class = sc,
+  nmf_matrix = tally_X$nmf_matrix,
+  return_class = "data.table"
+)
+
+saveRDS(pcawg_expo, file = "data/pcawg_cn_sigs_CN176_activity.rds")
+```
+
+Now we can know how well each sample catalog profile can be constructed from the signature combination.
+
+```{r}
+pcawg_expo <- readRDS("../data/pcawg_cn_sigs_CN176_activity.rds")
+summary(pcawg_expo$similarity)
+```
+
+```{r}
+hist(pcawg_expo$similarity, breaks = 100, xlab = "Reconstructed similarity", main = NA)
+```
+Most of samples are well constructed. Next we will use a similarity threshold `0.75` to filter out some samples for removing their effects on the following analysis.
+
+## TCGA copy number signatures
+
+To validate the copy number signatures discovered in PCAWG database, we need another database for validation.
+TCGA is the best resource we got and similar processing and signature identification are applied.
+
+```{r, eval=FALSE}
+library(sigminer)
+
+tally_X <- readRDS("tcga_cn_tally_X.rds")
+tally_X_noLOH <- readRDS("tcga_cn_tally_X_noLOH.rds")
+
+sigs <- bp_extract_signatures(
+ tally_X$nmf_matrix,
+ range = 2:30,
+ cores = 50,
+ n_bootstrap = 10,
+ n_nmf_run = 10,
+ cache_dir = "tcga_bp_pynmf",
+ keep_cache = TRUE,
+ cores_solution = 30,
+ pynmf = TRUE,
+ use_conda = TRUE
+)
+
+saveRDS(sigs, file = "tcga_cn_sigs_CN176_BP.rds")
+```
+
+Load the solution list:
+
+```{r}
+tcga_solutions <- readRDS("../data/TCGA/tcga_cn_sigs_CN176_BP.rds")
+```
+
+```{r, fig.height=5, fig.width=10}
+bp_show_survey(tcga_solutions, add_score = FALSE, fixed_ratio = FALSE,)
+```
+Also `11` signatures are determined based on survey plot.
 

@@ -3,5 +3,22 @@ library(sigminer)
 tally_X <- readRDS("data/TCGA/tcga_cn_tally_X.rds")
 tally_X_noLOH <- readRDS("data/TCGA/tcga_cn_tally_X_noLOH.rds")
 
-library(NMF)
-system.time(test <- NMF::nmf(t(tally_X$nmf_matrix), rank = 2, nrun = 1, .options = "tv4"))
+# library(NMF)
+# system.time(test <- NMF::nmf(t(tally_X$nmf_matrix), rank = 2, nrun = 1, .options = "tv4"))
+
+tcga_types <- readRDS("data/TCGA/TCGA_type_info.rds")
+
+sc <- tcga_types$cancer_type
+names(sc) <- tcga_types$sample
+length(unique(tcga_types$sample))
+
+tcga_solutions <- readRDS("data/TCGA/tcga_cn_sigs_CN176_BP.rds")
+
+tcga_expo <- bp_attribute_activity(
+  tcga_solutions$object$K11,
+  sample_class = sc,
+  nmf_matrix = tally_X$nmf_matrix,
+  return_class = "data.table"
+)
+
+saveRDS(tcga_expo, file = "data/TCGA/tcga_cn_sigs_CN176_activity.rds")
