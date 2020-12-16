@@ -65,25 +65,11 @@ show_sig_profile(
 )
 ```
 
-Filter out samples with low reconstructed level (similarity < `0.75`).
-
-```{r}
-pcawg_expo <- readRDS("../data/pcawg_cn_sigs_CN176_activity.rds")
-keep_samples <- pcawg_expo$similarity >= 0.75
-pcawg_expo$abs_activity <- pcawg_expo$abs_activity[keep_samples]
-pcawg_expo$rel_activity <- pcawg_expo$rel_activity[keep_samples]
-
-expo_mat <- pcawg_expo$abs_activity %>% 
-  tibble::column_to_rownames("sample") %>% 
-  as.matrix() %>% 
-  t()
-```
-
 Show signature activity profile.
 
 ```{r fig.width=14, fig.height=7}
 show_sig_exposure(
-  expo_mat,
+  pcawg_sigs,
   style = "cosmic",
   rm_space = TRUE,
   palette = sigminer:::letter_colors
@@ -111,12 +97,12 @@ Most of signature-pairs have similarity around `0.1`.
 Transform data to long format.
 
 ```{r}
-df_abs <- pcawg_expo$abs_activity %>% 
+df_abs <- get_sig_exposure(pcawg_sigs) %>% 
   tidyr::pivot_longer(cols = starts_with("Sig"), names_to = "sig", values_to = "activity") %>% 
   dplyr::mutate(activity = log10(activity + 1),
                 sig = factor(sig, levels = paste0("Sig", 1:11)))
 
-df_rel <- pcawg_expo$rel_activity %>% 
+df_rel <- get_sig_exposure(pcawg_sigs, type = "relative", rel_threshold = 0) %>% 
   tidyr::pivot_longer(cols = starts_with("Sig"), names_to = "sig", values_to = "activity") %>% 
   dplyr::mutate(
     sig = factor(sig, levels = paste0("Sig", 1:11))
@@ -151,7 +137,51 @@ show_group_distribution(
 
 ### Copy number profile for representative samples
 
+Here we will draw copy number profile of 2 representative samples for each signature.
 
+```{r}
+get_sample_from_sig <- function(dt, sig) {
+  res = head(dt[order(dt[[sig]], decreasing = TRUE)], 2L)
+  res
+}
+```
+
+Read `CopyNumber` object for PCAWG data.
+
+```{r}
+pcawg_cn_obj <- readRDS("../data/pcawg_cn_obj.rds")
+samp_summary <- pcawg_cn_obj@summary.per.sample
+rel_activity <- get_sig_exposure(pcawg_sigs, type = "relative", rel_threshold = 0)
+rel_activity <- rel_activity[, lapply(.SD, function(x) {if (is.numeric(x)) round(x, 3) else x})]
+```
+
+
+```{r, fig.width=12, fig.height=7}
+dir.create("../output/enrich_samples/", showWarnings = FALSE)
+for (i in paste0("Sig", 1:11)) {
+  cat(paste0("Most enriched in ", i, "\n"))
+  s = get_sample_from_sig(rel_activity, i)
+  print(s)
+  plist = show_cn_profile(pcawg_cn_obj, samples = s$sample,
+                          show_title = TRUE,
+                          return_plotlist = TRUE)
+  plist = purrr::map2(plist, s$sample, function(p, x) {
+    s = samp_summary[sample == x]
+    text = paste0(
+      "n_of_seg:", s$n_of_seg, "\n",
+      "n_of_amp:", s$n_of_amp, "\n",
+      "n_of_del:", s$n_of_del, "\n"
+    )
+    p <- p + annotate("text", x = Inf, y = Inf, hjust = 1, vjust = 1,
+                      label = text)
+    p
+  })
+  p = cowplot::plot_grid(plotlist = plist, nrow = 2)
+  print(p)
+  ggplot2::ggsave(file.path("../output/enrich_samples/", paste0(i, ".pdf")),
+                    plot = p, width = 12, height = 6)
+}
+```
 
 ### Ideograph for copy number profile reconstruction
 

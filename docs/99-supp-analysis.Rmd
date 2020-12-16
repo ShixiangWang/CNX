@@ -31,4 +31,18 @@ opts_knit$set(width = 75)
 Sys.setenv("LANGUAGE" = "EN")
 ```
 
-In this part, we would like to visualize and analyze all tumor samples as a whole.
+In this part, we will add some supplementary analyses.
+
+## TCGA CNS analysis
+
+### Copy number signatures
+
+### Cancer subtyping
+
+### Prognosis
+
+## Contribution of CNS to AMP/DEL events
+
+## Exploration of differnt signature extraction methods
+
+> Similarity for same number of signatures

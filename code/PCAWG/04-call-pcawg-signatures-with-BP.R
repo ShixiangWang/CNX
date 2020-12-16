@@ -89,13 +89,40 @@ pcawg_expo <- bp_attribute_activity(
   solution1000$object$K11,
   sample_class = sc,
   nmf_matrix = tally_X$nmf_matrix,
-  return_class = "data.table"
+  method = "bt",
+  bt_use_prop = FALSE,
+  return_class = "data.table",
+  use_parallel = 12
 )
 
 saveRDS(pcawg_expo, file = "data/pcawg_cn_sigs_CN176_activity.rds")
 
-pcawg_expo$abs_activity
+# pcawg_expo <- bp_attribute_activity(
+#   solution1000$object$K11,
+#   sample_class = sc,
+#   nmf_matrix = tally_X$nmf_matrix,
+#   method = "bt",
+#   bt_use_prop = TRUE,
+#   return_class = "data.table",
+#   use_parallel = 12
+# )
+
+pcawg_expo2 <- bp_attribute_activity(
+  solution1000$object$K11,
+  sample_class = sc,
+  nmf_matrix = tally_X$nmf_matrix,
+  method = "stepwise",
+  return_class = "data.table",
+  use_parallel = 12
+)
+
+saveRDS(pcawg_expo2, file = "data/pcawg_cn_sigs_CN176_activity_stepwise.rds")
+
+get_sig_rec_similarity(solution1000$object$K11, tally_X$nmf_matrix) -> x
+summary(x$similarity)
+
 summary(pcawg_expo$similarity)
+summary(pcawg_expo2$similarity)
 
 hist(pcawg_expo$similarity, breaks = 100)
 

@@ -31,7 +31,7 @@ opts_knit$set(width = 75)
 Sys.setenv("LANGUAGE" = "EN")
 ```
 
-In this part, we would like to visualize and analyze all tumor samples as a whole.
+In this part, we would like to explore CN signatures in more details with association analysis and summarize what we get to infer their etiologies.
 
 ## Association analysis for copy number signatures
 
@@ -72,3 +72,25 @@ hc <- hclust(dist(expo_mat_rel))
 ```{r}
 factoextra::fviz_dend(hc, k = 3, rect = T)
 ```
+
+## Association between copy number signatures (CNS) and other types of signatures (SBS, DBS, ID)
+
+### CNS and SBS
+
+### CNS and DBS
+
+### CNS and ID
+
+## Signature similarity comparison between different types of signatures
+
+> 比较不同 signature type 的平均相似性
+
+## Signature association network construction and visualization
+
+> Try to learn from NC paper
+
+## Association between CNS and genotype/phenotype features
+
+## Association between CNS and patients' prognosis
+
+## Data summary and inference of signature etiologies

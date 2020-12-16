@@ -31,4 +31,10 @@ opts_knit$set(width = 75)
 Sys.setenv("LANGUAGE" = "EN")
 ```
 
-In this part, we would like to visualize and analyze all tumor samples as a whole.
+In this part, we would like to see if we can cluster all tumors based on CN signatures and use the clusters to explore tumor heterogeneity.
+
+## Clustering with signature relative activity
+
+## Heatmap for clustering and genotype/phenotype features
+
+## Exploration of patients' prognosis difference across clusters

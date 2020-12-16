@@ -31,4 +31,10 @@ opts_knit$set(width = 75)
 Sys.setenv("LANGUAGE" = "EN")
 ```
 
-In this part, we would like to visualize and analyze all tumor samples as a whole.
+In this part, we will analyze copy number signatures across cancer types and show the landscape.
+
+## Signature number and contribution in each cancer type
+
+## Cancer type associated enrichment
+
+
