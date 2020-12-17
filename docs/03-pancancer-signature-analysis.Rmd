@@ -35,6 +35,120 @@ In this part, we will analyze copy number signatures across cancer types and sho
 
 ## Signature number and contribution in each cancer type
 
+Load tidy cancer type annotation data.
+
+```{r}
+library(sigminer)
+pcawg_types <- readRDS("../data/pcawg_type_info.rds")
+```
+
+
+To better describe the copy number signature landscape, here we use refitting activity data obtained from bootstrap procedure (see section "Reliable signature activity attribution" in PART 1).
+
+```{r}
+pcawg_activity <- readRDS("../data/pcawg_cn_sigs_CN176_activity.rds")
+```
+
+Combine the cancer type annotation and activity data and only keep samples with good reconstruction (`>0.75` cosine similarity).
+
+```{r}
+keep_samps <- pcawg_activity$similarity >= 0.75
+
+df_abs <- merge(pcawg_activity$abs_activity[keep_samps], pcawg_types, by = "sample")
+df_rel <- merge(pcawg_activity$rel_activity[keep_samps], pcawg_types, by = "sample")
+```
+
+### Signature activity in each cancer type
+
+Here we draw distribution of a signature across cancer types.
+
+```{r width = 12, height = 6}
+show_group_distribution(
+  df_abs, 
+  gvar = "cancer_type",
+  dvar = "Sig1",
+  order_by_fun = FALSE,
+  g_angle = 90,
+  point_size = 0.3
+)
+```
+We have many signatures here, so we output them to PDF files.
+
+```{r, eval=FALSE}
+dir.create("../output/cancer-type-dist", showWarnings = F)
+signames <- paste0("Sig", 1:11)
+for (i in signames) {
+  pxx <- show_group_distribution(df_abs, gvar = "cancer_type",
+                                 dvar = i, order_by_fun = FALSE, 
+                                 ylab = i,
+                                 g_angle = 90, point_size = 0.3)
+  ggplot2::ggsave(file.path("../output/cancer-type-dist/", paste0("Absolute_activity_", i, ".pdf")),
+                  plot = pxx, width = 12, height = 6)
+  pxx <- show_group_distribution(df_rel, gvar = "cancer_type",
+                                 dvar = i, order_by_fun = FALSE,
+                                 ylab = i,
+                                 g_angle = 90, point_size = 0.3)
+  ggplot2::ggsave(file.path("../output/cancer-type-dist/", paste0("Relative_activity_", i, ".pdf")),
+                  plot = pxx, width = 12, height = 6)
+}
+rm(pxx)
+```
+
+### Signature landscape
+
+Define a signature which is detectable if this signature contribute `>5%` exposures in a sample.
+
+```{r}
+df <- df_rel %>% 
+  dplyr::mutate_at(dplyr::vars(dplyr::starts_with("Sig")), ~ifelse(. > 0.5, 1L, 0L)) %>% 
+  tidyr::pivot_longer(cols = dplyr::starts_with("Sig"),
+                      names_to = "sig", values_to = "detectable") 
+
+df2 <- df_rel %>% 
+  tidyr::pivot_longer(cols = dplyr::starts_with("Sig"),
+                      names_to = "sig", values_to = "expo")
+df <- dplyr::left_join(df, df2,
+                       by = c("sample", "cancer_type", "sig"))
+
+df_type = df %>% 
+  dplyr::group_by(cancer_type, sig) %>% 
+  dplyr::summarise(
+    freq = sum(detectable),  # directly use count
+    expo = median(expo[detectable == 1]),
+    n = n(),
+    label = paste0(unique(cancer_type), " (n=", n, ")"),
+    .groups = "drop"
+  )
+
+mps = unique(df_type[, c("cancer_type", "label")])
+mpss = mps$label
+names(mpss) = mps$cancer_type
+```
+
+```{r}
+summary(df_type$freq)
+```
+
+Show copy number signature landscape.
+
+```{r, fig.width=15, fig.height=5}
+library(cowplot)
+
+p <- ggplot(df_type,
+       aes(x = cancer_type, y = factor(sig, levels = paste0("Sig", 1:11)))) + 
+  geom_point(aes(size = freq, color = expo)) +
+  theme_cowplot() +  
+  ggpubr::rotate_x_text(60) + 
+  scale_x_discrete(breaks = mps$cancer_type, labels = mps$label) + 
+  scale_size_continuous(limits = c(5, 230), 
+                        breaks = c(5, 20, 50, 100, 200)) + 
+  scale_color_gradient2(low = "white", mid = "purple", high = "black", midpoint = 0.3) +
+  labs(x = NULL, y = "Copy number signatures", 
+       color = "Median exposure\ndue to signature",
+       size = "Tumors with\nthe signature")
+p
+```
+
 ## Cancer type associated enrichment
 
 

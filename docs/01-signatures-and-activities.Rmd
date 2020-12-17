@@ -159,16 +159,22 @@ saveRDS(solution1000$object$K11, file = "data/pcawg_cn_sigs_CN176_signature.rds"
 ```
 
 
-## Signature activity attribution
+## Reliable signature activity attribution
 
-After signature determination, the activities (a.k.a. exposures) of signatures are attributed to each sample by following a step-wise approach, which adopted from @pcawgmutationalsignaturesworkinggroupRepertoireMutationalSignatures2020. *Of note, the approach is simplified by keeping the implementation of core ideas but discarding the useless steps due to few prior knowledge about copy number signatures*.
+After signature determination, the reliable activities (a.k.a. exposures) of signatures are attributed to each sample for downstream analysis.
 
 ### Attribution pipeline
 
-There are two core steps in this pipeline:
+There are 3 core steps in this pipeline:
 
-1. step1: initialize a signature set (signatures observed in a cancer type the sample belongs to) for a sample and remove useless signature contribution by setting 0 to a sample if has none or very few contribution (cosine similarity reduces <0.1) to reconstruct the raw catalog from signatures.
-2. step2: add a signature from global signatures if if promote the catalog reconstruction (cosine similarity increases >0.5).
+1. Step1: We run `n = 100` optimizations on bootstrapped data and obtain a distribution of activities for each sample.
+2. Step2: We consider the median activities as point estimates.
+3. step3: In each sample, we reset a signature activity to `0` if its activity distribution below the threshold of `1%` of total mutations in the sample with one-side T test p value `>0.05`.
+
+This pipeline is similar to previously reported [@degasperiPracticalFrameworkOnline2020, @huangDetectingPresenceMutational2018]. However, there are some different settings:
+
+1. We use `1%` of total mutations as a threshold here instead `5%` in @degasperiPracticalFrameworkOnline2020, because we observed some copy number segment contributions are removed from results with `5%` but they can be used for better explanation of sample copy number profile reconstruction.
+2. We use T test for P value calculation here instead of empirical P value calculation based on proportion in @degasperiPracticalFrameworkOnline2020 for keeping more positive events.
 
 > TODO: add flowchart
 

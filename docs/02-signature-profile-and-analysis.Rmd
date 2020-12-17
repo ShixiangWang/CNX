@@ -188,3 +188,8 @@ for (i in paste0("Sig", 1:11)) {
 > TODO: select one/two samples and draw copy number profile -> catalog profile -> signature relative activity. **Similar to Nature paper**.
 
 
+```{r, include=FALSE}
+# Clear environment
+rm(list = ls())
+```
+
