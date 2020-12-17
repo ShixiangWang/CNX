@@ -39,6 +39,8 @@ Load tidy cancer type annotation data.
 
 ```{r}
 library(sigminer)
+library(tidyverse)
+
 pcawg_types <- readRDS("../data/pcawg_type_info.rds")
 ```
 
@@ -100,7 +102,7 @@ Define a signature which is detectable if this signature contribute `>5%` exposu
 
 ```{r}
 df <- df_rel %>% 
-  dplyr::mutate_at(dplyr::vars(dplyr::starts_with("Sig")), ~ifelse(. > 0.5, 1L, 0L)) %>% 
+  dplyr::mutate_at(dplyr::vars(dplyr::starts_with("Sig")), ~ifelse(. > 0.05, 1L, 0L)) %>% 
   tidyr::pivot_longer(cols = dplyr::starts_with("Sig"),
                       names_to = "sig", values_to = "detectable") 
 
@@ -131,7 +133,7 @@ summary(df_type$freq)
 
 Show copy number signature landscape.
 
-```{r, fig.width=15, fig.height=5}
+```{r, fig.width=12, fig.height=6}
 library(cowplot)
 
 p <- ggplot(df_type,
@@ -140,15 +142,58 @@ p <- ggplot(df_type,
   theme_cowplot() +  
   ggpubr::rotate_x_text(60) + 
   scale_x_discrete(breaks = mps$cancer_type, labels = mps$label) + 
-  scale_size_continuous(limits = c(5, 230), 
+  scale_size_continuous(limits = c(5, 250), 
                         breaks = c(5, 20, 50, 100, 200)) + 
-  scale_color_gradient2(low = "white", mid = "purple", high = "black", midpoint = 0.3) +
+  scale_color_stepsn(
+    colors = viridis::viridis(5, direction = -1),
+    breaks = c(0, 0.25, 0.5, 0.75, 1)
+  ) +
   labs(x = NULL, y = "Copy number signatures", 
-       color = "Median exposure\ndue to signature",
+       color = "Median activity\ndue to signature",
        size = "Tumors with\nthe signature")
 p
+
+ggsave("../output/CNS_PCAWG_landscape.pdf", plot = p,
+       height = 6, width = 12)
 ```
 
 ## Cancer type associated enrichment
 
+Run enrichment analysis.
+
+```{r, message=FALSE}
+enrich_result <- group_enrichment(
+  df_abs,
+  grp_vars = "cancer_type",
+  enrich_vars = paste0("Sig", 1:11),
+  co_method = "wilcox.test"
+)
+```
+
+Show enrichment landscape.
+
+```{r}
+enrich_result$enrich_var <- factor(enrich_result$enrich_var, paste0("Sig", 1:11))
+p <- show_group_enrichment(enrich_result, fill_by_p_value = TRUE, return_list = T)
+p <- p$cancer_type + labs(x = NULL, y = NULL)
+p
+
+ggsave("../output/CNS_PCAWG_enrichment_landscape.pdf", plot = p,
+       height = 8, width = 6)
+```
+
+To better visualize the enrichment results, we use binned color regions.
+
+```{r}
+p <- show_group_enrichment(
+  enrich_result, 
+  fill_by_p_value = TRUE, 
+  cut_p_value = TRUE,
+  return_list = T)
+p <- p$cancer_type + labs(x = NULL, y = NULL)
+p
+
+ggsave("../output/CNS_PCAWG_enrichment_landscape2.pdf", plot = p,
+       height = 8, width = 6)
+```
 
