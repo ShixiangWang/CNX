@@ -74,9 +74,10 @@ show_group_distribution(
   point_size = 0.3
 )
 ```
+
 We have many signatures here, so we output them to PDF files.
 
-```{r, eval=FALSE}
+```{r, eval=if (exists(".regenerate_pdfs")) .regenerate_pdfs else FALSE}
 dir.create("../output/cancer-type-dist", showWarnings = F)
 signames <- paste0("Sig", 1:11)
 for (i in signames) {

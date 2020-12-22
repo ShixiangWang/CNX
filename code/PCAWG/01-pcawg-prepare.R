@@ -36,3 +36,19 @@ pcawg_cn <- pcawg_cn[, c(1:5, 7)]
 colnames(pcawg_cn)[1:5] = c("sample", "Chromosome", "Start.bp", "End.bp", "modal_cn")
 
 saveRDS(pcawg_cn, file = "data/pcawg_copynumber_sp.rds")
+
+# LOH ---------------------------------------------------------------------
+
+pcawg_cn <- readRDS("data/pcawg_copynumber_sp.rds")
+
+pcawg_loh <- pcawg_cn %>%
+  dplyr::filter(Chromosome %in% as.character(1:22)) %>%
+  dplyr::mutate(len = End.bp - Start.bp + 1) %>%
+  dplyr::group_by(sample) %>%
+  dplyr::summarise(
+    n_LOH = sum(minor_cn == 0 & modal_cn > 0 & len >= 1e4)
+  ) %>%
+  setNames(c("sample", "n_LOH")) %>%
+  data.table::as.data.table()
+
+saveRDS(pcawg_loh, file = "data/pcawg_loh.rds")

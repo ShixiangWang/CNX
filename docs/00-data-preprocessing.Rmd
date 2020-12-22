@@ -82,6 +82,23 @@ pcawg_cn <- pcawg_cn[, c(1:5, 7)]
 colnames(pcawg_cn)[1:5] <- c("sample", "Chromosome", "Start.bp", "End.bp", "modal_cn")
 
 saveRDS(pcawg_cn, file = "data/pcawg_copynumber_sp.rds")
+
+# LOH ---------------------------------------------------------------------
+
+pcawg_cn <- readRDS("data/pcawg_copynumber_sp.rds")
+
+pcawg_loh <- pcawg_cn %>%
+  dplyr::filter(Chromosome %in% as.character(1:22)) %>%
+  dplyr::mutate(len = End.bp - Start.bp + 1) %>%
+  dplyr::group_by(sample) %>%
+  dplyr::summarise(
+    n_LOH = sum(minor_cn == 0 & modal_cn > 0 & len >= 1e4)
+  ) %>%
+  setNames(c("sample", "n_LOH")) %>%
+  data.table::as.data.table()
+
+saveRDS(pcawg_loh, file = "data/pcawg_loh.rds")
+
 ```
 
 ## Generate PCAWG sample-by-component matrix
@@ -245,8 +262,21 @@ The generated catalog profiles for LOH version and non-LOH version component cla
 - [tcga_catalogs_tally_X.pdf](https://github.com/ShixiangWang/CNX/blob/master/output/tcga_catalogs_tally_X.pdf) - 176 components
 - [tcga_catalogs_tally_X_noLOH.pdf](https://github.com/ShixiangWang/CNX/blob/master/output/tcga_catalogs_tally_X_noLOH.pdf) - 136 components
 
-## Other PCAWG genotype/phenotype data
+## PCAWG genotype/phenotype data type and source
 
-Most of other PCAWG genotype/phenotype data used in this study are obtained from [PCAWG paper collection](https://www.nature.com/collections/afdejfafdb) published in early 2020.
+If no references described, PCAWG genotype/phenotype data used in this study are obtained from UCSC Xena database, the original data source is [PCAWG paper collection](https://www.nature.com/collections/afdejfafdb) published in early 2020.
 
-> TODO: describe detailed datasets.
+- Consensus copy number ([page in UCSC Xena](https://xenabrowser.net/datapages/?dataset=20170119_final_consensus_copynumber_sp&host=https%3A%2F%2Fpcawg.xenahubs.net&removeHub=https%3A%2F%2Fxena.treehouse.gi.ucsc.edu%3A443)).
+- General phenotype information ([page in UCSC Xena](https://xenabrowser.net/datapages/?cohort=PCAWG%20(specimen%20centric)&removeHub=https%3A%2F%2Fxena.treehouse.gi.ucsc.edu%3A443)).
+- Tumor purity & ploidy & WGD status ([page in UCSC Xena](https://xenabrowser.net/datapages/?dataset=consensus.20170217.purity.ploidy_sp&host=https%3A%2F%2Fpcawg.xenahubs.net&removeHub=https%3A%2F%2Fxena.treehouse.gi.ucsc.edu%3A443)).
+- Gene level fusion events ([page in UCSC Xena](https://xenabrowser.net/datapages/?dataset=pcawg3_fusions_PKU_EBI.gene_centric.sp.xena&host=https%3A%2F%2Fpcawg.xenahubs.net&removeHub=https%3A%2F%2Fxena.treehouse.gi.ucsc.edu%3A443)).
+- LOH number, calculated from copy number data, defined as number of copy number segments passing the following criterion:
+  - Minor copy number equals to `0`.
+  - Total copy number is greater than `0`.
+  - Segment length is greater than `10Kb`.
+- HRD status by CHORD framework, the raw data is available at @nguyenPancancerLandscapeHomologous2020, cleaned by Huimin Li.
+- Chromothripsis detected by ShatterSeek, the data is obtained from <http://compbio.med.harvard.edu/chromothripsis/>.
+- Amplicons (including ecDNA) detected by AmpliconArchitect, obtained from @kimExtrachromosomalDNAAssociated2020.
+- Telomere content detected by TelomereHunter, obtained from @pcawg-structuralvariationworkinggroupGenomicFootprintsActivated2020.
+- APOBEC mutations ([page in UCSC Xena](https://xenabrowser.net/datapages/?dataset=MAF_Aug31_2016_sorted_A3A_A3B_comparePlus.sp&host=https%3A%2F%2Fpcawg.xenahubs.net&removeHub=https%3A%2F%2Fxena.treehouse.gi.ucsc.edu%3A443)).
+

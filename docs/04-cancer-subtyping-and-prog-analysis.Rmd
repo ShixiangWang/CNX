@@ -31,9 +31,265 @@ opts_knit$set(width = 75)
 Sys.setenv("LANGUAGE" = "EN")
 ```
 
-In this part, we would like to see if we can cluster all tumors based on CN signatures and use the clusters to explore tumor heterogeneity.
+```{r include=FALSE}
+ReTidying = TRUE
+```
+
+
+In this part, we would like to cluster all tumors based on CN signatures and use the clusters to explore tumor heterogeneity.
+
+## Data integration
+
+Many raw data have been processed by tools (or collected) and cleaned. This part I mainly describe how to combine them to construct the integrated dataset.
+
+> If you care about the data (source) shown below, please check the last section of **PART 0**.
+
+```{r eval=ReTidying}
+library(pacman)
+p_load(
+  tidyverse,
+  data.table,
+  sigminer,
+  IDConverter
+)
+```
+
+Load pre-processed data.
+
+```{r eval=ReTidying}
+pcawg_cn_obj <- readRDS("../data/pcawg_cn_obj.rds")
+pcawg_cn_sig <- readRDS("../data/pcawg_cn_sigs_CN176_signature.rds")
+pcawg_samp_info_sp <- readRDS("../data/pcawg_samp_info_sp.rds")
+samp_summary <- pcawg_cn_obj@summary.per.sample
+samp_summary$n_loh <- NULL
+```
+
+
+Check if all samples are recorded.
+
+```{r eval=ReTidying}
+all(pcawg_cn_obj@summary.per.sample$sample %in% pcawg_samp_info_sp$pcawg_specimen_histology_August2016_v9$icgc_specimen_id)
+```
+
+```{r eval=ReTidying}
+pcawg_samp_info_sp <- lapply(pcawg_samp_info_sp, function(x) {
+  colnames(x)[1] <- "sample"
+  x
+})
+pcawg_samp_info <- purrr::reduce(pcawg_samp_info_sp, dplyr::full_join, by = "sample")
+pcawg_samp_info <- pcawg_samp_info %>% dplyr::filter(sample %in% pcawg_cn_obj@summary.per.sample$sample)
+
+rm(pcawg_samp_info_sp)
+```
+
+Refer to @pcawgmutationalsignaturesworkinggroupRepertoireMutationalSignatures2020, some cancer types with small sample size should be combined.
+
+```{r eval=ReTidying}
+table(pcawg_samp_info$histology_abbreviation)
+```
+
+```{r eval=ReTidying}
+pcawg_samp_info <- pcawg_samp_info %>% 
+  mutate(
+    cancer_type = case_when(
+      startsWith(histology_abbreviation, "Breast") ~ "Breast",
+      startsWith(histology_abbreviation, "Biliary-AdenoCA") ~ "Biliary-AdenoCA",
+      histology_abbreviation %in% c("Bone-Epith", "Bone-Benign") ~ "Bone-Other",
+      startsWith(histology_abbreviation, "Cervix") ~ "Cervix",
+      histology_abbreviation %in% c("Myeloid-AML, Myeloid-MDS", "Myeloid-AML, Myeloid-MPN", "Myeloid-MDS", "Myeloid-MPN") ~ "Myeloid-MDS/MPN",
+      TRUE ~ histology_abbreviation
+    )
+  )
+```
+
+Select important features.
+
+```{r eval=ReTidying}
+pcawg_samp_info <- pcawg_samp_info %>% 
+  dplyr::select(c("sample", "_PATIENT", "donor_sex", "donor_age_at_diagnosis",
+                      "donor_survival_time", "donor_vital_status", "first_therapy_type",
+                      "tobacco_smoking_history_indicator", "alcohol_history",
+                      "dcc_project_code", "dcc_specimen_type",
+                      "histology_abbreviation", "cancer_type",
+                      "tumour_stage",
+                      "level_of_cellularity"))
+colnames(pcawg_samp_info)[2] <- "donor_id"
+
+# Remove duplicated samples
+pcawg_samp_info <- pcawg_samp_info[!duplicated(pcawg_samp_info$sample), ]
+```
+
+Get signature activities.
+
+```{r eval=ReTidying}
+pcawg_activity <- readRDS("../data/pcawg_cn_sigs_CN176_activity.rds")
+
+expo_abs <- pcawg_activity$abs_activity[, lapply(.SD, function(x) if (is.numeric(x)) round(x, digits = 3) else x)]
+colnames(expo_abs) <- c("sample", paste0("Abs_", colnames(expo_abs)[-1]))
+
+
+expo_rel <- pcawg_activity$rel_activity[, lapply(.SD, function(x) if (is.numeric(x)) round(x, digits = 3) else x)]
+colnames(expo_rel) <- c("sample", paste0("Rel_", colnames(expo_rel)[-1]))
+
+pcawg_activity2 <- merge(expo_abs, expo_rel, by = "sample")
+pcawg_activity2$similarity <- pcawg_activity$similarity
+pcawg_activity <- pcawg_activity2
+pcawg_activity$keep <- pcawg_activity$similarity >= 0.75
+
+rm(pcawg_activity2, expo_abs, expo_rel)
+```
+
+Read tumor purity & ploidy & WGD status.
+
+```{r eval=ReTidying}
+dt_pp <- fread("../data/PCAWG/consensus.20170217.purity.ploidy_sp")
+dt_pp <- dt_pp[, c("samplename", "purity", "ploidy", "wgd_status")]
+colnames(dt_pp)[1] <- "sample" 
+```
+
+Calculate fusion events in all samples.
+
+```{r eval=ReTidying}
+fusion <- fread("../data/PCAWG/pcawg3_fusions_PKU_EBI.gene_centric.sp.xena")
+fusion <- as.matrix(fusion[, -1])
+fusion <- apply(fusion, 2, sum)
+fusion <- dplyr::tibble(
+  sample = names(fusion),
+  n_fusion = as.numeric(fusion)
+)
+```
+
+Load HRD status in all samples.
+
+```{r eval=ReTidying}
+HRD <- readRDS("../data/PCAWG/pcawg_CHORD.rds")
+HRD <- HRD %>% 
+  dplyr::select(icgc_specimen_id, is_hrd, genotype_monoall) %>% 
+  set_names(c("sample", "hrd_status", "hrd_genotype")) %>% 
+  unique()
+```
+
+```{r, include=FALSE, eval=FALSE}
+#HRD <- readRDS("../data/PCAWG/PCAWG_HRDindex.RDS")
+# HRD <- dplyr::tibble(
+#   sample = names(HRD),
+#   HRDindex = as.numeric(HRD)
+# )
+```
+
+
+Read LOH data.
+
+```{r eval=ReTidying}
+LOH <- readRDS("../data/pcawg_loh.rds")
+```
+
+
+Read Chromothripsis data and clean it.
+
+```{r eval=ReTidying}
+# http://compbio.med.harvard.edu/chromothripsis/
+chromothripsis <- fread("../data/PCAWG/PCAWG-ShatterSeek.txt.gz")
+chromothripsis <- chromothripsis[, c("icgc_donor_id", "type_chromothripsis", "chromo_label")]
+
+# Check label
+table(chromothripsis$chromo_label)
+any(is.na(chromothripsis$chromo_label))
+
+# Summarize
+chromothripsis_summary <- chromothripsis[
+  , .(n_chromo = sum(chromo_label != "No"),
+      chromo_type = paste0(na.omit(type_chromothripsis), collapse = "/")), by = icgc_donor_id]
+
+chromothripsis_summary <- merge(chromothripsis_summary, pcawg_full[, c("icgc_donor_id", "icgc_specimen_id")],
+      by = "icgc_donor_id") %>% unique()
+chromothripsis_summary$icgc_donor_id <- NULL
+colnames(chromothripsis_summary)[3] <- "sample"
+rm(chromothripsis)
+```
+
+Read AmpliconArchitect results.
+
+```{r eval=ReTidying}
+aa1 <- readxl::read_excel("../data/PCAWG/ecDNA.xlsx", skip = 1)
+aa2 <- readxl::read_excel("../data/PCAWG/ecDNA.xlsx", sheet = 3)
+
+table(aa1$amplicon_classification)
+table(aa2$sample_classification)
+all(aa1$sample_barcode %in% aa2$sample_barcode)
+
+aa_summary <- aa1 %>% 
+  dplyr::group_by(sample_barcode) %>% 
+  dplyr::summarise(
+    n_amplicon_BFB = sum(amplicon_classification == "BFB", na.rm = TRUE),
+    n_amplicon_ecDNA = sum(amplicon_classification == "Circular", na.rm = TRUE),
+    n_amplicon_HR = sum(amplicon_classification == "Heavily-rearranged", na.rm = TRUE),
+    n_amplicon_Linear = sum(amplicon_classification == "Linear", na.rm = TRUE),
+    .groups = "drop"
+  )
+
+data.table::setDT(aa_summary)
+
+custom_dt <- IDConverter::pcawg_simple[, c("submitted_specimen_id", "icgc_specimen_id")]
+custom_dt <- custom_dt[startsWith(submitted_specimen_id, "TCGA")]
+custom_dt[, submitted_specimen_id := substr(submitted_specimen_id, 1, 15)]
+
+aa_summary[
+  , sample := ifelse(
+    startsWith(sample_barcode, "SA"),
+    convert_pcawg(sample_barcode, from = "icgc_sample_id", to = "icgc_specimen_id"),
+    convert_custom(sample_barcode, from = "submitted_specimen_id", to = "icgc_specimen_id", dt = custom_dt))]
+
+## Filter out samples not in PCAWG
+aa_summary <- aa_summary[!is.na(sample)][, sample_barcode := NULL]
+
+rm(aa1, aa2, custom_dt)
+```
+
+Read TelomereHunter results.
+
+```{r eval=ReTidying, warning=FALSE}
+TC <- readxl::read_excel("../data/PCAWG/TelomereContent.xlsx")
+TC <- TC %>% dplyr::select(c("icgc_specimen_id", "tel_content_log2"))
+colnames(TC)[1] <- "sample"
+data.table::setDT(TC)
+```
+
+```{r eval=ReTidying}
+apobec <- read_tsv("../data/PCAWG/MAF_Aug31_2016_sorted_A3A_A3B_comparePlus.txt", col_types = cols())
+apobec <- apobec %>% 
+  dplyr::select(c(1, 5)) %>% 
+  data.table::as.data.table() %>% 
+  setNames(c("sample", "APOBEC_mutations"))
+```
+
+
+Combine and save result combined data.
+
+```{r eval=ReTidying}
+pcawg_samp_info <- purrr::reduce(list(pcawg_samp_info,
+                                      pcawg_activity,
+                                      samp_summary,
+                                      dt_pp,
+                                      fusion,
+                                      HRD,
+                                      LOH,
+                                      chromothripsis_summary,
+                                      aa_summary,
+                                      TC,
+                                      apobec), 
+                                 dplyr::left_join, by = "sample")
+
+saveRDS(pcawg_samp_info, file = "../data/pcawg_sample_tidy_info.rds")
+
+## Remove all objects
+rm(list = ls())
+```
+
 
 ## Clustering with signature relative activity
+
+
 
 ## Heatmap for clustering and genotype/phenotype features
 
