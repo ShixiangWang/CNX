@@ -64,7 +64,7 @@ df_rel <- merge(pcawg_activity$rel_activity[keep_samps], pcawg_types, by = "samp
 
 Here we draw distribution of a signature across cancer types.
 
-```{r fig.width=10, fig.height=4}
+```{r fig.width=12, fig.height=6}
 show_group_distribution(
   df_abs, 
   gvar = "cancer_type",
@@ -216,6 +216,38 @@ df_check <- df_abs[, c("Sig6", "cancer_type")][
 ```
 
 ```{r}
-ggpubr::ggboxplot(df_check, x = "cancer_type", y = "Sig6", fill = "cancer_type", xlab = FALSE, width = 0.3)
+ggpubr::ggboxplot(
+  df_check, 
+  x = "cancer_type", y = "Sig6", 
+  fill = "cancer_type", 
+  xlab = FALSE, width = 0.3)
+```
+Check copy number distribution for the `"SoftTissue-Liposarc"` samples.
+
+```{r}
+samples <- df_abs[cancer_type == "SoftTissue-Liposarc"]$sample
+
+pcawg_cn_obj <- readRDS("../data/pcawg_cn_obj.rds")
+cn_dt <- subset(pcawg_cn_obj@data, sample %in% samples)
+cn_dt$segLen = cn_dt$end - cn_dt$start + 1
 ```
 
+Copy number value:
+
+```{r}
+boxplot(cn_dt$segVal)
+```
+
+Segment length:
+
+```{r}
+boxplot(cn_dt$segLen)
+```
+
+```{r}
+cn_dt_samp <- cn_dt[, .(nAMP = sum(segVal > 2)), by = sample]
+```
+
+```{r}
+boxplot(cn_dt_samp$nAMP)
+```
