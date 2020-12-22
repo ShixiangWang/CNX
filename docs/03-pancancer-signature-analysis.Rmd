@@ -64,7 +64,7 @@ df_rel <- merge(pcawg_activity$rel_activity[keep_samps], pcawg_types, by = "samp
 
 Here we draw distribution of a signature across cancer types.
 
-```{r width = 12, height = 6}
+```{r fig.width=10, fig.height=4}
 show_group_distribution(
   df_abs, 
   gvar = "cancer_type",
@@ -196,5 +196,26 @@ p
 
 ggsave("../output/CNS_PCAWG_enrichment_landscape2.pdf", plot = p,
        height = 8, width = 6)
+```
+We see cancer type `SoftTissue-Liposarc` has pretty high enrichment on `Sig6`.
+Let's check the enrichment result.
+
+```{r}
+enrich_result[grp1 == "SoftTissue-Liposarc"]
+```
+We can see mean activity `486` (`n=19`) vs `9` (`n=2621`).
+
+Let's go further plot the distribution for the two groups.
+
+```{r}
+df_check <- df_abs[, c("Sig6", "cancer_type")][
+  , .(cancer_type = ifelse(cancer_type == "SoftTissue-Liposarc", 
+                           "SoftTissue-Liposarc",
+                           "Others"),
+      Sig6 = Sig6)]
+```
+
+```{r}
+ggpubr::ggboxplot(df_check, x = "cancer_type", y = "Sig6", fill = "cancer_type", xlab = FALSE, width = 0.3)
 ```
 
