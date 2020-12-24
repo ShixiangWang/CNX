@@ -51,7 +51,7 @@ final_abs <- run_all_consensus_partition_methods(
   partition_method = "skmeans",
   top_n = 10, mc.cores = 8, max_k = 10
 )
-cola_report(final_abs, output_dir = "output/cola_report/pcawg_abs_sigs_500_sampls_final", mc.cores = 8)
+cola_report(final_abs, output_dir = "output/cola_report/pcawg_abs_sigs_all_sampls_final", mc.cores = 8)
 
 final_rel <- run_all_consensus_partition_methods(
   mat_rel,
@@ -59,7 +59,7 @@ final_rel <- run_all_consensus_partition_methods(
   partition_method = "skmeans",
   top_n = 10, mc.cores = 8, max_k = 10
 )
-cola_report(final_rel, output_dir = "output/cola_report/pcawg_rel_sigs_500_sampls_final", mc.cores = 8)
+cola_report(final_rel, output_dir = "output/cola_report/pcawg_rel_sigs_all_sampls_final", mc.cores = 8)
 
 final_cmb <- run_all_consensus_partition_methods(
   rbind(mat_abs, mat_rel),
@@ -67,8 +67,12 @@ final_cmb <- run_all_consensus_partition_methods(
   partition_method = "skmeans",
   top_n = 20, mc.cores = 8, max_k = 10
 )
-cola_report(final_cmb, output_dir = "output/cola_report/pcawg_cmb_sigs_500_sampls_final", mc.cores = 8)
+cola_report(final_cmb, output_dir = "output/cola_report/pcawg_cmb_sigs_all_sampls_final", mc.cores = 8)
 
 save(final_abs, final_rel, final_cmb, file = "output/cola_report/final_result.RData")
 # Check all cola reports and find ABS features is the best option
 save(final_abs, file = "data/pcawg_cola_result.rds")
+
+res = final_abs["ATC", "skmeans"]
+select_partition_number(res)
+collect_classes(res)

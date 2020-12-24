@@ -1,0 +1,4170 @@
+cola Report for Consensus Partitioning
+==================
+
+**Date**: 2020-12-23 13:22:34 CST, **cola version**: 1.9.0.1012
+
+----------------------------------------------------------------
+
+<style type='text/css'>
+
+body, td, th {
+   font-family: Arial,Helvetica,sans-serif;
+   background-color: white;
+   font-size: 13px;
+  max-width: 800px;
+  margin: auto;
+  margin-left:210px;
+  padding: 0px 10px 0px 10px;
+  border-left: 1px solid #EEEEEE;
+  line-height: 150%;
+}
+
+tt, code, pre {
+   font-family: 'DejaVu Sans Mono', 'Droid Sans Mono', 'Lucida Console', Consolas, Monaco, 
+
+monospace;
+}
+
+h1 {
+   font-size:2.2em;
+}
+
+h2 {
+   font-size:1.8em;
+}
+
+h3 {
+   font-size:1.4em;
+}
+
+h4 {
+   font-size:1.0em;
+}
+
+h5 {
+   font-size:0.9em;
+}
+
+h6 {
+   font-size:0.8em;
+}
+
+a {
+  text-decoration: none;
+  color: #0366d6;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+a:visited {
+   color: #0366d6;
+}
+
+pre, img {
+  max-width: 100%;
+}
+pre {
+  overflow-x: auto;
+}
+pre code {
+   display: block; padding: 0.5em;
+}
+
+code {
+  font-size: 92%;
+  border: 1px solid #ccc;
+}
+
+code[class] {
+  background-color: #F8F8F8;
+}
+
+table, td, th {
+  border: 1px solid #ccc;
+}
+
+blockquote {
+   color:#666666;
+   margin:0;
+   padding-left: 1em;
+   border-left: 0.5em #EEE solid;
+}
+
+hr {
+   height: 0px;
+   border-bottom: none;
+   border-top-width: thin;
+   border-top-style: dotted;
+   border-top-color: #999999;
+}
+
+@media print {
+   * {
+      background: transparent !important;
+      color: black !important;
+      filter:none !important;
+      -ms-filter: none !important;
+   }
+
+   body {
+      font-size:12pt;
+      max-width:100%;
+   }
+
+   a, a:visited {
+      text-decoration: underline;
+   }
+
+   hr {
+      visibility: hidden;
+      page-break-before: always;
+   }
+
+   pre, blockquote {
+      padding-right: 1em;
+      page-break-inside: avoid;
+   }
+
+   tr, img {
+      page-break-inside: avoid;
+   }
+
+   img {
+      max-width: 100% !important;
+   }
+
+   @page :left {
+      margin: 15mm 20mm 15mm 10mm;
+   }
+
+   @page :right {
+      margin: 15mm 10mm 15mm 20mm;
+   }
+
+   p, h2, h3 {
+      orphans: 3; widows: 3;
+   }
+
+   h2, h3 {
+      page-break-after: avoid;
+   }
+}
+</style>
+
+
+
+
+## Summary
+
+
+
+First the variable is renamed to `res_list`.
+
+
+```r
+res_list = final_abs
+```
+
+
+
+All available functions which can be applied to this `res_list` object:
+
+
+```r
+res_list
+```
+
+```
+#> A 'ConsensusPartitionList' object with 1 methods.
+#>   On a matrix with 10 rows and 2640 columns.
+#>   Top rows are extracted by 'ATC' methods.
+#>   Subgroups are detected by 'skmeans' method.
+#>   Number of partitions are tried for k = 2, 3, 4, 5, 6, 7, 8, 9, 10.
+#>   Performed in total 450 partitions by row resampling.
+#> 
+#> Following methods can be applied to this 'ConsensusPartitionList' object:
+#>  [1] "cola_report"           "collect_classes"       "collect_plots"         "collect_stats"        
+#>  [5] "colnames"              "functional_enrichment" "get_anno_col"          "get_anno"             
+#>  [9] "get_classes"           "get_matrix"            "get_membership"        "get_stats"            
+#> [13] "is_best_k"             "is_stable_k"           "ncol"                  "nrow"                 
+#> [17] "rownames"              "show"                  "suggest_best_k"        "test_to_known_factors"
+#> [21] "top_rows_heatmap"      "top_rows_overlap"     
+#> 
+#> You can get result for a single method by, e.g. object["ATC", "skmeans"] or object["ATC:skmeans"]
+```
+
+The call of `run_all_consensus_partition_methods()` was:
+
+
+```
+#> run_all_consensus_partition_methods(data = mat_abs, top_value_method = "ATC", partition_method = "skmeans", 
+#>     max_k = 10, top_n = 10, mc.cores = 8)
+```
+
+Dimension of the input matrix:
+
+
+```r
+mat = get_matrix(res_list)
+dim(mat)
+```
+
+```
+#> [1]   10 2640
+```
+
+### Density distribution
+
+The density distribution for each sample is visualized as in one column in the
+following heatmap. The clustering is based on the distance which is the
+Kolmogorov-Smirnov statistic between two distributions.
+
+
+
+
+```r
+library(ComplexHeatmap)
+densityHeatmap(mat, ylab = "value", cluster_columns = TRUE, show_column_names = FALSE,
+    mc.cores = 1)
+```
+
+
+
+
+
+### Suggest the best k
+
+
+
+Folowing table shows the best `k` (number of partitions) for each combination
+of top-value methods and partitioning methods. Clicking on the method name in
+the table goes to the corresponding section for a single combination of methods.
+
+[The cola vignette](http://bioconductor.org/packages/devel/bioc/vignettes/cola/inst/doc/cola.html#toc_13)
+explains the definition of the metrics used for determining the best
+number of partitions.
+
+
+```r
+suggest_best_k(res_list)
+```
+
+
+|                            | The best k| 1-PAC| Mean silhouette| Concordance|   |
+|:---------------------------|----------:|-----:|---------------:|-----------:|:--|
+|[ATC:skmeans](#ATC-skmeans) |          2|   0.7|           0.895|        0.95|   |
+
+\*\*: 1-PAC > 0.95, \*: 1-PAC > 0.9
+
+
+
+
+### CDF of consensus matrices
+
+Cumulative distribution function curves of consensus matrix for all methods.
+
+
+
+
+```r
+collect_plots(res_list, fun = plot_ecdf)
+```
+
+
+
+### Consensus heatmap
+
+Consensus heatmaps for all methods. ([What is a consensus heatmap?](http://bioconductor.org/packages/devel/bioc/vignettes/cola/inst/doc/cola.html#toc_9))
+
+
+<style type='text/css'>
+
+
+
+.ui-helper-hidden {
+	display: none;
+}
+.ui-helper-hidden-accessible {
+	border: 0;
+	clip: rect(0 0 0 0);
+	height: 1px;
+	margin: -1px;
+	overflow: hidden;
+	padding: 0;
+	position: absolute;
+	width: 1px;
+}
+.ui-helper-reset {
+	margin: 0;
+	padding: 0;
+	border: 0;
+	outline: 0;
+	line-height: 1.3;
+	text-decoration: none;
+	font-size: 100%;
+	list-style: none;
+}
+.ui-helper-clearfix:before,
+.ui-helper-clearfix:after {
+	content: "";
+	display: table;
+	border-collapse: collapse;
+}
+.ui-helper-clearfix:after {
+	clear: both;
+}
+.ui-helper-zfix {
+	width: 100%;
+	height: 100%;
+	top: 0;
+	left: 0;
+	position: absolute;
+	opacity: 0;
+	filter:Alpha(Opacity=0); 
+}
+
+.ui-front {
+	z-index: 100;
+}
+
+
+
+.ui-state-disabled {
+	cursor: default !important;
+	pointer-events: none;
+}
+
+
+
+.ui-icon {
+	display: inline-block;
+	vertical-align: middle;
+	margin-top: -.25em;
+	position: relative;
+	text-indent: -99999px;
+	overflow: hidden;
+	background-repeat: no-repeat;
+}
+
+.ui-widget-icon-block {
+	left: 50%;
+	margin-left: -8px;
+	display: block;
+}
+
+
+
+
+.ui-widget-overlay {
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+}
+.ui-accordion .ui-accordion-header {
+	display: block;
+	cursor: pointer;
+	position: relative;
+	margin: 2px 0 0 0;
+	padding: .5em .5em .5em .7em;
+	font-size: 100%;
+}
+.ui-accordion .ui-accordion-content {
+	padding: 1em 2.2em;
+	border-top: 0;
+	overflow: auto;
+}
+.ui-autocomplete {
+	position: absolute;
+	top: 0;
+	left: 0;
+	cursor: default;
+}
+.ui-menu {
+	list-style: none;
+	padding: 0;
+	margin: 0;
+	display: block;
+	outline: 0;
+}
+.ui-menu .ui-menu {
+	position: absolute;
+}
+.ui-menu .ui-menu-item {
+	margin: 0;
+	cursor: pointer;
+	
+	list-style-image: url("data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7");
+}
+.ui-menu .ui-menu-item-wrapper {
+	position: relative;
+	padding: 3px 1em 3px .4em;
+}
+.ui-menu .ui-menu-divider {
+	margin: 5px 0;
+	height: 0;
+	font-size: 0;
+	line-height: 0;
+	border-width: 1px 0 0 0;
+}
+.ui-menu .ui-state-focus,
+.ui-menu .ui-state-active {
+	margin: -1px;
+}
+
+
+.ui-menu-icons {
+	position: relative;
+}
+.ui-menu-icons .ui-menu-item-wrapper {
+	padding-left: 2em;
+}
+
+
+.ui-menu .ui-icon {
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	left: .2em;
+	margin: auto 0;
+}
+
+
+.ui-menu .ui-menu-icon {
+	left: auto;
+	right: 0;
+}
+.ui-button {
+	padding: .4em 1em;
+	display: inline-block;
+	position: relative;
+	line-height: normal;
+	margin-right: .1em;
+	cursor: pointer;
+	vertical-align: middle;
+	text-align: center;
+	-webkit-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	user-select: none;
+
+	
+	overflow: visible;
+}
+
+.ui-button,
+.ui-button:link,
+.ui-button:visited,
+.ui-button:hover,
+.ui-button:active {
+	text-decoration: none;
+}
+
+
+.ui-button-icon-only {
+	width: 2em;
+	box-sizing: border-box;
+	text-indent: -9999px;
+	white-space: nowrap;
+}
+
+
+input.ui-button.ui-button-icon-only {
+	text-indent: 0;
+}
+
+
+.ui-button-icon-only .ui-icon {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	margin-top: -8px;
+	margin-left: -8px;
+}
+
+.ui-button.ui-icon-notext .ui-icon {
+	padding: 0;
+	width: 2.1em;
+	height: 2.1em;
+	text-indent: -9999px;
+	white-space: nowrap;
+
+}
+
+input.ui-button.ui-icon-notext .ui-icon {
+	width: auto;
+	height: auto;
+	text-indent: 0;
+	white-space: normal;
+	padding: .4em 1em;
+}
+
+
+
+input.ui-button::-moz-focus-inner,
+button.ui-button::-moz-focus-inner {
+	border: 0;
+	padding: 0;
+}
+.ui-controlgroup {
+	vertical-align: middle;
+	display: inline-block;
+}
+.ui-controlgroup > .ui-controlgroup-item {
+	float: left;
+	margin-left: 0;
+	margin-right: 0;
+}
+.ui-controlgroup > .ui-controlgroup-item:focus,
+.ui-controlgroup > .ui-controlgroup-item.ui-visual-focus {
+	z-index: 9999;
+}
+.ui-controlgroup-vertical > .ui-controlgroup-item {
+	display: block;
+	float: none;
+	width: 100%;
+	margin-top: 0;
+	margin-bottom: 0;
+	text-align: left;
+}
+.ui-controlgroup-vertical .ui-controlgroup-item {
+	box-sizing: border-box;
+}
+.ui-controlgroup .ui-controlgroup-label {
+	padding: .4em 1em;
+}
+.ui-controlgroup .ui-controlgroup-label span {
+	font-size: 80%;
+}
+.ui-controlgroup-horizontal .ui-controlgroup-label + .ui-controlgroup-item {
+	border-left: none;
+}
+.ui-controlgroup-vertical .ui-controlgroup-label + .ui-controlgroup-item {
+	border-top: none;
+}
+.ui-controlgroup-horizontal .ui-controlgroup-label.ui-widget-content {
+	border-right: none;
+}
+.ui-controlgroup-vertical .ui-controlgroup-label.ui-widget-content {
+	border-bottom: none;
+}
+
+
+.ui-controlgroup-vertical .ui-spinner-input {
+
+	
+	width: 75%;
+	width: calc( 100% - 2.4em );
+}
+.ui-controlgroup-vertical .ui-spinner .ui-spinner-up {
+	border-top-style: solid;
+}
+
+.ui-checkboxradio-label .ui-icon-background {
+	box-shadow: inset 1px 1px 1px #ccc;
+	border-radius: .12em;
+	border: none;
+}
+.ui-checkboxradio-radio-label .ui-icon-background {
+	width: 16px;
+	height: 16px;
+	border-radius: 1em;
+	overflow: visible;
+	border: none;
+}
+.ui-checkboxradio-radio-label.ui-checkboxradio-checked .ui-icon,
+.ui-checkboxradio-radio-label.ui-checkboxradio-checked:hover .ui-icon {
+	background-image: none;
+	width: 8px;
+	height: 8px;
+	border-width: 4px;
+	border-style: solid;
+}
+.ui-checkboxradio-disabled {
+	pointer-events: none;
+}
+.ui-datepicker {
+	width: 17em;
+	padding: .2em .2em 0;
+	display: none;
+}
+.ui-datepicker .ui-datepicker-header {
+	position: relative;
+	padding: .2em 0;
+}
+.ui-datepicker .ui-datepicker-prev,
+.ui-datepicker .ui-datepicker-next {
+	position: absolute;
+	top: 2px;
+	width: 1.8em;
+	height: 1.8em;
+}
+.ui-datepicker .ui-datepicker-prev-hover,
+.ui-datepicker .ui-datepicker-next-hover {
+	top: 1px;
+}
+.ui-datepicker .ui-datepicker-prev {
+	left: 2px;
+}
+.ui-datepicker .ui-datepicker-next {
+	right: 2px;
+}
+.ui-datepicker .ui-datepicker-prev-hover {
+	left: 1px;
+}
+.ui-datepicker .ui-datepicker-next-hover {
+	right: 1px;
+}
+.ui-datepicker .ui-datepicker-prev span,
+.ui-datepicker .ui-datepicker-next span {
+	display: block;
+	position: absolute;
+	left: 50%;
+	margin-left: -8px;
+	top: 50%;
+	margin-top: -8px;
+}
+.ui-datepicker .ui-datepicker-title {
+	margin: 0 2.3em;
+	line-height: 1.8em;
+	text-align: center;
+}
+.ui-datepicker .ui-datepicker-title select {
+	font-size: 1em;
+	margin: 1px 0;
+}
+.ui-datepicker select.ui-datepicker-month,
+.ui-datepicker select.ui-datepicker-year {
+	width: 45%;
+}
+.ui-datepicker table {
+	width: 100%;
+	font-size: .9em;
+	border-collapse: collapse;
+	margin: 0 0 .4em;
+}
+.ui-datepicker th {
+	padding: .7em .3em;
+	text-align: center;
+	font-weight: bold;
+	border: 0;
+}
+.ui-datepicker td {
+	border: 0;
+	padding: 1px;
+}
+.ui-datepicker td span,
+.ui-datepicker td a {
+	display: block;
+	padding: .2em;
+	text-align: right;
+	text-decoration: none;
+}
+.ui-datepicker .ui-datepicker-buttonpane {
+	background-image: none;
+	margin: .7em 0 0 0;
+	padding: 0 .2em;
+	border-left: 0;
+	border-right: 0;
+	border-bottom: 0;
+}
+.ui-datepicker .ui-datepicker-buttonpane button {
+	float: right;
+	margin: .5em .2em .4em;
+	cursor: pointer;
+	padding: .2em .6em .3em .6em;
+	width: auto;
+	overflow: visible;
+}
+.ui-datepicker .ui-datepicker-buttonpane button.ui-datepicker-current {
+	float: left;
+}
+
+
+.ui-datepicker.ui-datepicker-multi {
+	width: auto;
+}
+.ui-datepicker-multi .ui-datepicker-group {
+	float: left;
+}
+.ui-datepicker-multi .ui-datepicker-group table {
+	width: 95%;
+	margin: 0 auto .4em;
+}
+.ui-datepicker-multi-2 .ui-datepicker-group {
+	width: 50%;
+}
+.ui-datepicker-multi-3 .ui-datepicker-group {
+	width: 33.3%;
+}
+.ui-datepicker-multi-4 .ui-datepicker-group {
+	width: 25%;
+}
+.ui-datepicker-multi .ui-datepicker-group-last .ui-datepicker-header,
+.ui-datepicker-multi .ui-datepicker-group-middle .ui-datepicker-header {
+	border-left-width: 0;
+}
+.ui-datepicker-multi .ui-datepicker-buttonpane {
+	clear: left;
+}
+.ui-datepicker-row-break {
+	clear: both;
+	width: 100%;
+	font-size: 0;
+}
+
+
+.ui-datepicker-rtl {
+	direction: rtl;
+}
+.ui-datepicker-rtl .ui-datepicker-prev {
+	right: 2px;
+	left: auto;
+}
+.ui-datepicker-rtl .ui-datepicker-next {
+	left: 2px;
+	right: auto;
+}
+.ui-datepicker-rtl .ui-datepicker-prev:hover {
+	right: 1px;
+	left: auto;
+}
+.ui-datepicker-rtl .ui-datepicker-next:hover {
+	left: 1px;
+	right: auto;
+}
+.ui-datepicker-rtl .ui-datepicker-buttonpane {
+	clear: right;
+}
+.ui-datepicker-rtl .ui-datepicker-buttonpane button {
+	float: left;
+}
+.ui-datepicker-rtl .ui-datepicker-buttonpane button.ui-datepicker-current,
+.ui-datepicker-rtl .ui-datepicker-group {
+	float: right;
+}
+.ui-datepicker-rtl .ui-datepicker-group-last .ui-datepicker-header,
+.ui-datepicker-rtl .ui-datepicker-group-middle .ui-datepicker-header {
+	border-right-width: 0;
+	border-left-width: 1px;
+}
+
+
+.ui-datepicker .ui-icon {
+	display: block;
+	text-indent: -99999px;
+	overflow: hidden;
+	background-repeat: no-repeat;
+	left: .5em;
+	top: .3em;
+}
+.ui-dialog {
+	position: absolute;
+	top: 0;
+	left: 0;
+	padding: .2em;
+	outline: 0;
+}
+.ui-dialog .ui-dialog-titlebar {
+	padding: .4em 1em;
+	position: relative;
+}
+.ui-dialog .ui-dialog-title {
+	float: left;
+	margin: .1em 0;
+	white-space: nowrap;
+	width: 90%;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+.ui-dialog .ui-dialog-titlebar-close {
+	position: absolute;
+	right: .3em;
+	top: 50%;
+	width: 20px;
+	margin: -10px 0 0 0;
+	padding: 1px;
+	height: 20px;
+}
+.ui-dialog .ui-dialog-content {
+	position: relative;
+	border: 0;
+	padding: .5em 1em;
+	background: none;
+	overflow: auto;
+}
+.ui-dialog .ui-dialog-buttonpane {
+	text-align: left;
+	border-width: 1px 0 0 0;
+	background-image: none;
+	margin-top: .5em;
+	padding: .3em 1em .5em .4em;
+}
+.ui-dialog .ui-dialog-buttonpane .ui-dialog-buttonset {
+	float: right;
+}
+.ui-dialog .ui-dialog-buttonpane button {
+	margin: .5em .4em .5em 0;
+	cursor: pointer;
+}
+.ui-dialog .ui-resizable-n {
+	height: 2px;
+	top: 0;
+}
+.ui-dialog .ui-resizable-e {
+	width: 2px;
+	right: 0;
+}
+.ui-dialog .ui-resizable-s {
+	height: 2px;
+	bottom: 0;
+}
+.ui-dialog .ui-resizable-w {
+	width: 2px;
+	left: 0;
+}
+.ui-dialog .ui-resizable-se,
+.ui-dialog .ui-resizable-sw,
+.ui-dialog .ui-resizable-ne,
+.ui-dialog .ui-resizable-nw {
+	width: 7px;
+	height: 7px;
+}
+.ui-dialog .ui-resizable-se {
+	right: 0;
+	bottom: 0;
+}
+.ui-dialog .ui-resizable-sw {
+	left: 0;
+	bottom: 0;
+}
+.ui-dialog .ui-resizable-ne {
+	right: 0;
+	top: 0;
+}
+.ui-dialog .ui-resizable-nw {
+	left: 0;
+	top: 0;
+}
+.ui-draggable .ui-dialog-titlebar {
+	cursor: move;
+}
+.ui-draggable-handle {
+	-ms-touch-action: none;
+	touch-action: none;
+}
+.ui-resizable {
+	position: relative;
+}
+.ui-resizable-handle {
+	position: absolute;
+	font-size: 0.1px;
+	display: block;
+	-ms-touch-action: none;
+	touch-action: none;
+}
+.ui-resizable-disabled .ui-resizable-handle,
+.ui-resizable-autohide .ui-resizable-handle {
+	display: none;
+}
+.ui-resizable-n {
+	cursor: n-resize;
+	height: 7px;
+	width: 100%;
+	top: -5px;
+	left: 0;
+}
+.ui-resizable-s {
+	cursor: s-resize;
+	height: 7px;
+	width: 100%;
+	bottom: -5px;
+	left: 0;
+}
+.ui-resizable-e {
+	cursor: e-resize;
+	width: 7px;
+	right: -5px;
+	top: 0;
+	height: 100%;
+}
+.ui-resizable-w {
+	cursor: w-resize;
+	width: 7px;
+	left: -5px;
+	top: 0;
+	height: 100%;
+}
+.ui-resizable-se {
+	cursor: se-resize;
+	width: 12px;
+	height: 12px;
+	right: 1px;
+	bottom: 1px;
+}
+.ui-resizable-sw {
+	cursor: sw-resize;
+	width: 9px;
+	height: 9px;
+	left: -5px;
+	bottom: -5px;
+}
+.ui-resizable-nw {
+	cursor: nw-resize;
+	width: 9px;
+	height: 9px;
+	left: -5px;
+	top: -5px;
+}
+.ui-resizable-ne {
+	cursor: ne-resize;
+	width: 9px;
+	height: 9px;
+	right: -5px;
+	top: -5px;
+}
+.ui-progressbar {
+	height: 2em;
+	text-align: left;
+	overflow: hidden;
+}
+.ui-progressbar .ui-progressbar-value {
+	margin: -1px;
+	height: 100%;
+}
+.ui-progressbar .ui-progressbar-overlay {
+	background: url("data:image/gif;base64,R0lGODlhKAAoAIABAAAAAP///yH/C05FVFNDQVBFMi4wAwEAAAAh+QQJAQABACwAAAAAKAAoAAACkYwNqXrdC52DS06a7MFZI+4FHBCKoDeWKXqymPqGqxvJrXZbMx7Ttc+w9XgU2FB3lOyQRWET2IFGiU9m1frDVpxZZc6bfHwv4c1YXP6k1Vdy292Fb6UkuvFtXpvWSzA+HycXJHUXiGYIiMg2R6W459gnWGfHNdjIqDWVqemH2ekpObkpOlppWUqZiqr6edqqWQAAIfkECQEAAQAsAAAAACgAKAAAApSMgZnGfaqcg1E2uuzDmmHUBR8Qil95hiPKqWn3aqtLsS18y7G1SzNeowWBENtQd+T1JktP05nzPTdJZlR6vUxNWWjV+vUWhWNkWFwxl9VpZRedYcflIOLafaa28XdsH/ynlcc1uPVDZxQIR0K25+cICCmoqCe5mGhZOfeYSUh5yJcJyrkZWWpaR8doJ2o4NYq62lAAACH5BAkBAAEALAAAAAAoACgAAAKVDI4Yy22ZnINRNqosw0Bv7i1gyHUkFj7oSaWlu3ovC8GxNso5fluz3qLVhBVeT/Lz7ZTHyxL5dDalQWPVOsQWtRnuwXaFTj9jVVh8pma9JjZ4zYSj5ZOyma7uuolffh+IR5aW97cHuBUXKGKXlKjn+DiHWMcYJah4N0lYCMlJOXipGRr5qdgoSTrqWSq6WFl2ypoaUAAAIfkECQEAAQAsAAAAACgAKAAAApaEb6HLgd/iO7FNWtcFWe+ufODGjRfoiJ2akShbueb0wtI50zm02pbvwfWEMWBQ1zKGlLIhskiEPm9R6vRXxV4ZzWT2yHOGpWMyorblKlNp8HmHEb/lCXjcW7bmtXP8Xt229OVWR1fod2eWqNfHuMjXCPkIGNileOiImVmCOEmoSfn3yXlJWmoHGhqp6ilYuWYpmTqKUgAAIfkECQEAAQAsAAAAACgAKAAAApiEH6kb58biQ3FNWtMFWW3eNVcojuFGfqnZqSebuS06w5V80/X02pKe8zFwP6EFWOT1lDFk8rGERh1TTNOocQ61Hm4Xm2VexUHpzjymViHrFbiELsefVrn6XKfnt2Q9G/+Xdie499XHd2g4h7ioOGhXGJboGAnXSBnoBwKYyfioubZJ2Hn0RuRZaflZOil56Zp6iioKSXpUAAAh+QQJAQABACwAAAAAKAAoAAACkoQRqRvnxuI7kU1a1UU5bd5tnSeOZXhmn5lWK3qNTWvRdQxP8qvaC+/yaYQzXO7BMvaUEmJRd3TsiMAgswmNYrSgZdYrTX6tSHGZO73ezuAw2uxuQ+BbeZfMxsexY35+/Qe4J1inV0g4x3WHuMhIl2jXOKT2Q+VU5fgoSUI52VfZyfkJGkha6jmY+aaYdirq+lQAACH5BAkBAAEALAAAAAAoACgAAAKWBIKpYe0L3YNKToqswUlvznigd4wiR4KhZrKt9Upqip61i9E3vMvxRdHlbEFiEXfk9YARYxOZZD6VQ2pUunBmtRXo1Lf8hMVVcNl8JafV38aM2/Fu5V16Bn63r6xt97j09+MXSFi4BniGFae3hzbH9+hYBzkpuUh5aZmHuanZOZgIuvbGiNeomCnaxxap2upaCZsq+1kAACH5BAkBAAEALAAAAAAoACgAAAKXjI8By5zf4kOxTVrXNVlv1X0d8IGZGKLnNpYtm8Lr9cqVeuOSvfOW79D9aDHizNhDJidFZhNydEahOaDH6nomtJjp1tutKoNWkvA6JqfRVLHU/QUfau9l2x7G54d1fl995xcIGAdXqMfBNadoYrhH+Mg2KBlpVpbluCiXmMnZ2Sh4GBqJ+ckIOqqJ6LmKSllZmsoq6wpQAAAh+QQJAQABACwAAAAAKAAoAAAClYx/oLvoxuJDkU1a1YUZbJ59nSd2ZXhWqbRa2/gF8Gu2DY3iqs7yrq+xBYEkYvFSM8aSSObE+ZgRl1BHFZNr7pRCavZ5BW2142hY3AN/zWtsmf12p9XxxFl2lpLn1rseztfXZjdIWIf2s5dItwjYKBgo9yg5pHgzJXTEeGlZuenpyPmpGQoKOWkYmSpaSnqKileI2FAAACH5BAkBAAEALAAAAAAoACgAAAKVjB+gu+jG4kORTVrVhRlsnn2dJ3ZleFaptFrb+CXmO9OozeL5VfP99HvAWhpiUdcwkpBH3825AwYdU8xTqlLGhtCosArKMpvfa1mMRae9VvWZfeB2XfPkeLmm18lUcBj+p5dnN8jXZ3YIGEhYuOUn45aoCDkp16hl5IjYJvjWKcnoGQpqyPlpOhr3aElaqrq56Bq7VAAAOw==");
+	height: 100%;
+	filter: alpha(opacity=25); 
+	opacity: 0.25;
+}
+.ui-progressbar-indeterminate .ui-progressbar-value {
+	background-image: none;
+}
+.ui-selectable {
+	-ms-touch-action: none;
+	touch-action: none;
+}
+.ui-selectable-helper {
+	position: absolute;
+	z-index: 100;
+	border: 1px dotted black;
+}
+.ui-selectmenu-menu {
+	padding: 0;
+	margin: 0;
+	position: absolute;
+	top: 0;
+	left: 0;
+	display: none;
+}
+.ui-selectmenu-menu .ui-menu {
+	overflow: auto;
+	overflow-x: hidden;
+	padding-bottom: 1px;
+}
+.ui-selectmenu-menu .ui-menu .ui-selectmenu-optgroup {
+	font-size: 1em;
+	font-weight: bold;
+	line-height: 1.5;
+	padding: 2px 0.4em;
+	margin: 0.5em 0 0 0;
+	height: auto;
+	border: 0;
+}
+.ui-selectmenu-open {
+	display: block;
+}
+.ui-selectmenu-text {
+	display: block;
+	margin-right: 20px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+.ui-selectmenu-button.ui-button {
+	text-align: left;
+	white-space: nowrap;
+	width: 14em;
+}
+.ui-selectmenu-icon.ui-icon {
+	float: right;
+	margin-top: 0;
+}
+.ui-slider {
+	position: relative;
+	text-align: left;
+}
+.ui-slider .ui-slider-handle {
+	position: absolute;
+	z-index: 2;
+	width: 1.2em;
+	height: 1.2em;
+	cursor: default;
+	-ms-touch-action: none;
+	touch-action: none;
+}
+.ui-slider .ui-slider-range {
+	position: absolute;
+	z-index: 1;
+	font-size: .7em;
+	display: block;
+	border: 0;
+	background-position: 0 0;
+}
+
+
+.ui-slider.ui-state-disabled .ui-slider-handle,
+.ui-slider.ui-state-disabled .ui-slider-range {
+	filter: inherit;
+}
+
+.ui-slider-horizontal {
+	height: .8em;
+}
+.ui-slider-horizontal .ui-slider-handle {
+	top: -.3em;
+	margin-left: -.6em;
+}
+.ui-slider-horizontal .ui-slider-range {
+	top: 0;
+	height: 100%;
+}
+.ui-slider-horizontal .ui-slider-range-min {
+	left: 0;
+}
+.ui-slider-horizontal .ui-slider-range-max {
+	right: 0;
+}
+
+.ui-slider-vertical {
+	width: .8em;
+	height: 100px;
+}
+.ui-slider-vertical .ui-slider-handle {
+	left: -.3em;
+	margin-left: 0;
+	margin-bottom: -.6em;
+}
+.ui-slider-vertical .ui-slider-range {
+	left: 0;
+	width: 100%;
+}
+.ui-slider-vertical .ui-slider-range-min {
+	bottom: 0;
+}
+.ui-slider-vertical .ui-slider-range-max {
+	top: 0;
+}
+.ui-sortable-handle {
+	-ms-touch-action: none;
+	touch-action: none;
+}
+.ui-spinner {
+	position: relative;
+	display: inline-block;
+	overflow: hidden;
+	padding: 0;
+	vertical-align: middle;
+}
+.ui-spinner-input {
+	border: none;
+	background: none;
+	color: inherit;
+	padding: .222em 0;
+	margin: .2em 0;
+	vertical-align: middle;
+	margin-left: .4em;
+	margin-right: 2em;
+}
+.ui-spinner-button {
+	width: 1.6em;
+	height: 50%;
+	font-size: .5em;
+	padding: 0;
+	margin: 0;
+	text-align: center;
+	position: absolute;
+	cursor: default;
+	display: block;
+	overflow: hidden;
+	right: 0;
+}
+
+.ui-spinner a.ui-spinner-button {
+	border-top-style: none;
+	border-bottom-style: none;
+	border-right-style: none;
+}
+.ui-spinner-up {
+	top: 0;
+}
+.ui-spinner-down {
+	bottom: 0;
+}
+.ui-tabs {
+	position: relative;
+	padding: .2em;
+}
+.ui-tabs .ui-tabs-nav {
+	margin: 0;
+	padding: .2em .2em 0;
+}
+.ui-tabs .ui-tabs-nav li {
+	list-style: none;
+	float: left;
+	position: relative;
+	top: 0;
+	margin: 1px .2em 0 0;
+	border-bottom-width: 0;
+	padding: 0;
+	white-space: nowrap;
+}
+.ui-tabs .ui-tabs-nav .ui-tabs-anchor {
+	float: left;
+	padding: .5em 1em;
+	text-decoration: none;
+}
+.ui-tabs .ui-tabs-nav li.ui-tabs-active {
+	margin-bottom: -1px;
+	padding-bottom: 1px;
+}
+.ui-tabs .ui-tabs-nav li.ui-tabs-active .ui-tabs-anchor,
+.ui-tabs .ui-tabs-nav li.ui-state-disabled .ui-tabs-anchor,
+.ui-tabs .ui-tabs-nav li.ui-tabs-loading .ui-tabs-anchor {
+	cursor: text;
+}
+.ui-tabs-collapsible .ui-tabs-nav li.ui-tabs-active .ui-tabs-anchor {
+	cursor: pointer;
+}
+.ui-tabs .ui-tabs-panel {
+	display: block;
+	border-width: 0;
+	padding: 1em 1.4em;
+	background: none;
+}
+.ui-tooltip {
+	padding: 8px;
+	position: absolute;
+	z-index: 9999;
+	max-width: 300px;
+}
+body .ui-tooltip {
+	border-width: 2px;
+}
+
+.ui-widget {
+	font-family: Arial,Helvetica,sans-serif;
+	font-size: 1em;
+}
+.ui-widget .ui-widget {
+	font-size: 1em;
+}
+.ui-widget input,
+.ui-widget select,
+.ui-widget textarea,
+.ui-widget button {
+	font-family: Arial,Helvetica,sans-serif;
+	font-size: 1em;
+}
+.ui-widget.ui-widget-content {
+	border: 1px solid #c5c5c5;
+}
+.ui-widget-content {
+	border: 1px solid #dddddd;
+	background: #ffffff;
+	color: #333333;
+}
+.ui-widget-content a {
+	color: #333333;
+}
+.ui-widget-header {
+	border: 1px solid #dddddd;
+	background: #e9e9e9;
+	color: #333333;
+	font-weight: bold;
+}
+.ui-widget-header a {
+	color: #333333;
+}
+
+
+.ui-state-default,
+.ui-widget-content .ui-state-default,
+.ui-widget-header .ui-state-default,
+.ui-button,
+
+
+html .ui-button.ui-state-disabled:hover,
+html .ui-button.ui-state-disabled:active {
+	border: 1px solid #c5c5c5;
+	background: #f6f6f6;
+	font-weight: normal;
+	color: #454545;
+}
+.ui-state-default a,
+.ui-state-default a:link,
+.ui-state-default a:visited,
+a.ui-button,
+a:link.ui-button,
+a:visited.ui-button,
+.ui-button {
+	color: #454545;
+	text-decoration: none;
+}
+.ui-state-hover,
+.ui-widget-content .ui-state-hover,
+.ui-widget-header .ui-state-hover,
+.ui-state-focus,
+.ui-widget-content .ui-state-focus,
+.ui-widget-header .ui-state-focus,
+.ui-button:hover,
+.ui-button:focus {
+	border: 1px solid #cccccc;
+	background: #ededed;
+	font-weight: normal;
+	color: #2b2b2b;
+}
+.ui-state-hover a,
+.ui-state-hover a:hover,
+.ui-state-hover a:link,
+.ui-state-hover a:visited,
+.ui-state-focus a,
+.ui-state-focus a:hover,
+.ui-state-focus a:link,
+.ui-state-focus a:visited,
+a.ui-button:hover,
+a.ui-button:focus {
+	color: #2b2b2b;
+	text-decoration: none;
+}
+
+.ui-visual-focus {
+	box-shadow: 0 0 3px 1px rgb(94, 158, 214);
+}
+.ui-state-active,
+.ui-widget-content .ui-state-active,
+.ui-widget-header .ui-state-active,
+a.ui-button:active,
+.ui-button:active,
+.ui-button.ui-state-active:hover {
+	border: 1px solid #003eff;
+	background: #007fff;
+	font-weight: normal;
+	color: #ffffff;
+}
+.ui-icon-background,
+.ui-state-active .ui-icon-background {
+	border: #003eff;
+	background-color: #ffffff;
+}
+.ui-state-active a,
+.ui-state-active a:link,
+.ui-state-active a:visited {
+	color: #ffffff;
+	text-decoration: none;
+}
+
+
+.ui-state-highlight,
+.ui-widget-content .ui-state-highlight,
+.ui-widget-header .ui-state-highlight {
+	border: 1px solid #dad55e;
+	background: #fffa90;
+	color: #777620;
+}
+.ui-state-checked {
+	border: 1px solid #dad55e;
+	background: #fffa90;
+}
+.ui-state-highlight a,
+.ui-widget-content .ui-state-highlight a,
+.ui-widget-header .ui-state-highlight a {
+	color: #777620;
+}
+.ui-state-error,
+.ui-widget-content .ui-state-error,
+.ui-widget-header .ui-state-error {
+	border: 1px solid #f1a899;
+	background: #fddfdf;
+	color: #5f3f3f;
+}
+.ui-state-error a,
+.ui-widget-content .ui-state-error a,
+.ui-widget-header .ui-state-error a {
+	color: #5f3f3f;
+}
+.ui-state-error-text,
+.ui-widget-content .ui-state-error-text,
+.ui-widget-header .ui-state-error-text {
+	color: #5f3f3f;
+}
+.ui-priority-primary,
+.ui-widget-content .ui-priority-primary,
+.ui-widget-header .ui-priority-primary {
+	font-weight: bold;
+}
+.ui-priority-secondary,
+.ui-widget-content .ui-priority-secondary,
+.ui-widget-header .ui-priority-secondary {
+	opacity: .7;
+	filter:Alpha(Opacity=70); 
+	font-weight: normal;
+}
+.ui-state-disabled,
+.ui-widget-content .ui-state-disabled,
+.ui-widget-header .ui-state-disabled {
+	opacity: .35;
+	filter:Alpha(Opacity=35); 
+	background-image: none;
+}
+.ui-state-disabled .ui-icon {
+	filter:Alpha(Opacity=35); 
+}
+
+
+
+
+.ui-icon {
+	width: 16px;
+	height: 16px;
+}
+.ui-icon,
+.ui-widget-content .ui-icon {
+	background-image: url("images/ui-icons_444444_256x240.png");
+}
+.ui-widget-header .ui-icon {
+	background-image: url("images/ui-icons_444444_256x240.png");
+}
+.ui-state-hover .ui-icon,
+.ui-state-focus .ui-icon,
+.ui-button:hover .ui-icon,
+.ui-button:focus .ui-icon {
+	background-image: url("images/ui-icons_555555_256x240.png");
+}
+.ui-state-active .ui-icon,
+.ui-button:active .ui-icon {
+	background-image: url("images/ui-icons_ffffff_256x240.png");
+}
+.ui-state-highlight .ui-icon,
+.ui-button .ui-state-highlight.ui-icon {
+	background-image: url("images/ui-icons_777620_256x240.png");
+}
+.ui-state-error .ui-icon,
+.ui-state-error-text .ui-icon {
+	background-image: url("images/ui-icons_cc0000_256x240.png");
+}
+.ui-button .ui-icon {
+	background-image: url("images/ui-icons_777777_256x240.png");
+}
+
+
+.ui-icon-blank { background-position: 16px 16px; }
+.ui-icon-caret-1-n { background-position: 0 0; }
+.ui-icon-caret-1-ne { background-position: -16px 0; }
+.ui-icon-caret-1-e { background-position: -32px 0; }
+.ui-icon-caret-1-se { background-position: -48px 0; }
+.ui-icon-caret-1-s { background-position: -65px 0; }
+.ui-icon-caret-1-sw { background-position: -80px 0; }
+.ui-icon-caret-1-w { background-position: -96px 0; }
+.ui-icon-caret-1-nw { background-position: -112px 0; }
+.ui-icon-caret-2-n-s { background-position: -128px 0; }
+.ui-icon-caret-2-e-w { background-position: -144px 0; }
+.ui-icon-triangle-1-n { background-position: 0 -16px; }
+.ui-icon-triangle-1-ne { background-position: -16px -16px; }
+.ui-icon-triangle-1-e { background-position: -32px -16px; }
+.ui-icon-triangle-1-se { background-position: -48px -16px; }
+.ui-icon-triangle-1-s { background-position: -65px -16px; }
+.ui-icon-triangle-1-sw { background-position: -80px -16px; }
+.ui-icon-triangle-1-w { background-position: -96px -16px; }
+.ui-icon-triangle-1-nw { background-position: -112px -16px; }
+.ui-icon-triangle-2-n-s { background-position: -128px -16px; }
+.ui-icon-triangle-2-e-w { background-position: -144px -16px; }
+.ui-icon-arrow-1-n { background-position: 0 -32px; }
+.ui-icon-arrow-1-ne { background-position: -16px -32px; }
+.ui-icon-arrow-1-e { background-position: -32px -32px; }
+.ui-icon-arrow-1-se { background-position: -48px -32px; }
+.ui-icon-arrow-1-s { background-position: -65px -32px; }
+.ui-icon-arrow-1-sw { background-position: -80px -32px; }
+.ui-icon-arrow-1-w { background-position: -96px -32px; }
+.ui-icon-arrow-1-nw { background-position: -112px -32px; }
+.ui-icon-arrow-2-n-s { background-position: -128px -32px; }
+.ui-icon-arrow-2-ne-sw { background-position: -144px -32px; }
+.ui-icon-arrow-2-e-w { background-position: -160px -32px; }
+.ui-icon-arrow-2-se-nw { background-position: -176px -32px; }
+.ui-icon-arrowstop-1-n { background-position: -192px -32px; }
+.ui-icon-arrowstop-1-e { background-position: -208px -32px; }
+.ui-icon-arrowstop-1-s { background-position: -224px -32px; }
+.ui-icon-arrowstop-1-w { background-position: -240px -32px; }
+.ui-icon-arrowthick-1-n { background-position: 1px -48px; }
+.ui-icon-arrowthick-1-ne { background-position: -16px -48px; }
+.ui-icon-arrowthick-1-e { background-position: -32px -48px; }
+.ui-icon-arrowthick-1-se { background-position: -48px -48px; }
+.ui-icon-arrowthick-1-s { background-position: -64px -48px; }
+.ui-icon-arrowthick-1-sw { background-position: -80px -48px; }
+.ui-icon-arrowthick-1-w { background-position: -96px -48px; }
+.ui-icon-arrowthick-1-nw { background-position: -112px -48px; }
+.ui-icon-arrowthick-2-n-s { background-position: -128px -48px; }
+.ui-icon-arrowthick-2-ne-sw { background-position: -144px -48px; }
+.ui-icon-arrowthick-2-e-w { background-position: -160px -48px; }
+.ui-icon-arrowthick-2-se-nw { background-position: -176px -48px; }
+.ui-icon-arrowthickstop-1-n { background-position: -192px -48px; }
+.ui-icon-arrowthickstop-1-e { background-position: -208px -48px; }
+.ui-icon-arrowthickstop-1-s { background-position: -224px -48px; }
+.ui-icon-arrowthickstop-1-w { background-position: -240px -48px; }
+.ui-icon-arrowreturnthick-1-w { background-position: 0 -64px; }
+.ui-icon-arrowreturnthick-1-n { background-position: -16px -64px; }
+.ui-icon-arrowreturnthick-1-e { background-position: -32px -64px; }
+.ui-icon-arrowreturnthick-1-s { background-position: -48px -64px; }
+.ui-icon-arrowreturn-1-w { background-position: -64px -64px; }
+.ui-icon-arrowreturn-1-n { background-position: -80px -64px; }
+.ui-icon-arrowreturn-1-e { background-position: -96px -64px; }
+.ui-icon-arrowreturn-1-s { background-position: -112px -64px; }
+.ui-icon-arrowrefresh-1-w { background-position: -128px -64px; }
+.ui-icon-arrowrefresh-1-n { background-position: -144px -64px; }
+.ui-icon-arrowrefresh-1-e { background-position: -160px -64px; }
+.ui-icon-arrowrefresh-1-s { background-position: -176px -64px; }
+.ui-icon-arrow-4 { background-position: 0 -80px; }
+.ui-icon-arrow-4-diag { background-position: -16px -80px; }
+.ui-icon-extlink { background-position: -32px -80px; }
+.ui-icon-newwin { background-position: -48px -80px; }
+.ui-icon-refresh { background-position: -64px -80px; }
+.ui-icon-shuffle { background-position: -80px -80px; }
+.ui-icon-transfer-e-w { background-position: -96px -80px; }
+.ui-icon-transferthick-e-w { background-position: -112px -80px; }
+.ui-icon-folder-collapsed { background-position: 0 -96px; }
+.ui-icon-folder-open { background-position: -16px -96px; }
+.ui-icon-document { background-position: -32px -96px; }
+.ui-icon-document-b { background-position: -48px -96px; }
+.ui-icon-note { background-position: -64px -96px; }
+.ui-icon-mail-closed { background-position: -80px -96px; }
+.ui-icon-mail-open { background-position: -96px -96px; }
+.ui-icon-suitcase { background-position: -112px -96px; }
+.ui-icon-comment { background-position: -128px -96px; }
+.ui-icon-person { background-position: -144px -96px; }
+.ui-icon-print { background-position: -160px -96px; }
+.ui-icon-trash { background-position: -176px -96px; }
+.ui-icon-locked { background-position: -192px -96px; }
+.ui-icon-unlocked { background-position: -208px -96px; }
+.ui-icon-bookmark { background-position: -224px -96px; }
+.ui-icon-tag { background-position: -240px -96px; }
+.ui-icon-home { background-position: 0 -112px; }
+.ui-icon-flag { background-position: -16px -112px; }
+.ui-icon-calendar { background-position: -32px -112px; }
+.ui-icon-cart { background-position: -48px -112px; }
+.ui-icon-pencil { background-position: -64px -112px; }
+.ui-icon-clock { background-position: -80px -112px; }
+.ui-icon-disk { background-position: -96px -112px; }
+.ui-icon-calculator { background-position: -112px -112px; }
+.ui-icon-zoomin { background-position: -128px -112px; }
+.ui-icon-zoomout { background-position: -144px -112px; }
+.ui-icon-search { background-position: -160px -112px; }
+.ui-icon-wrench { background-position: -176px -112px; }
+.ui-icon-gear { background-position: -192px -112px; }
+.ui-icon-heart { background-position: -208px -112px; }
+.ui-icon-star { background-position: -224px -112px; }
+.ui-icon-link { background-position: -240px -112px; }
+.ui-icon-cancel { background-position: 0 -128px; }
+.ui-icon-plus { background-position: -16px -128px; }
+.ui-icon-plusthick { background-position: -32px -128px; }
+.ui-icon-minus { background-position: -48px -128px; }
+.ui-icon-minusthick { background-position: -64px -128px; }
+.ui-icon-close { background-position: -80px -128px; }
+.ui-icon-closethick { background-position: -96px -128px; }
+.ui-icon-key { background-position: -112px -128px; }
+.ui-icon-lightbulb { background-position: -128px -128px; }
+.ui-icon-scissors { background-position: -144px -128px; }
+.ui-icon-clipboard { background-position: -160px -128px; }
+.ui-icon-copy { background-position: -176px -128px; }
+.ui-icon-contact { background-position: -192px -128px; }
+.ui-icon-image { background-position: -208px -128px; }
+.ui-icon-video { background-position: -224px -128px; }
+.ui-icon-script { background-position: -240px -128px; }
+.ui-icon-alert { background-position: 0 -144px; }
+.ui-icon-info { background-position: -16px -144px; }
+.ui-icon-notice { background-position: -32px -144px; }
+.ui-icon-help { background-position: -48px -144px; }
+.ui-icon-check { background-position: -64px -144px; }
+.ui-icon-bullet { background-position: -80px -144px; }
+.ui-icon-radio-on { background-position: -96px -144px; }
+.ui-icon-radio-off { background-position: -112px -144px; }
+.ui-icon-pin-w { background-position: -128px -144px; }
+.ui-icon-pin-s { background-position: -144px -144px; }
+.ui-icon-play { background-position: 0 -160px; }
+.ui-icon-pause { background-position: -16px -160px; }
+.ui-icon-seek-next { background-position: -32px -160px; }
+.ui-icon-seek-prev { background-position: -48px -160px; }
+.ui-icon-seek-end { background-position: -64px -160px; }
+.ui-icon-seek-start { background-position: -80px -160px; }
+
+.ui-icon-seek-first { background-position: -80px -160px; }
+.ui-icon-stop { background-position: -96px -160px; }
+.ui-icon-eject { background-position: -112px -160px; }
+.ui-icon-volume-off { background-position: -128px -160px; }
+.ui-icon-volume-on { background-position: -144px -160px; }
+.ui-icon-power { background-position: 0 -176px; }
+.ui-icon-signal-diag { background-position: -16px -176px; }
+.ui-icon-signal { background-position: -32px -176px; }
+.ui-icon-battery-0 { background-position: -48px -176px; }
+.ui-icon-battery-1 { background-position: -64px -176px; }
+.ui-icon-battery-2 { background-position: -80px -176px; }
+.ui-icon-battery-3 { background-position: -96px -176px; }
+.ui-icon-circle-plus { background-position: 0 -192px; }
+.ui-icon-circle-minus { background-position: -16px -192px; }
+.ui-icon-circle-close { background-position: -32px -192px; }
+.ui-icon-circle-triangle-e { background-position: -48px -192px; }
+.ui-icon-circle-triangle-s { background-position: -64px -192px; }
+.ui-icon-circle-triangle-w { background-position: -80px -192px; }
+.ui-icon-circle-triangle-n { background-position: -96px -192px; }
+.ui-icon-circle-arrow-e { background-position: -112px -192px; }
+.ui-icon-circle-arrow-s { background-position: -128px -192px; }
+.ui-icon-circle-arrow-w { background-position: -144px -192px; }
+.ui-icon-circle-arrow-n { background-position: -160px -192px; }
+.ui-icon-circle-zoomin { background-position: -176px -192px; }
+.ui-icon-circle-zoomout { background-position: -192px -192px; }
+.ui-icon-circle-check { background-position: -208px -192px; }
+.ui-icon-circlesmall-plus { background-position: 0 -208px; }
+.ui-icon-circlesmall-minus { background-position: -16px -208px; }
+.ui-icon-circlesmall-close { background-position: -32px -208px; }
+.ui-icon-squaresmall-plus { background-position: -48px -208px; }
+.ui-icon-squaresmall-minus { background-position: -64px -208px; }
+.ui-icon-squaresmall-close { background-position: -80px -208px; }
+.ui-icon-grip-dotted-vertical { background-position: 0 -224px; }
+.ui-icon-grip-dotted-horizontal { background-position: -16px -224px; }
+.ui-icon-grip-solid-vertical { background-position: -32px -224px; }
+.ui-icon-grip-solid-horizontal { background-position: -48px -224px; }
+.ui-icon-gripsmall-diagonal-se { background-position: -64px -224px; }
+.ui-icon-grip-diagonal-se { background-position: -80px -224px; }
+
+
+
+
+
+.ui-corner-all,
+.ui-corner-top,
+.ui-corner-left,
+.ui-corner-tl {
+	border-top-left-radius: 3px;
+}
+.ui-corner-all,
+.ui-corner-top,
+.ui-corner-right,
+.ui-corner-tr {
+	border-top-right-radius: 3px;
+}
+.ui-corner-all,
+.ui-corner-bottom,
+.ui-corner-left,
+.ui-corner-bl {
+	border-bottom-left-radius: 3px;
+}
+.ui-corner-all,
+.ui-corner-bottom,
+.ui-corner-right,
+.ui-corner-br {
+	border-bottom-right-radius: 3px;
+}
+
+
+.ui-widget-overlay {
+	background: #aaaaaa;
+	opacity: .3;
+	filter: Alpha(Opacity=30); 
+}
+.ui-widget-shadow {
+	-webkit-box-shadow: 0px 0px 5px #666666;
+	box-shadow: 0px 0px 5px #666666;
+} 
+</style>
+<script src='js/jquery-1.12.4.js'></script>
+<script src='js/jquery-ui.js'></script>
+
+<script>
+$( function() {
+	$( '#tabs-collect-consensus-heatmap' ).tabs();
+} );
+</script>
+<div id='tabs-collect-consensus-heatmap'>
+<ul>
+<li><a href='#tab-collect-consensus-heatmap-1'>k = 2</a></li>
+<li><a href='#tab-collect-consensus-heatmap-2'>k = 3</a></li>
+<li><a href='#tab-collect-consensus-heatmap-3'>k = 4</a></li>
+<li><a href='#tab-collect-consensus-heatmap-4'>k = 5</a></li>
+<li><a href='#tab-collect-consensus-heatmap-5'>k = 6</a></li>
+<li><a href='#tab-collect-consensus-heatmap-6'>k = 7</a></li>
+<li><a href='#tab-collect-consensus-heatmap-7'>k = 8</a></li>
+<li><a href='#tab-collect-consensus-heatmap-8'>k = 9</a></li>
+<li><a href='#tab-collect-consensus-heatmap-9'>k = 10</a></li>
+</ul>
+<div id='tab-collect-consensus-heatmap-1'>
+<pre><code class="r">collect_plots(res_list, k = 2, fun = consensus_heatmap, mc.cores = 1)
+</code></pre>
+
+<p><img src="figure_cola/tab-collect-consensus-heatmap-1-1.png" alt="plot of chunk tab-collect-consensus-heatmap-1"/></p>
+
+</div>
+<div id='tab-collect-consensus-heatmap-2'>
+<pre><code class="r">collect_plots(res_list, k = 3, fun = consensus_heatmap, mc.cores = 1)
+</code></pre>
+
+<p><img src="figure_cola/tab-collect-consensus-heatmap-2-1.png" alt="plot of chunk tab-collect-consensus-heatmap-2"/></p>
+
+</div>
+<div id='tab-collect-consensus-heatmap-3'>
+<pre><code class="r">collect_plots(res_list, k = 4, fun = consensus_heatmap, mc.cores = 1)
+</code></pre>
+
+<p><img src="figure_cola/tab-collect-consensus-heatmap-3-1.png" alt="plot of chunk tab-collect-consensus-heatmap-3"/></p>
+
+</div>
+<div id='tab-collect-consensus-heatmap-4'>
+<pre><code class="r">collect_plots(res_list, k = 5, fun = consensus_heatmap, mc.cores = 1)
+</code></pre>
+
+<p><img src="figure_cola/tab-collect-consensus-heatmap-4-1.png" alt="plot of chunk tab-collect-consensus-heatmap-4"/></p>
+
+</div>
+<div id='tab-collect-consensus-heatmap-5'>
+<pre><code class="r">collect_plots(res_list, k = 6, fun = consensus_heatmap, mc.cores = 1)
+</code></pre>
+
+<p><img src="figure_cola/tab-collect-consensus-heatmap-5-1.png" alt="plot of chunk tab-collect-consensus-heatmap-5"/></p>
+
+</div>
+<div id='tab-collect-consensus-heatmap-6'>
+<pre><code class="r">collect_plots(res_list, k = 7, fun = consensus_heatmap, mc.cores = 1)
+</code></pre>
+
+<p><img src="figure_cola/tab-collect-consensus-heatmap-6-1.png" alt="plot of chunk tab-collect-consensus-heatmap-6"/></p>
+
+</div>
+<div id='tab-collect-consensus-heatmap-7'>
+<pre><code class="r">collect_plots(res_list, k = 8, fun = consensus_heatmap, mc.cores = 1)
+</code></pre>
+
+<p><img src="figure_cola/tab-collect-consensus-heatmap-7-1.png" alt="plot of chunk tab-collect-consensus-heatmap-7"/></p>
+
+</div>
+<div id='tab-collect-consensus-heatmap-8'>
+<pre><code class="r">collect_plots(res_list, k = 9, fun = consensus_heatmap, mc.cores = 1)
+</code></pre>
+
+<p><img src="figure_cola/tab-collect-consensus-heatmap-8-1.png" alt="plot of chunk tab-collect-consensus-heatmap-8"/></p>
+
+</div>
+<div id='tab-collect-consensus-heatmap-9'>
+<pre><code class="r">collect_plots(res_list, k = 10, fun = consensus_heatmap, mc.cores = 1)
+</code></pre>
+
+<p><img src="figure_cola/tab-collect-consensus-heatmap-9-1.png" alt="plot of chunk tab-collect-consensus-heatmap-9"/></p>
+
+</div>
+</div>
+
+
+
+### Membership heatmap
+
+Membership heatmaps for all methods. ([What is a membership heatmap?](http://bioconductor.org/packages/devel/bioc/vignettes/cola/inst/doc/cola.html#toc_12))
+
+
+<script>
+$( function() {
+	$( '#tabs-collect-membership-heatmap' ).tabs();
+} );
+</script>
+<div id='tabs-collect-membership-heatmap'>
+<ul>
+<li><a href='#tab-collect-membership-heatmap-1'>k = 2</a></li>
+<li><a href='#tab-collect-membership-heatmap-2'>k = 3</a></li>
+<li><a href='#tab-collect-membership-heatmap-3'>k = 4</a></li>
+<li><a href='#tab-collect-membership-heatmap-4'>k = 5</a></li>
+<li><a href='#tab-collect-membership-heatmap-5'>k = 6</a></li>
+<li><a href='#tab-collect-membership-heatmap-6'>k = 7</a></li>
+<li><a href='#tab-collect-membership-heatmap-7'>k = 8</a></li>
+<li><a href='#tab-collect-membership-heatmap-8'>k = 9</a></li>
+<li><a href='#tab-collect-membership-heatmap-9'>k = 10</a></li>
+</ul>
+<div id='tab-collect-membership-heatmap-1'>
+<pre><code class="r">collect_plots(res_list, k = 2, fun = membership_heatmap, mc.cores = 1)
+</code></pre>
+
+<p><img src="figure_cola/tab-collect-membership-heatmap-1-1.png" alt="plot of chunk tab-collect-membership-heatmap-1"/></p>
+
+</div>
+<div id='tab-collect-membership-heatmap-2'>
+<pre><code class="r">collect_plots(res_list, k = 3, fun = membership_heatmap, mc.cores = 1)
+</code></pre>
+
+<p><img src="figure_cola/tab-collect-membership-heatmap-2-1.png" alt="plot of chunk tab-collect-membership-heatmap-2"/></p>
+
+</div>
+<div id='tab-collect-membership-heatmap-3'>
+<pre><code class="r">collect_plots(res_list, k = 4, fun = membership_heatmap, mc.cores = 1)
+</code></pre>
+
+<p><img src="figure_cola/tab-collect-membership-heatmap-3-1.png" alt="plot of chunk tab-collect-membership-heatmap-3"/></p>
+
+</div>
+<div id='tab-collect-membership-heatmap-4'>
+<pre><code class="r">collect_plots(res_list, k = 5, fun = membership_heatmap, mc.cores = 1)
+</code></pre>
+
+<p><img src="figure_cola/tab-collect-membership-heatmap-4-1.png" alt="plot of chunk tab-collect-membership-heatmap-4"/></p>
+
+</div>
+<div id='tab-collect-membership-heatmap-5'>
+<pre><code class="r">collect_plots(res_list, k = 6, fun = membership_heatmap, mc.cores = 1)
+</code></pre>
+
+<p><img src="figure_cola/tab-collect-membership-heatmap-5-1.png" alt="plot of chunk tab-collect-membership-heatmap-5"/></p>
+
+</div>
+<div id='tab-collect-membership-heatmap-6'>
+<pre><code class="r">collect_plots(res_list, k = 7, fun = membership_heatmap, mc.cores = 1)
+</code></pre>
+
+<p><img src="figure_cola/tab-collect-membership-heatmap-6-1.png" alt="plot of chunk tab-collect-membership-heatmap-6"/></p>
+
+</div>
+<div id='tab-collect-membership-heatmap-7'>
+<pre><code class="r">collect_plots(res_list, k = 8, fun = membership_heatmap, mc.cores = 1)
+</code></pre>
+
+<p><img src="figure_cola/tab-collect-membership-heatmap-7-1.png" alt="plot of chunk tab-collect-membership-heatmap-7"/></p>
+
+</div>
+<div id='tab-collect-membership-heatmap-8'>
+<pre><code class="r">collect_plots(res_list, k = 9, fun = membership_heatmap, mc.cores = 1)
+</code></pre>
+
+<p><img src="figure_cola/tab-collect-membership-heatmap-8-1.png" alt="plot of chunk tab-collect-membership-heatmap-8"/></p>
+
+</div>
+<div id='tab-collect-membership-heatmap-9'>
+<pre><code class="r">collect_plots(res_list, k = 10, fun = membership_heatmap, mc.cores = 1)
+</code></pre>
+
+<p><img src="figure_cola/tab-collect-membership-heatmap-9-1.png" alt="plot of chunk tab-collect-membership-heatmap-9"/></p>
+
+</div>
+</div>
+
+
+
+### Signature heatmap
+
+Signature heatmaps for all methods. ([What is a signature heatmap?](http://bioconductor.org/packages/devel/bioc/vignettes/cola/inst/doc/cola.html#toc_21))
+
+
+Note in following heatmaps, rows are scaled.
+
+
+
+<script>
+$( function() {
+	$( '#tabs-collect-get-signatures' ).tabs();
+} );
+</script>
+<div id='tabs-collect-get-signatures'>
+<ul>
+<li><a href='#tab-collect-get-signatures-1'>k = 2</a></li>
+<li><a href='#tab-collect-get-signatures-2'>k = 3</a></li>
+<li><a href='#tab-collect-get-signatures-3'>k = 4</a></li>
+<li><a href='#tab-collect-get-signatures-4'>k = 5</a></li>
+<li><a href='#tab-collect-get-signatures-5'>k = 6</a></li>
+<li><a href='#tab-collect-get-signatures-6'>k = 7</a></li>
+<li><a href='#tab-collect-get-signatures-7'>k = 8</a></li>
+<li><a href='#tab-collect-get-signatures-8'>k = 9</a></li>
+<li><a href='#tab-collect-get-signatures-9'>k = 10</a></li>
+</ul>
+<div id='tab-collect-get-signatures-1'>
+<pre><code class="r">collect_plots(res_list, k = 2, fun = get_signatures, mc.cores = 1)
+</code></pre>
+
+<p><img src="figure_cola/tab-collect-get-signatures-1-1.png" alt="plot of chunk tab-collect-get-signatures-1"/></p>
+
+</div>
+<div id='tab-collect-get-signatures-2'>
+<pre><code class="r">collect_plots(res_list, k = 3, fun = get_signatures, mc.cores = 1)
+</code></pre>
+
+<p><img src="figure_cola/tab-collect-get-signatures-2-1.png" alt="plot of chunk tab-collect-get-signatures-2"/></p>
+
+</div>
+<div id='tab-collect-get-signatures-3'>
+<pre><code class="r">collect_plots(res_list, k = 4, fun = get_signatures, mc.cores = 1)
+</code></pre>
+
+<p><img src="figure_cola/tab-collect-get-signatures-3-1.png" alt="plot of chunk tab-collect-get-signatures-3"/></p>
+
+</div>
+<div id='tab-collect-get-signatures-4'>
+<pre><code class="r">collect_plots(res_list, k = 5, fun = get_signatures, mc.cores = 1)
+</code></pre>
+
+<p><img src="figure_cola/tab-collect-get-signatures-4-1.png" alt="plot of chunk tab-collect-get-signatures-4"/></p>
+
+</div>
+<div id='tab-collect-get-signatures-5'>
+<pre><code class="r">collect_plots(res_list, k = 6, fun = get_signatures, mc.cores = 1)
+</code></pre>
+
+<p><img src="figure_cola/tab-collect-get-signatures-5-1.png" alt="plot of chunk tab-collect-get-signatures-5"/></p>
+
+</div>
+<div id='tab-collect-get-signatures-6'>
+<pre><code class="r">collect_plots(res_list, k = 7, fun = get_signatures, mc.cores = 1)
+</code></pre>
+
+<p><img src="figure_cola/tab-collect-get-signatures-6-1.png" alt="plot of chunk tab-collect-get-signatures-6"/></p>
+
+</div>
+<div id='tab-collect-get-signatures-7'>
+<pre><code class="r">collect_plots(res_list, k = 8, fun = get_signatures, mc.cores = 1)
+</code></pre>
+
+<p><img src="figure_cola/tab-collect-get-signatures-7-1.png" alt="plot of chunk tab-collect-get-signatures-7"/></p>
+
+</div>
+<div id='tab-collect-get-signatures-8'>
+<pre><code class="r">collect_plots(res_list, k = 9, fun = get_signatures, mc.cores = 1)
+</code></pre>
+
+<p><img src="figure_cola/tab-collect-get-signatures-8-1.png" alt="plot of chunk tab-collect-get-signatures-8"/></p>
+
+</div>
+<div id='tab-collect-get-signatures-9'>
+<pre><code class="r">collect_plots(res_list, k = 10, fun = get_signatures, mc.cores = 1)
+</code></pre>
+
+<p><img src="figure_cola/tab-collect-get-signatures-9-1.png" alt="plot of chunk tab-collect-get-signatures-9"/></p>
+
+</div>
+</div>
+
+
+
+### Statistics table
+
+The statistics used for measuring the stability of consensus partitioning.
+([How are they
+defined?](http://bioconductor.org/packages/devel/bioc/vignettes/cola/inst/doc/cola.html#toc_13))
+
+
+<script>
+$( function() {
+	$( '#tabs-get-stats-from-consensus-partition-list' ).tabs();
+} );
+</script>
+<div id='tabs-get-stats-from-consensus-partition-list'>
+<ul>
+<li><a href='#tab-get-stats-from-consensus-partition-list-1'>k = 2</a></li>
+<li><a href='#tab-get-stats-from-consensus-partition-list-2'>k = 3</a></li>
+<li><a href='#tab-get-stats-from-consensus-partition-list-3'>k = 4</a></li>
+<li><a href='#tab-get-stats-from-consensus-partition-list-4'>k = 5</a></li>
+<li><a href='#tab-get-stats-from-consensus-partition-list-5'>k = 6</a></li>
+<li><a href='#tab-get-stats-from-consensus-partition-list-6'>k = 7</a></li>
+<li><a href='#tab-get-stats-from-consensus-partition-list-7'>k = 8</a></li>
+<li><a href='#tab-get-stats-from-consensus-partition-list-8'>k = 9</a></li>
+<li><a href='#tab-get-stats-from-consensus-partition-list-9'>k = 10</a></li>
+</ul>
+<div id='tab-get-stats-from-consensus-partition-list-1'>
+<pre><code class="r">get_stats(res_list, k = 2)
+</code></pre>
+
+<pre><code>#&gt;             k 1-PAC mean_silhouette concordance area_increased  Rand Jaccard
+#&gt; ATC:skmeans 2   0.7           0.895        0.95          0.458 0.536   0.536
+</code></pre>
+
+</div>
+<div id='tab-get-stats-from-consensus-partition-list-2'>
+<pre><code class="r">get_stats(res_list, k = 3)
+</code></pre>
+
+<pre><code>#&gt;             k 1-PAC mean_silhouette concordance area_increased Rand Jaccard
+#&gt; ATC:skmeans 3 0.731           0.872       0.939          0.404 0.74   0.546
+</code></pre>
+
+</div>
+<div id='tab-get-stats-from-consensus-partition-list-3'>
+<pre><code class="r">get_stats(res_list, k = 4)
+</code></pre>
+
+<pre><code>#&gt;             k 1-PAC mean_silhouette concordance area_increased  Rand Jaccard
+#&gt; ATC:skmeans 4   0.7           0.801       0.901         0.0938 0.907   0.745
+</code></pre>
+
+</div>
+<div id='tab-get-stats-from-consensus-partition-list-4'>
+<pre><code class="r">get_stats(res_list, k = 5)
+</code></pre>
+
+<pre><code>#&gt;             k 1-PAC mean_silhouette concordance area_increased  Rand Jaccard
+#&gt; ATC:skmeans 5  0.72           0.779       0.892         0.0708 0.915   0.725
+</code></pre>
+
+</div>
+<div id='tab-get-stats-from-consensus-partition-list-5'>
+<pre><code class="r">get_stats(res_list, k = 6)
+</code></pre>
+
+<pre><code>#&gt;             k 1-PAC mean_silhouette concordance area_increased Rand Jaccard
+#&gt; ATC:skmeans 6  0.74           0.753       0.849          0.042 0.93   0.729
+</code></pre>
+
+</div>
+<div id='tab-get-stats-from-consensus-partition-list-6'>
+<pre><code class="r">get_stats(res_list, k = 7)
+</code></pre>
+
+<pre><code>#&gt;             k 1-PAC mean_silhouette concordance area_increased  Rand Jaccard
+#&gt; ATC:skmeans 7 0.742           0.693       0.813         0.0246 0.963   0.829
+</code></pre>
+
+</div>
+<div id='tab-get-stats-from-consensus-partition-list-7'>
+<pre><code class="r">get_stats(res_list, k = 8)
+</code></pre>
+
+<pre><code>#&gt;             k 1-PAC mean_silhouette concordance area_increased  Rand Jaccard
+#&gt; ATC:skmeans 8 0.729           0.666       0.763         0.0227 0.957   0.785
+</code></pre>
+
+</div>
+<div id='tab-get-stats-from-consensus-partition-list-8'>
+<pre><code class="r">get_stats(res_list, k = 9)
+</code></pre>
+
+<pre><code>#&gt;             k 1-PAC mean_silhouette concordance area_increased  Rand Jaccard
+#&gt; ATC:skmeans 9 0.758           0.531       0.704         0.0191 0.932   0.658
+</code></pre>
+
+</div>
+<div id='tab-get-stats-from-consensus-partition-list-9'>
+<pre><code class="r">get_stats(res_list, k = 10)
+</code></pre>
+
+<pre><code>#&gt;              k 1-PAC mean_silhouette concordance area_increased  Rand Jaccard
+#&gt; ATC:skmeans 10 0.763           0.598       0.742         0.0144 0.944   0.686
+</code></pre>
+
+</div>
+</div>
+
+Following heatmap plots the partition for each combination of methods and the
+lightness correspond to the silhouette scores for samples in each method. On
+top the consensus subgroup is inferred from all methods by taking the mean
+silhouette scores as weight.
+
+
+<script>
+$( function() {
+	$( '#tabs-collect-stats-from-consensus-partition-list' ).tabs();
+} );
+</script>
+<div id='tabs-collect-stats-from-consensus-partition-list'>
+<ul>
+<li><a href='#tab-collect-stats-from-consensus-partition-list-1'>k = 2</a></li>
+<li><a href='#tab-collect-stats-from-consensus-partition-list-2'>k = 3</a></li>
+<li><a href='#tab-collect-stats-from-consensus-partition-list-3'>k = 4</a></li>
+<li><a href='#tab-collect-stats-from-consensus-partition-list-4'>k = 5</a></li>
+<li><a href='#tab-collect-stats-from-consensus-partition-list-5'>k = 6</a></li>
+<li><a href='#tab-collect-stats-from-consensus-partition-list-6'>k = 7</a></li>
+<li><a href='#tab-collect-stats-from-consensus-partition-list-7'>k = 8</a></li>
+<li><a href='#tab-collect-stats-from-consensus-partition-list-8'>k = 9</a></li>
+<li><a href='#tab-collect-stats-from-consensus-partition-list-9'>k = 10</a></li>
+</ul>
+<div id='tab-collect-stats-from-consensus-partition-list-1'>
+<pre><code class="r">collect_stats(res_list, k = 2)
+</code></pre>
+
+<p><img src="figure_cola/tab-collect-stats-from-consensus-partition-list-1-1.png" alt="plot of chunk tab-collect-stats-from-consensus-partition-list-1"/></p>
+
+</div>
+<div id='tab-collect-stats-from-consensus-partition-list-2'>
+<pre><code class="r">collect_stats(res_list, k = 3)
+</code></pre>
+
+<p><img src="figure_cola/tab-collect-stats-from-consensus-partition-list-2-1.png" alt="plot of chunk tab-collect-stats-from-consensus-partition-list-2"/></p>
+
+</div>
+<div id='tab-collect-stats-from-consensus-partition-list-3'>
+<pre><code class="r">collect_stats(res_list, k = 4)
+</code></pre>
+
+<p><img src="figure_cola/tab-collect-stats-from-consensus-partition-list-3-1.png" alt="plot of chunk tab-collect-stats-from-consensus-partition-list-3"/></p>
+
+</div>
+<div id='tab-collect-stats-from-consensus-partition-list-4'>
+<pre><code class="r">collect_stats(res_list, k = 5)
+</code></pre>
+
+<p><img src="figure_cola/tab-collect-stats-from-consensus-partition-list-4-1.png" alt="plot of chunk tab-collect-stats-from-consensus-partition-list-4"/></p>
+
+</div>
+<div id='tab-collect-stats-from-consensus-partition-list-5'>
+<pre><code class="r">collect_stats(res_list, k = 6)
+</code></pre>
+
+<p><img src="figure_cola/tab-collect-stats-from-consensus-partition-list-5-1.png" alt="plot of chunk tab-collect-stats-from-consensus-partition-list-5"/></p>
+
+</div>
+<div id='tab-collect-stats-from-consensus-partition-list-6'>
+<pre><code class="r">collect_stats(res_list, k = 7)
+</code></pre>
+
+<p><img src="figure_cola/tab-collect-stats-from-consensus-partition-list-6-1.png" alt="plot of chunk tab-collect-stats-from-consensus-partition-list-6"/></p>
+
+</div>
+<div id='tab-collect-stats-from-consensus-partition-list-7'>
+<pre><code class="r">collect_stats(res_list, k = 8)
+</code></pre>
+
+<p><img src="figure_cola/tab-collect-stats-from-consensus-partition-list-7-1.png" alt="plot of chunk tab-collect-stats-from-consensus-partition-list-7"/></p>
+
+</div>
+<div id='tab-collect-stats-from-consensus-partition-list-8'>
+<pre><code class="r">collect_stats(res_list, k = 9)
+</code></pre>
+
+<p><img src="figure_cola/tab-collect-stats-from-consensus-partition-list-8-1.png" alt="plot of chunk tab-collect-stats-from-consensus-partition-list-8"/></p>
+
+</div>
+<div id='tab-collect-stats-from-consensus-partition-list-9'>
+<pre><code class="r">collect_stats(res_list, k = 10)
+</code></pre>
+
+<p><img src="figure_cola/tab-collect-stats-from-consensus-partition-list-9-1.png" alt="plot of chunk tab-collect-stats-from-consensus-partition-list-9"/></p>
+
+</div>
+</div>
+
+### Partition from all methods
+
+
+
+Collect partitions from all methods:
+
+
+<script>
+$( function() {
+	$( '#tabs-collect-classes-from-consensus-partition-list' ).tabs();
+} );
+</script>
+<div id='tabs-collect-classes-from-consensus-partition-list'>
+<ul>
+<li><a href='#tab-collect-classes-from-consensus-partition-list-1'>k = 2</a></li>
+<li><a href='#tab-collect-classes-from-consensus-partition-list-2'>k = 3</a></li>
+<li><a href='#tab-collect-classes-from-consensus-partition-list-3'>k = 4</a></li>
+<li><a href='#tab-collect-classes-from-consensus-partition-list-4'>k = 5</a></li>
+<li><a href='#tab-collect-classes-from-consensus-partition-list-5'>k = 6</a></li>
+<li><a href='#tab-collect-classes-from-consensus-partition-list-6'>k = 7</a></li>
+<li><a href='#tab-collect-classes-from-consensus-partition-list-7'>k = 8</a></li>
+<li><a href='#tab-collect-classes-from-consensus-partition-list-8'>k = 9</a></li>
+<li><a href='#tab-collect-classes-from-consensus-partition-list-9'>k = 10</a></li>
+</ul>
+<div id='tab-collect-classes-from-consensus-partition-list-1'>
+<pre><code class="r">collect_classes(res_list, k = 2)
+</code></pre>
+
+<p><img src="figure_cola/tab-collect-classes-from-consensus-partition-list-1-1.png" alt="plot of chunk tab-collect-classes-from-consensus-partition-list-1"/></p>
+
+</div>
+<div id='tab-collect-classes-from-consensus-partition-list-2'>
+<pre><code class="r">collect_classes(res_list, k = 3)
+</code></pre>
+
+<p><img src="figure_cola/tab-collect-classes-from-consensus-partition-list-2-1.png" alt="plot of chunk tab-collect-classes-from-consensus-partition-list-2"/></p>
+
+</div>
+<div id='tab-collect-classes-from-consensus-partition-list-3'>
+<pre><code class="r">collect_classes(res_list, k = 4)
+</code></pre>
+
+<p><img src="figure_cola/tab-collect-classes-from-consensus-partition-list-3-1.png" alt="plot of chunk tab-collect-classes-from-consensus-partition-list-3"/></p>
+
+</div>
+<div id='tab-collect-classes-from-consensus-partition-list-4'>
+<pre><code class="r">collect_classes(res_list, k = 5)
+</code></pre>
+
+<p><img src="figure_cola/tab-collect-classes-from-consensus-partition-list-4-1.png" alt="plot of chunk tab-collect-classes-from-consensus-partition-list-4"/></p>
+
+</div>
+<div id='tab-collect-classes-from-consensus-partition-list-5'>
+<pre><code class="r">collect_classes(res_list, k = 6)
+</code></pre>
+
+<p><img src="figure_cola/tab-collect-classes-from-consensus-partition-list-5-1.png" alt="plot of chunk tab-collect-classes-from-consensus-partition-list-5"/></p>
+
+</div>
+<div id='tab-collect-classes-from-consensus-partition-list-6'>
+<pre><code class="r">collect_classes(res_list, k = 7)
+</code></pre>
+
+<p><img src="figure_cola/tab-collect-classes-from-consensus-partition-list-6-1.png" alt="plot of chunk tab-collect-classes-from-consensus-partition-list-6"/></p>
+
+</div>
+<div id='tab-collect-classes-from-consensus-partition-list-7'>
+<pre><code class="r">collect_classes(res_list, k = 8)
+</code></pre>
+
+<p><img src="figure_cola/tab-collect-classes-from-consensus-partition-list-7-1.png" alt="plot of chunk tab-collect-classes-from-consensus-partition-list-7"/></p>
+
+</div>
+<div id='tab-collect-classes-from-consensus-partition-list-8'>
+<pre><code class="r">collect_classes(res_list, k = 9)
+</code></pre>
+
+<p><img src="figure_cola/tab-collect-classes-from-consensus-partition-list-8-1.png" alt="plot of chunk tab-collect-classes-from-consensus-partition-list-8"/></p>
+
+</div>
+<div id='tab-collect-classes-from-consensus-partition-list-9'>
+<pre><code class="r">collect_classes(res_list, k = 10)
+</code></pre>
+
+<p><img src="figure_cola/tab-collect-classes-from-consensus-partition-list-9-1.png" alt="plot of chunk tab-collect-classes-from-consensus-partition-list-9"/></p>
+
+</div>
+</div>
+
+
+
+### Top rows overlap
+
+
+Heatmaps of the top rows:
+
+
+
+<script>
+$( function() {
+	$( '#tabs-top-rows-heatmap' ).tabs();
+} );
+</script>
+<div id='tabs-top-rows-heatmap'>
+<ul>
+<li><a href='#tab-top-rows-heatmap-1'>top_n = 10</a></li>
+</ul>
+<div id='tab-top-rows-heatmap-1'>
+<pre><code class="r">top_rows_heatmap(res_list, top_n = 10)
+</code></pre>
+
+<p><img src="figure_cola/tab-top-rows-heatmap-1-1.png" alt="plot of chunk tab-top-rows-heatmap-1"/></p>
+
+</div>
+</div>
+
+
+
+ 
+## Results for each method
+
+
+---------------------------------------------------
+
+
+
+### ATC:skmeans
+
+
+
+
+
+
+The object with results only for a single top-value method and a single partitioning method 
+can be extracted as:
+
+```r
+res = res_list["ATC", "skmeans"]
+# you can also extract it by
+# res = res_list["ATC:skmeans"]
+```
+
+A summary of `res` and all the functions that can be applied to it:
+
+```r
+res
+```
+
+```
+#> A 'ConsensusPartition' object with k = 2, 3, 4, 5, 6, 7, 8, 9, 10.
+#>   On a matrix with 10 rows and 2640 columns.
+#>   Top rows (10) are extracted by 'ATC' method.
+#>   Subgroups are detected by 'skmeans' method.
+#>   Performed in total 450 partitions by row resampling.
+#>   Best k for subgroups seems to be 2.
+#> 
+#> Following methods can be applied to this 'ConsensusPartition' object:
+#>  [1] "cola_report"             "collect_classes"         "collect_plots"          
+#>  [4] "collect_stats"           "colnames"                "compare_signatures"     
+#>  [7] "consensus_heatmap"       "dimension_reduction"     "functional_enrichment"  
+#> [10] "get_anno_col"            "get_anno"                "get_classes"            
+#> [13] "get_consensus"           "get_matrix"              "get_membership"         
+#> [16] "get_param"               "get_signatures"          "get_stats"              
+#> [19] "is_best_k"               "is_stable_k"             "membership_heatmap"     
+#> [22] "ncol"                    "nrow"                    "plot_ecdf"              
+#> [25] "predict_classes"         "rownames"                "select_partition_number"
+#> [28] "show"                    "suggest_best_k"          "test_to_known_factors"
+```
+
+`collect_plots()` function collects all the plots made from `res` for all `k` (number of subgroups)
+into one single page to provide an easy and fast comparison between different `k`.
+
+```r
+collect_plots(res)
+```
+
+![plot of chunk ATC-skmeans-collect-plots](figure_cola/ATC-skmeans-collect-plots-1.png)
+
+The plots are:
+
+- The first row: a plot of the eCDF (empirical cumulative distribution
+  function) curves of the consensus matrix for each `k` and the heatmap of
+  predicted classes for each `k`.
+- The second row: heatmaps of the consensus matrix for each `k`.
+- The third row: heatmaps of the membership matrix for each `k`.
+- The fouth row: heatmaps of the signatures for each `k`.
+
+All the plots in panels can be made by individual functions and they are
+plotted later in this section.
+
+`select_partition_number()` produces several plots showing different
+statistics for choosing "optimized" `k`. There are following statistics:
+
+- eCDF curves of the consensus matrix for each `k`;
+- 1-PAC. [The PAC score](https://en.wikipedia.org/wiki/Consensus_clustering#Over-interpretation_potential_of_consensus_clustering)
+  measures the proportion of the ambiguous subgrouping.
+- Mean silhouette score.
+- Concordance. The mean probability of fiting the consensus subgroup labels in all
+  partitions.
+- Area increased. Denote $A_k$ as the area under the eCDF curve for current
+  `k`, the area increased is defined as $A_k - A_{k-1}$.
+- Rand index. The percent of pairs of samples that are both in a same cluster
+  or both are not in a same cluster in the partition of k and k-1.
+- Jaccard index. The ratio of pairs of samples are both in a same cluster in
+  the partition of k and k-1 and the pairs of samples are both in a same
+  cluster in the partition k or k-1.
+
+The detailed explanations of these statistics can be found in [the _cola_
+vignette](http://bioconductor.org/packages/devel/bioc/vignettes/cola/inst/doc/cola.html#toc_13).
+
+Generally speaking, higher 1-PAC score, higher mean silhouette score or higher
+concordance corresponds to better partition. Rand index and Jaccard index
+measure how similar the current partition is compared to partition with `k-1`.
+If they are too similar, we won't accept `k` is better than `k-1`.
+
+```r
+select_partition_number(res)
+```
+
+![plot of chunk ATC-skmeans-select-partition-number](figure_cola/ATC-skmeans-select-partition-number-1.png)
+
+The numeric values for all these statistics can be obtained by `get_stats()`.
+
+```r
+get_stats(res)
+```
+
+```
+#>     k 1-PAC mean_silhouette concordance area_increased  Rand Jaccard
+#> 2   2 0.700           0.895       0.950         0.4577 0.536   0.536
+#> 3   3 0.731           0.872       0.939         0.4039 0.740   0.546
+#> 4   4 0.700           0.801       0.901         0.0938 0.907   0.745
+#> 5   5 0.720           0.779       0.892         0.0708 0.915   0.725
+#> 6   6 0.740           0.753       0.849         0.0420 0.930   0.729
+#> 7   7 0.742           0.693       0.813         0.0246 0.963   0.829
+#> 8   8 0.729           0.666       0.763         0.0227 0.957   0.785
+#> 9   9 0.758           0.531       0.704         0.0191 0.932   0.658
+#> 10 10 0.763           0.598       0.742         0.0144 0.944   0.686
+```
+
+`suggest_best_k()` suggests the best $k$ based on these statistics. The rules are as follows:
+
+- All $k$ with Jaccard index larger than 0.95 are removed because increasing
+  $k$ does not provide enough extra information. If all $k$ are removed, it is
+  marked as no subgroup is detected.
+- For all $k$ with 1-PAC score larger than 0.9, the maximal $k$ is taken as
+  the best $k$, and other $k$ are marked as optional $k$.
+- If it does not fit the second rule. The $k$ with the maximal vote of the
+  highest 1-PAC score, highest mean silhouette, and highest concordance is
+  taken as the best $k$.
+
+```r
+suggest_best_k(res)
+```
+
+```
+#> [1] 2
+```
+
+
+Following is the table of the partitions (You need to click the **show/hide
+code output** link to see it). The membership matrix (columns with name `p*`)
+is inferred by
+[`clue::cl_consensus()`](https://www.rdocumentation.org/link/cl_consensus?package=clue)
+function with the `SE` method. Basically the value in the membership matrix
+represents the probability to belong to a certain group. The finall subgroup
+label for an item is determined with the group with highest probability it
+belongs to.
+
+In `get_classes()` function, the entropy is calculated from the membership
+matrix and the silhouette score is calculated from the consensus matrix.
+
+
+
+<script>
+$( function() {
+	$( '#tabs-ATC-skmeans-get-classes' ).tabs();
+} );
+</script>
+<div id='tabs-ATC-skmeans-get-classes'>
+<ul>
+<li><a href='#tab-ATC-skmeans-get-classes-1'>k = 2</a></li>
+<li><a href='#tab-ATC-skmeans-get-classes-2'>k = 3</a></li>
+<li><a href='#tab-ATC-skmeans-get-classes-3'>k = 4</a></li>
+<li><a href='#tab-ATC-skmeans-get-classes-4'>k = 5</a></li>
+<li><a href='#tab-ATC-skmeans-get-classes-5'>k = 6</a></li>
+<li><a href='#tab-ATC-skmeans-get-classes-6'>k = 7</a></li>
+<li><a href='#tab-ATC-skmeans-get-classes-7'>k = 8</a></li>
+<li><a href='#tab-ATC-skmeans-get-classes-8'>k = 9</a></li>
+<li><a href='#tab-ATC-skmeans-get-classes-9'>k = 10</a></li>
+</ul>
+
+<div id='tab-ATC-skmeans-get-classes-1'>
+<p><a id='tab-ATC-skmeans-get-classes-1-a' style='color:#0366d6' href='#'>show/hide code output</a></p>
+<pre><code class="r">cbind(get_classes(res, k = 2), get_membership(res, k = 2))
+</code></pre>
+
+<pre><code>#&gt;          class entropy silhouette   p1   p2
+#&gt; SP2143       1   0.000     0.9107 1.00 0.00
+#&gt; SP2144       1   0.000     0.9107 1.00 0.00
+#&gt; SP2145       1   0.242     0.8981 0.96 0.04
+#&gt; SP2146       1   0.000     0.9107 1.00 0.00
+#&gt; SP2147       1   0.141     0.9061 0.98 0.02
+#&gt; SP2148       1   0.402     0.8761 0.92 0.08
+#&gt; SP2149       1   0.000     0.9107 1.00 0.00
+#&gt; SP2150       1   0.000     0.9107 1.00 0.00
+#&gt; SP2151       1   0.000     0.9107 1.00 0.00
+#&gt; SP2152       1   0.000     0.9107 1.00 0.00
+#&gt; SP2153       1   0.000     0.9107 1.00 0.00
+#&gt; SP2154       1   0.584     0.8409 0.86 0.14
+#&gt; SP2155       1   0.000     0.9107 1.00 0.00
+#&gt; SP2156       1   0.000     0.9107 1.00 0.00
+#&gt; SP2157       2   0.000     0.9673 0.00 1.00
+#&gt; SP2158       1   0.000     0.9107 1.00 0.00
+#&gt; SP2159       2   0.760     0.7182 0.22 0.78
+#&gt; SP2160       1   0.000     0.9107 1.00 0.00
+#&gt; SP22031      2   0.000     0.9673 0.00 1.00
+#&gt; SP2357       1   0.000     0.9107 1.00 0.00
+#&gt; SP22750      2   0.000     0.9673 0.00 1.00
+#&gt; SP23078      1   0.242     0.8988 0.96 0.04
+#&gt; SP2293       2   0.000     0.9673 0.00 1.00
+#&gt; SP23431      2   0.000     0.9673 0.00 1.00
+#&gt; SP23435      2   0.000     0.9673 0.00 1.00
+#&gt; SP23439      2   0.000     0.9673 0.00 1.00
+#&gt; SP23443      2   0.000     0.9673 0.00 1.00
+#&gt; SP23447      2   0.000     0.9673 0.00 1.00
+#&gt; SP23451      2   0.000     0.9673 0.00 1.00
+#&gt; SP23455      2   0.000     0.9673 0.00 1.00
+#&gt; SP23459      2   0.000     0.9673 0.00 1.00
+#&gt; SP23463      2   0.000     0.9673 0.00 1.00
+#&gt; SP23467      2   0.000     0.9673 0.00 1.00
+#&gt; SP23477      2   0.000     0.9673 0.00 1.00
+#&gt; SP23479      2   0.000     0.9673 0.00 1.00
+#&gt; SP23481      2   0.000     0.9673 0.00 1.00
+#&gt; SP23483      2   0.000     0.9673 0.00 1.00
+#&gt; SP23496      1   0.242     0.8979 0.96 0.04
+#&gt; SP23498      1   0.000     0.9107 1.00 0.00
+#&gt; SP23500      2   0.634     0.8050 0.16 0.84
+#&gt; SP23504      1   0.584     0.8444 0.86 0.14
+#&gt; SP23506      1   0.327     0.8899 0.94 0.06
+#&gt; SP23502      1   0.000     0.9107 1.00 0.00
+#&gt; SP23622      2   0.000     0.9673 0.00 1.00
+#&gt; SP23639      2   0.529     0.8530 0.12 0.88
+#&gt; SP23739      2   0.469     0.8747 0.10 0.90
+#&gt; SP23754      2   0.469     0.8747 0.10 0.90
+#&gt; SP23775      1   0.000     0.9107 1.00 0.00
+#&gt; SP23925      1   0.584     0.8409 0.86 0.14
+#&gt; SP24135      2   0.000     0.9673 0.00 1.00
+#&gt; SP24236      2   0.634     0.8050 0.16 0.84
+#&gt; SP24301      2   0.000     0.9673 0.00 1.00
+#&gt; SP24391      2   0.000     0.9673 0.00 1.00
+#&gt; SP24565      1   0.990     0.2800 0.56 0.44
+#&gt; SP24702      1   0.827     0.6855 0.74 0.26
+#&gt; SP24708      2   0.855     0.6121 0.28 0.72
+#&gt; SP24815      1   0.995     0.2028 0.54 0.46
+#&gt; SP25350      2   0.000     0.9673 0.00 1.00
+#&gt; SP25380      1   0.795     0.7139 0.76 0.24
+#&gt; SP25494      1   0.634     0.8118 0.84 0.16
+#&gt; SP25518      2   0.584     0.8286 0.14 0.86
+#&gt; SP25833      2   0.469     0.8747 0.10 0.90
+#&gt; SP25905      2   0.529     0.8392 0.12 0.88
+#&gt; SP26439      2   0.000     0.9673 0.00 1.00
+#&gt; SP26475      2   0.529     0.8530 0.12 0.88
+#&gt; SP26499      2   0.000     0.9673 0.00 1.00
+#&gt; SP26709      2   0.000     0.9673 0.00 1.00
+#&gt; SP2731       1   0.000     0.9107 1.00 0.00
+#&gt; SP2766       1   0.327     0.8878 0.94 0.06
+#&gt; SP2781       2   0.827     0.6118 0.26 0.74
+#&gt; SP2793       1   0.000     0.9107 1.00 0.00
+#&gt; SP2799       2   0.680     0.7538 0.18 0.82
+#&gt; SP2801       1   0.000     0.9107 1.00 0.00
+#&gt; SP27603      2   0.469     0.8741 0.10 0.90
+#&gt; SP2826       1   0.000     0.9107 1.00 0.00
+#&gt; SP27825      2   0.529     0.8530 0.12 0.88
+#&gt; SP27957      1   0.000     0.9107 1.00 0.00
+#&gt; SP28041      2   0.584     0.8286 0.14 0.86
+#&gt; SP2881       1   0.000     0.9107 1.00 0.00
+#&gt; SP28275      1   0.855     0.6485 0.72 0.28
+#&gt; SP28335      1   0.584     0.8409 0.86 0.14
+#&gt; SP28581      2   0.000     0.9673 0.00 1.00
+#&gt; SP2997       1   0.469     0.8670 0.90 0.10
+#&gt; SP29331      1   0.469     0.8670 0.90 0.10
+#&gt; SP3016       1   0.141     0.9060 0.98 0.02
+#&gt; SP29559      1   0.958     0.4495 0.62 0.38
+#&gt; SP29697      2   0.000     0.9673 0.00 1.00
+#&gt; SP29914      1   0.584     0.8409 0.86 0.14
+#&gt; SP29940      2   0.000     0.9673 0.00 1.00
+#&gt; SP29987      2   0.529     0.8530 0.12 0.88
+#&gt; SP30011      2   0.000     0.9673 0.00 1.00
+#&gt; SP30071      2   0.000     0.9673 0.00 1.00
+#&gt; SP30077      1   0.000     0.9107 1.00 0.00
+#&gt; SP30083      1   0.000     0.9107 1.00 0.00
+#&gt; SP30093      1   0.000     0.9107 1.00 0.00
+#&gt; SP30113      2   0.327     0.9147 0.06 0.94
+#&gt; SP30143      1   0.680     0.7956 0.82 0.18
+#&gt; SP30185      2   0.000     0.9673 0.00 1.00
+#&gt; SP30213      2   0.000     0.9673 0.00 1.00
+#&gt; SP30332      1   0.141     0.9060 0.98 0.02
+#&gt; SP30493      2   0.680     0.7782 0.18 0.82
+#&gt; SP30675      1   0.000     0.9107 1.00 0.00
+#&gt; SP30803      2   0.000     0.9673 0.00 1.00
+#&gt; SP30843      2   0.000     0.9673 0.00 1.00
+#&gt; SP30907      1   0.000     0.9107 1.00 0.00
+#&gt; SP31030      2   0.000     0.9673 0.00 1.00
+#&gt; SP31046      2   0.000     0.9673 0.00 1.00
+#&gt; SP31126      1   0.000     0.9107 1.00 0.00
+#&gt; SP31174      1   0.584     0.8409 0.86 0.14
+#&gt; SP31190      1   0.722     0.7656 0.80 0.20
+#&gt; SP31334      1   0.000     0.9107 1.00 0.00
+#&gt; SP31422      1   0.000     0.9107 1.00 0.00
+#&gt; SP31606      2   0.855     0.6070 0.28 0.72
+#&gt; SP31790      1   0.000     0.9107 1.00 0.00
+#&gt; SP31814      1   0.971     0.3966 0.60 0.40
+#&gt; SP31854      1   0.000     0.9107 1.00 0.00
+#&gt; SP32014      1   0.141     0.9061 0.98 0.02
+#&gt; SP32222      2   0.000     0.9673 0.00 1.00
+#&gt; SP3368       1   0.634     0.8185 0.84 0.16
+#&gt; SP32662      1   0.000     0.9107 1.00 0.00
+#&gt; SP32694      2   0.000     0.9673 0.00 1.00
+#&gt; SP32742      1   0.760     0.7671 0.78 0.22
+#&gt; SP32894      2   0.584     0.8286 0.14 0.86
+#&gt; SP32958      2   0.000     0.9673 0.00 1.00
+#&gt; SP3415       1   0.000     0.9107 1.00 0.00
+#&gt; SP33094      1   0.000     0.9107 1.00 0.00
+#&gt; SP33496      1   0.000     0.9107 1.00 0.00
+#&gt; SP33544      1   0.469     0.8670 0.90 0.10
+#&gt; SP33688      2   0.584     0.8286 0.14 0.86
+#&gt; SP33774      2   0.000     0.9673 0.00 1.00
+#&gt; SP33837      2   0.000     0.9673 0.00 1.00
+#&gt; SP34005      2   0.000     0.9673 0.00 1.00
+#&gt; SP34186      2   0.000     0.9673 0.00 1.00
+#&gt; SP34191      2   0.000     0.9673 0.00 1.00
+#&gt; SP34431      2   0.000     0.9673 0.00 1.00
+#&gt; SP34452      2   0.000     0.9673 0.00 1.00
+#&gt; SP34493      2   0.000     0.9673 0.00 1.00
+#&gt; SP35412      2   0.000     0.9673 0.00 1.00
+#&gt; SP35617      1   0.584     0.8409 0.86 0.14
+#&gt; SP35849      2   0.000     0.9673 0.00 1.00
+#&gt; SP35951      2   0.000     0.9673 0.00 1.00
+#&gt; SP35989      2   0.000     0.9673 0.00 1.00
+#&gt; SP36036      2   0.000     0.9673 0.00 1.00
+#&gt; SP36218      2   0.000     0.9673 0.00 1.00
+#&gt; SP36498      2   0.000     0.9673 0.00 1.00
+#&gt; SP36586      1   0.141     0.9055 0.98 0.02
+#&gt; SP37369      2   0.000     0.9673 0.00 1.00
+#&gt; SP37432      2   0.000     0.9673 0.00 1.00
+#&gt; SP37516      2   0.000     0.9673 0.00 1.00
+#&gt; SP37903      2   0.000     0.9673 0.00 1.00
+#&gt; SP37970      2   0.000     0.9673 0.00 1.00
+#&gt; SP38271      2   0.000     0.9673 0.00 1.00
+#&gt; SP38759      2   0.000     0.9673 0.00 1.00
+#&gt; SP39102      2   0.000     0.9673 0.00 1.00
+#&gt; SP39248      2   0.000     0.9673 0.00 1.00
+#&gt; SP39298      2   0.000     0.9673 0.00 1.00
+#&gt; SP39349      2   0.000     0.9673 0.00 1.00
+#&gt; SP39594      2   0.000     0.9673 0.00 1.00
+#&gt; SP39907      2   0.000     0.9673 0.00 1.00
+#&gt; SP39997      2   0.999    -0.0289 0.48 0.52
+#&gt; SP40047      2   0.000     0.9673 0.00 1.00
+#&gt; SP40736      2   0.000     0.9673 0.00 1.00
+#&gt; SP41453      2   0.000     0.9673 0.00 1.00
+#&gt; SP42154      2   0.000     0.9673 0.00 1.00
+#&gt; SP42829      2   0.000     0.9673 0.00 1.00
+#&gt; SP4472       1   0.000     0.9107 1.00 0.00
+#&gt; SP43201      2   0.000     0.9673 0.00 1.00
+#&gt; SP43510      2   0.000     0.9673 0.00 1.00
+#&gt; SP4523       1   0.000     0.9107 1.00 0.00
+#&gt; SP43532      2   0.000     0.9673 0.00 1.00
+#&gt; SP43633      2   0.000     0.9673 0.00 1.00
+#&gt; SP43651      2   0.000     0.9673 0.00 1.00
+#&gt; SP4535       2   0.000     0.9673 0.00 1.00
+#&gt; SP43664      1   0.795     0.7226 0.76 0.24
+#&gt; SP43688      2   0.000     0.9673 0.00 1.00
+#&gt; SP43770      2   0.000     0.9673 0.00 1.00
+#&gt; SP43792      2   0.000     0.9673 0.00 1.00
+#&gt; SP43808      2   0.000     0.9673 0.00 1.00
+#&gt; SP43822      1   0.000     0.9107 1.00 0.00
+#&gt; SP4557       2   0.000     0.9673 0.00 1.00
+#&gt; SP4593       2   0.000     0.9673 0.00 1.00
+#&gt; SP116946     2   0.000     0.9673 0.00 1.00
+#&gt; SP116948     2   0.584     0.8286 0.14 0.86
+#&gt; SP116963     2   0.000     0.9673 0.00 1.00
+#&gt; SP135234     1   0.000     0.9107 1.00 0.00
+#&gt; SP135293     2   0.000     0.9673 0.00 1.00
+#&gt; SP135323     2   0.141     0.9503 0.02 0.98
+#&gt; SP135420     1   0.000     0.9107 1.00 0.00
+#&gt; SP116991     1   0.722     0.7883 0.80 0.20
+#&gt; SP117003     2   0.000     0.9673 0.00 1.00
+#&gt; SP117011     2   0.000     0.9673 0.00 1.00
+#&gt; SP117017     2   0.469     0.8747 0.10 0.90
+#&gt; SP117031     2   0.000     0.9673 0.00 1.00
+#&gt; SP117032     2   0.990     0.1755 0.44 0.56
+#&gt; SP135226     2   0.958     0.3721 0.38 0.62
+#&gt; SP117057     1   0.000     0.9107 1.00 0.00
+#&gt; SP135411     1   0.000     0.9107 1.00 0.00
+#&gt; SP117078     1   0.000     0.9107 1.00 0.00
+#&gt; SP117079     2   0.000     0.9673 0.00 1.00
+#&gt; SP117105     1   0.634     0.8113 0.84 0.16
+#&gt;  [ reached &#39;max&#39; / getOption(&quot;max.print&quot;) -- omitted 2440 rows ]
+</code></pre>
+
+<script>
+$('#tab-ATC-skmeans-get-classes-1-a').parent().next().next().hide();
+$('#tab-ATC-skmeans-get-classes-1-a').click(function(){
+  $('#tab-ATC-skmeans-get-classes-1-a').parent().next().next().toggle();
+  return(false);
+});
+</script>
+</div>
+
+<div id='tab-ATC-skmeans-get-classes-2'>
+<p><a id='tab-ATC-skmeans-get-classes-2-a' style='color:#0366d6' href='#'>show/hide code output</a></p>
+<pre><code class="r">cbind(get_classes(res, k = 3), get_membership(res, k = 3))
+</code></pre>
+
+<pre><code>#&gt;         class entropy silhouette   p1   p2   p3
+#&gt; SP2143      1  0.0000     0.9268 1.00 0.00 0.00
+#&gt; SP2144      3  0.4002     0.7729 0.16 0.00 0.84
+#&gt; SP2145      3  0.0000     0.8730 0.00 0.00 1.00
+#&gt; SP2146      3  0.1529     0.8565 0.04 0.00 0.96
+#&gt; SP2147      1  0.0000     0.9268 1.00 0.00 0.00
+#&gt; SP2148      3  0.0892     0.8663 0.02 0.00 0.98
+#&gt; SP2149      1  0.0000     0.9268 1.00 0.00 0.00
+#&gt; SP2150      1  0.0000     0.9268 1.00 0.00 0.00
+#&gt; SP2151      1  0.0000     0.9268 1.00 0.00 0.00
+#&gt; SP2152      3  0.1529     0.8565 0.04 0.00 0.96
+#&gt; SP2153      1  0.0000     0.9268 1.00 0.00 0.00
+#&gt; SP2154      1  0.2537     0.8817 0.92 0.08 0.00
+#&gt; SP2155      1  0.0000     0.9268 1.00 0.00 0.00
+#&gt; SP2156      1  0.0000     0.9268 1.00 0.00 0.00
+#&gt; SP2157      2  0.0000     0.9672 0.00 1.00 0.00
+#&gt; SP2158      1  0.0000     0.9268 1.00 0.00 0.00
+#&gt; SP2159      3  0.0000     0.8730 0.00 0.00 1.00
+#&gt; SP2160      1  0.0000     0.9268 1.00 0.00 0.00
+#&gt; SP22031     2  0.0000     0.9672 0.00 1.00 0.00
+#&gt; SP2357      1  0.0000     0.9268 1.00 0.00 0.00
+#&gt; SP22750     2  0.0000     0.9672 0.00 1.00 0.00
+#&gt; SP23078     1  0.1529     0.9068 0.96 0.04 0.00
+#&gt; SP2293      3  0.2959     0.8511 0.00 0.10 0.90
+#&gt; SP23431     3  0.3686     0.8343 0.00 0.14 0.86
+#&gt; SP23435     3  0.0000     0.8730 0.00 0.00 1.00
+#&gt; SP23439     3  0.2959     0.8511 0.00 0.10 0.90
+#&gt; SP23443     3  0.5216     0.6935 0.00 0.26 0.74
+#&gt; SP23447     3  0.3686     0.8343 0.00 0.14 0.86
+#&gt; SP23451     3  0.5397     0.6672 0.00 0.28 0.72
+#&gt; SP23455     2  0.6280    -0.0385 0.00 0.54 0.46
+#&gt; SP23459     2  0.0000     0.9672 0.00 1.00 0.00
+#&gt; SP23463     2  0.0000     0.9672 0.00 1.00 0.00
+#&gt; SP23467     2  0.5397     0.5766 0.00 0.72 0.28
+#&gt; SP23477     3  0.5216     0.6935 0.00 0.26 0.74
+#&gt; SP23479     3  0.5835     0.5958 0.00 0.34 0.66
+#&gt; SP23481     2  0.0000     0.9672 0.00 1.00 0.00
+#&gt; SP23483     2  0.0000     0.9672 0.00 1.00 0.00
+#&gt; SP23496     3  0.0000     0.8730 0.00 0.00 1.00
+#&gt; SP23498     1  0.0000     0.9268 1.00 0.00 0.00
+#&gt; SP23500     3  0.0000     0.8730 0.00 0.00 1.00
+#&gt; SP23504     1  0.2066     0.8952 0.94 0.06 0.00
+#&gt; SP23506     1  0.0000     0.9268 1.00 0.00 0.00
+#&gt; SP23502     1  0.0000     0.9268 1.00 0.00 0.00
+#&gt; SP23622     2  0.3686     0.8072 0.00 0.86 0.14
+#&gt; SP23639     3  0.1529     0.8661 0.00 0.04 0.96
+#&gt; SP23739     3  0.4796     0.7440 0.00 0.22 0.78
+#&gt; SP23754     3  0.1529     0.8689 0.00 0.04 0.96
+#&gt; SP23775     1  0.0000     0.9268 1.00 0.00 0.00
+#&gt; SP23925     1  0.3686     0.8353 0.86 0.14 0.00
+#&gt; SP24135     3  0.2959     0.8513 0.00 0.10 0.90
+#&gt; SP24236     3  0.0000     0.8730 0.00 0.00 1.00
+#&gt; SP24301     2  0.0000     0.9672 0.00 1.00 0.00
+#&gt; SP24391     2  0.0000     0.9672 0.00 1.00 0.00
+#&gt; SP24565     3  0.0000     0.8730 0.00 0.00 1.00
+#&gt; SP24702     3  0.1781     0.8648 0.02 0.02 0.96
+#&gt; SP24708     2  0.8202     0.4669 0.26 0.62 0.12
+#&gt; SP24815     3  0.4291     0.7476 0.18 0.00 0.82
+#&gt; SP25350     2  0.0000     0.9672 0.00 1.00 0.00
+#&gt; SP25380     3  0.1529     0.8565 0.04 0.00 0.96
+#&gt; SP25494     3  0.4209     0.7944 0.12 0.02 0.86
+#&gt; SP25518     3  0.0000     0.8730 0.00 0.00 1.00
+#&gt; SP25833     3  0.0000     0.8730 0.00 0.00 1.00
+#&gt; SP25905     2  0.5016     0.6762 0.24 0.76 0.00
+#&gt; SP26439     3  0.3686     0.8343 0.00 0.14 0.86
+#&gt; SP26475     3  0.0000     0.8730 0.00 0.00 1.00
+#&gt; SP26499     3  0.5397     0.6672 0.00 0.28 0.72
+#&gt; SP26709     2  0.0000     0.9672 0.00 1.00 0.00
+#&gt; SP2731      1  0.6280     0.0946 0.54 0.00 0.46
+#&gt; SP2766      3  0.0000     0.8730 0.00 0.00 1.00
+#&gt; SP2781      2  0.5216     0.6216 0.26 0.74 0.00
+#&gt; SP2793      1  0.0000     0.9268 1.00 0.00 0.00
+#&gt; SP2799      2  0.4291     0.7571 0.18 0.82 0.00
+#&gt; SP2801      1  0.0000     0.9268 1.00 0.00 0.00
+#&gt; SP27603     3  0.0000     0.8730 0.00 0.00 1.00
+#&gt; SP2826      1  0.0000     0.9268 1.00 0.00 0.00
+#&gt; SP27825     3  0.0000     0.8730 0.00 0.00 1.00
+#&gt; SP27957     1  0.4796     0.6924 0.78 0.00 0.22
+#&gt; SP28041     3  0.3686     0.8149 0.00 0.14 0.86
+#&gt; SP2881      1  0.0000     0.9268 1.00 0.00 0.00
+#&gt; SP28275     3  0.4796     0.7057 0.22 0.00 0.78
+#&gt; SP28335     1  0.1529     0.9073 0.96 0.04 0.00
+#&gt; SP28581     2  0.3340     0.8397 0.00 0.88 0.12
+#&gt; SP2997      1  0.2066     0.8952 0.94 0.06 0.00
+#&gt; SP29331     1  0.0892     0.9184 0.98 0.02 0.00
+#&gt; SP3016      1  0.0892     0.9171 0.98 0.02 0.00
+#&gt; SP29559     3  0.1529     0.8689 0.00 0.04 0.96
+#&gt; SP29697     2  0.0000     0.9672 0.00 1.00 0.00
+#&gt; SP29914     1  0.3686     0.8353 0.86 0.14 0.00
+#&gt; SP29940     2  0.0000     0.9672 0.00 1.00 0.00
+#&gt; SP29987     3  0.0000     0.8730 0.00 0.00 1.00
+#&gt; SP30011     2  0.0892     0.9485 0.00 0.98 0.02
+#&gt; SP30071     2  0.0000     0.9672 0.00 1.00 0.00
+#&gt; SP30077     1  0.0000     0.9268 1.00 0.00 0.00
+#&gt; SP30083     1  0.0000     0.9268 1.00 0.00 0.00
+#&gt; SP30093     1  0.0000     0.9268 1.00 0.00 0.00
+#&gt; SP30113     3  0.0000     0.8730 0.00 0.00 1.00
+#&gt; SP30143     1  0.4555     0.7545 0.80 0.20 0.00
+#&gt; SP30185     3  0.3686     0.8343 0.00 0.14 0.86
+#&gt; SP30213     3  0.3686     0.8343 0.00 0.14 0.86
+#&gt; SP30332     1  0.0892     0.9171 0.98 0.02 0.00
+#&gt; SP30493     3  0.1529     0.8689 0.00 0.04 0.96
+#&gt; SP30675     3  0.5216     0.6540 0.26 0.00 0.74
+#&gt; SP30803     3  0.0000     0.8730 0.00 0.00 1.00
+#&gt; SP30843     2  0.0000     0.9672 0.00 1.00 0.00
+#&gt; SP30907     1  0.0000     0.9268 1.00 0.00 0.00
+#&gt; SP31030     2  0.0000     0.9672 0.00 1.00 0.00
+#&gt; SP31046     2  0.5016     0.6549 0.00 0.76 0.24
+#&gt; SP31126     1  0.0000     0.9268 1.00 0.00 0.00
+#&gt; SP31174     1  0.3686     0.8353 0.86 0.14 0.00
+#&gt; SP31190     3  0.0000     0.8730 0.00 0.00 1.00
+#&gt; SP31334     1  0.0000     0.9268 1.00 0.00 0.00
+#&gt; SP31422     1  0.0000     0.9268 1.00 0.00 0.00
+#&gt; SP31606     3  0.0000     0.8730 0.00 0.00 1.00
+#&gt; SP31790     1  0.0000     0.9268 1.00 0.00 0.00
+#&gt; SP31814     3  0.0000     0.8730 0.00 0.00 1.00
+#&gt; SP31854     1  0.0000     0.9268 1.00 0.00 0.00
+#&gt; SP32014     1  0.0892     0.9184 0.98 0.02 0.00
+#&gt; SP32222     2  0.0000     0.9672 0.00 1.00 0.00
+#&gt; SP3368      3  0.4035     0.8335 0.08 0.04 0.88
+#&gt; SP32662     1  0.0000     0.9268 1.00 0.00 0.00
+#&gt; SP32694     2  0.0000     0.9672 0.00 1.00 0.00
+#&gt; SP32742     1  0.4291     0.7915 0.82 0.18 0.00
+#&gt; SP32894     3  0.0000     0.8730 0.00 0.00 1.00
+#&gt; SP32958     2  0.6192     0.2082 0.00 0.58 0.42
+#&gt; SP3415      1  0.0000     0.9268 1.00 0.00 0.00
+#&gt; SP33094     1  0.0000     0.9268 1.00 0.00 0.00
+#&gt; SP33496     1  0.0000     0.9268 1.00 0.00 0.00
+#&gt; SP33544     1  0.0000     0.9268 1.00 0.00 0.00
+#&gt; SP33688     3  0.1529     0.8687 0.00 0.04 0.96
+#&gt; SP33774     3  0.3686     0.8343 0.00 0.14 0.86
+#&gt; SP33837     2  0.0000     0.9672 0.00 1.00 0.00
+#&gt; SP34005     3  0.5560     0.6350 0.00 0.30 0.70
+#&gt; SP34186     2  0.0000     0.9672 0.00 1.00 0.00
+#&gt; SP34191     2  0.0000     0.9672 0.00 1.00 0.00
+#&gt; SP34431     2  0.0000     0.9672 0.00 1.00 0.00
+#&gt; SP34452     2  0.0000     0.9672 0.00 1.00 0.00
+#&gt; SP34493     2  0.0000     0.9672 0.00 1.00 0.00
+#&gt; SP35412     2  0.3686     0.8128 0.00 0.86 0.14
+#&gt; SP35617     1  0.3686     0.8353 0.86 0.14 0.00
+#&gt; SP35849     2  0.0000     0.9672 0.00 1.00 0.00
+#&gt; SP35951     2  0.0000     0.9672 0.00 1.00 0.00
+#&gt; SP35989     2  0.0000     0.9672 0.00 1.00 0.00
+#&gt; SP36036     2  0.0000     0.9672 0.00 1.00 0.00
+#&gt; SP36218     2  0.0000     0.9672 0.00 1.00 0.00
+#&gt; SP36498     2  0.0000     0.9672 0.00 1.00 0.00
+#&gt; SP36586     3  0.5835     0.4839 0.34 0.00 0.66
+#&gt; SP37369     2  0.0000     0.9672 0.00 1.00 0.00
+#&gt; SP37432     2  0.0000     0.9672 0.00 1.00 0.00
+#&gt; SP37516     2  0.0000     0.9672 0.00 1.00 0.00
+#&gt; SP37903     2  0.0000     0.9672 0.00 1.00 0.00
+#&gt; SP37970     2  0.0000     0.9672 0.00 1.00 0.00
+#&gt; SP38271     2  0.0000     0.9672 0.00 1.00 0.00
+#&gt; SP38759     2  0.0000     0.9672 0.00 1.00 0.00
+#&gt; SP39102     2  0.0000     0.9672 0.00 1.00 0.00
+#&gt; SP39248     2  0.0000     0.9672 0.00 1.00 0.00
+#&gt; SP39298     2  0.0000     0.9672 0.00 1.00 0.00
+#&gt; SP39349     2  0.0000     0.9672 0.00 1.00 0.00
+#&gt; SP39594     2  0.0000     0.9672 0.00 1.00 0.00
+#&gt; SP39907     2  0.0000     0.9672 0.00 1.00 0.00
+#&gt; SP39997     1  0.6192     0.3261 0.58 0.42 0.00
+#&gt; SP40047     2  0.0000     0.9672 0.00 1.00 0.00
+#&gt; SP40736     2  0.0000     0.9672 0.00 1.00 0.00
+#&gt; SP41453     2  0.0000     0.9672 0.00 1.00 0.00
+#&gt; SP42154     2  0.0000     0.9672 0.00 1.00 0.00
+#&gt; SP42829     2  0.0000     0.9672 0.00 1.00 0.00
+#&gt; SP4472      1  0.0000     0.9268 1.00 0.00 0.00
+#&gt;  [ reached &#39;max&#39; / getOption(&quot;max.print&quot;) -- omitted 2474 rows ]
+</code></pre>
+
+<script>
+$('#tab-ATC-skmeans-get-classes-2-a').parent().next().next().hide();
+$('#tab-ATC-skmeans-get-classes-2-a').click(function(){
+  $('#tab-ATC-skmeans-get-classes-2-a').parent().next().next().toggle();
+  return(false);
+});
+</script>
+</div>
+
+<div id='tab-ATC-skmeans-get-classes-3'>
+<p><a id='tab-ATC-skmeans-get-classes-3-a' style='color:#0366d6' href='#'>show/hide code output</a></p>
+<pre><code class="r">cbind(get_classes(res, k = 4), get_membership(res, k = 4))
+</code></pre>
+
+<pre><code>#&gt;         class entropy silhouette   p1   p2   p3   p4
+#&gt; SP2143      4  0.4855     0.2547 0.40 0.00 0.00 0.60
+#&gt; SP2144      1  0.4079     0.6729 0.80 0.00 0.18 0.02
+#&gt; SP2145      3  0.3335     0.7975 0.12 0.00 0.86 0.02
+#&gt; SP2146      1  0.5271     0.3658 0.64 0.00 0.34 0.02
+#&gt; SP2147      4  0.0707     0.8063 0.02 0.00 0.00 0.98
+#&gt; SP2148      3  0.4284     0.7334 0.20 0.00 0.78 0.02
+#&gt; SP2149      1  0.1637     0.8419 0.94 0.00 0.00 0.06
+#&gt; SP2150      1  0.2011     0.8354 0.92 0.00 0.00 0.08
+#&gt; SP2151      1  0.1637     0.8419 0.94 0.00 0.00 0.06
+#&gt; SP2152      1  0.4936     0.5198 0.70 0.00 0.28 0.02
+#&gt; SP2153      1  0.1637     0.8419 0.94 0.00 0.00 0.06
+#&gt; SP2154      4  0.3247     0.7957 0.06 0.06 0.00 0.88
+#&gt; SP2155      1  0.1637     0.8419 0.94 0.00 0.00 0.06
+#&gt; SP2156      1  0.0000     0.8241 1.00 0.00 0.00 0.00
+#&gt; SP2157      2  0.0000     0.9542 0.00 1.00 0.00 0.00
+#&gt; SP2158      1  0.1637     0.8419 0.94 0.00 0.00 0.06
+#&gt; SP2159      3  0.3335     0.7975 0.12 0.00 0.86 0.02
+#&gt; SP2160      1  0.1637     0.8419 0.94 0.00 0.00 0.06
+#&gt; SP22031     2  0.0000     0.9542 0.00 1.00 0.00 0.00
+#&gt; SP2357      1  0.1637     0.8419 0.94 0.00 0.00 0.06
+#&gt; SP22750     2  0.0000     0.9542 0.00 1.00 0.00 0.00
+#&gt; SP23078     4  0.5957     0.1784 0.42 0.04 0.00 0.54
+#&gt; SP2293      3  0.0000     0.8389 0.00 0.00 1.00 0.00
+#&gt; SP23431     3  0.2011     0.8260 0.00 0.08 0.92 0.00
+#&gt; SP23435     3  0.0000     0.8389 0.00 0.00 1.00 0.00
+#&gt; SP23439     3  0.0000     0.8389 0.00 0.00 1.00 0.00
+#&gt; SP23443     3  0.3801     0.6941 0.00 0.22 0.78 0.00
+#&gt; SP23447     3  0.0000     0.8389 0.00 0.00 1.00 0.00
+#&gt; SP23451     3  0.4277     0.6266 0.00 0.28 0.72 0.00
+#&gt; SP23455     3  0.4790     0.4926 0.00 0.38 0.62 0.00
+#&gt; SP23459     2  0.0000     0.9542 0.00 1.00 0.00 0.00
+#&gt; SP23463     2  0.0000     0.9542 0.00 1.00 0.00 0.00
+#&gt; SP23467     3  0.4713     0.5019 0.00 0.36 0.64 0.00
+#&gt; SP23477     3  0.3801     0.6941 0.00 0.22 0.78 0.00
+#&gt; SP23479     3  0.4624     0.5809 0.00 0.34 0.66 0.00
+#&gt; SP23481     2  0.0000     0.9542 0.00 1.00 0.00 0.00
+#&gt; SP23483     2  0.0000     0.9542 0.00 1.00 0.00 0.00
+#&gt; SP23496     3  0.4079     0.7507 0.18 0.00 0.80 0.02
+#&gt; SP23498     1  0.1211     0.8161 0.96 0.00 0.00 0.04
+#&gt; SP23500     3  0.1211     0.8341 0.04 0.00 0.96 0.00
+#&gt; SP23504     4  0.0707     0.8215 0.00 0.02 0.00 0.98
+#&gt; SP23506     4  0.0707     0.8063 0.02 0.00 0.00 0.98
+#&gt; SP23502     1  0.0000     0.8241 1.00 0.00 0.00 0.00
+#&gt; SP23622     2  0.5428     0.6638 0.00 0.74 0.14 0.12
+#&gt; SP23639     3  0.1913     0.8273 0.00 0.04 0.94 0.02
+#&gt; SP23739     3  0.3975     0.6731 0.00 0.24 0.76 0.00
+#&gt; SP23754     3  0.0000     0.8389 0.00 0.00 1.00 0.00
+#&gt; SP23775     1  0.4277     0.6503 0.72 0.00 0.00 0.28
+#&gt; SP23925     4  0.2921     0.7844 0.00 0.14 0.00 0.86
+#&gt; SP24135     3  0.0000     0.8389 0.00 0.00 1.00 0.00
+#&gt; SP24236     3  0.2335     0.8238 0.06 0.00 0.92 0.02
+#&gt; SP24301     2  0.2921     0.8163 0.00 0.86 0.00 0.14
+#&gt; SP24391     2  0.0000     0.9542 0.00 1.00 0.00 0.00
+#&gt; SP24565     3  0.2335     0.8238 0.06 0.00 0.92 0.02
+#&gt; SP24702     3  0.4955     0.7061 0.20 0.02 0.76 0.02
+#&gt; SP24708     1  0.4936     0.4856 0.70 0.28 0.00 0.02
+#&gt; SP24815     3  0.4797     0.5980 0.26 0.00 0.72 0.02
+#&gt; SP25350     2  0.0000     0.9542 0.00 1.00 0.00 0.00
+#&gt; SP25380     1  0.5355     0.4152 0.62 0.00 0.36 0.02
+#&gt; SP25494     3  0.6115     0.3185 0.40 0.02 0.56 0.02
+#&gt; SP25518     3  0.2335     0.8238 0.06 0.00 0.92 0.02
+#&gt; SP25833     3  0.0000     0.8389 0.00 0.00 1.00 0.00
+#&gt; SP25905     4  0.4713     0.4836 0.00 0.36 0.00 0.64
+#&gt; SP26439     3  0.2921     0.7984 0.00 0.14 0.86 0.00
+#&gt; SP26475     3  0.0000     0.8389 0.00 0.00 1.00 0.00
+#&gt; SP26499     3  0.4277     0.6266 0.00 0.28 0.72 0.00
+#&gt; SP26709     2  0.0000     0.9542 0.00 1.00 0.00 0.00
+#&gt; SP2731      1  0.0707     0.8155 0.98 0.00 0.00 0.02
+#&gt; SP2766      3  0.3853     0.7699 0.16 0.00 0.82 0.02
+#&gt; SP2781      4  0.3610     0.7272 0.00 0.20 0.00 0.80
+#&gt; SP2793      1  0.1637     0.8419 0.94 0.00 0.00 0.06
+#&gt; SP2799      4  0.1211     0.8159 0.00 0.04 0.00 0.96
+#&gt; SP2801      1  0.1637     0.8419 0.94 0.00 0.00 0.06
+#&gt; SP27603     3  0.0000     0.8389 0.00 0.00 1.00 0.00
+#&gt; SP2826      1  0.2345     0.8260 0.90 0.00 0.00 0.10
+#&gt; SP27825     3  0.2335     0.8238 0.06 0.00 0.92 0.02
+#&gt; SP27957     1  0.0000     0.8241 1.00 0.00 0.00 0.00
+#&gt; SP28041     3  0.5166     0.7512 0.06 0.14 0.78 0.02
+#&gt; SP2881      1  0.3801     0.7167 0.78 0.00 0.00 0.22
+#&gt; SP28275     1  0.4277     0.5437 0.72 0.00 0.28 0.00
+#&gt; SP28335     4  0.3853     0.7145 0.16 0.02 0.00 0.82
+#&gt; SP28581     2  0.2921     0.8153 0.00 0.86 0.14 0.00
+#&gt; SP2997      4  0.0707     0.8215 0.00 0.02 0.00 0.98
+#&gt; SP29331     4  0.0707     0.8215 0.00 0.02 0.00 0.98
+#&gt; SP3016      1  0.1637     0.8419 0.94 0.00 0.00 0.06
+#&gt; SP29559     3  0.5224     0.7487 0.18 0.04 0.76 0.02
+#&gt; SP29697     2  0.0000     0.9542 0.00 1.00 0.00 0.00
+#&gt; SP29914     4  0.2921     0.7844 0.00 0.14 0.00 0.86
+#&gt; SP29940     2  0.2011     0.8793 0.00 0.92 0.08 0.00
+#&gt; SP29987     3  0.0000     0.8389 0.00 0.00 1.00 0.00
+#&gt; SP30011     2  0.5175     0.7003 0.00 0.76 0.12 0.12
+#&gt; SP30071     2  0.0000     0.9542 0.00 1.00 0.00 0.00
+#&gt; SP30077     1  0.1637     0.8419 0.94 0.00 0.00 0.06
+#&gt; SP30083     4  0.3610     0.6518 0.20 0.00 0.00 0.80
+#&gt; SP30093     4  0.4713     0.3638 0.36 0.00 0.00 0.64
+#&gt; SP30113     3  0.0707     0.8371 0.00 0.00 0.98 0.02
+#&gt; SP30143     4  0.0707     0.8215 0.00 0.02 0.00 0.98
+#&gt; SP30185     3  0.2921     0.7984 0.00 0.14 0.86 0.00
+#&gt; SP30213     3  0.2011     0.8260 0.00 0.08 0.92 0.00
+#&gt; SP30332     1  0.1637     0.8419 0.94 0.00 0.00 0.06
+#&gt; SP30493     3  0.5255     0.7857 0.12 0.08 0.78 0.02
+#&gt; SP30675     1  0.5355     0.3368 0.62 0.00 0.36 0.02
+#&gt; SP30803     3  0.0000     0.8389 0.00 0.00 1.00 0.00
+#&gt; SP30843     2  0.0000     0.9542 0.00 1.00 0.00 0.00
+#&gt; SP30907     1  0.2921     0.7952 0.86 0.00 0.00 0.14
+#&gt; SP31030     2  0.2647     0.8378 0.00 0.88 0.00 0.12
+#&gt; SP31046     2  0.4713     0.4141 0.00 0.64 0.36 0.00
+#&gt; SP31126     4  0.0707     0.8063 0.02 0.00 0.00 0.98
+#&gt; SP31174     4  0.0707     0.8215 0.00 0.02 0.00 0.98
+#&gt; SP31190     3  0.5173     0.5256 0.32 0.00 0.66 0.02
+#&gt; SP31334     1  0.2345     0.8234 0.90 0.00 0.00 0.10
+#&gt; SP31422     4  0.4907     0.1541 0.42 0.00 0.00 0.58
+#&gt; SP31606     3  0.2647     0.7776 0.00 0.00 0.88 0.12
+#&gt; SP31790     1  0.3801     0.7231 0.78 0.00 0.00 0.22
+#&gt; SP31814     3  0.1411     0.8343 0.02 0.00 0.96 0.02
+#&gt; SP31854     1  0.1637     0.8419 0.94 0.00 0.00 0.06
+#&gt; SP32014     4  0.0707     0.8215 0.00 0.02 0.00 0.98
+#&gt; SP32222     2  0.0000     0.9542 0.00 1.00 0.00 0.00
+#&gt; SP3368      3  0.5006     0.7667 0.16 0.04 0.78 0.02
+#&gt; SP32662     1  0.2647     0.8116 0.88 0.00 0.00 0.12
+#&gt; SP32694     2  0.4522     0.5199 0.00 0.68 0.00 0.32
+#&gt; SP32742     4  0.0707     0.8215 0.00 0.02 0.00 0.98
+#&gt; SP32894     3  0.2335     0.8238 0.06 0.00 0.92 0.02
+#&gt; SP32958     2  0.4977     0.0764 0.00 0.54 0.46 0.00
+#&gt; SP3415      1  0.0000     0.8241 1.00 0.00 0.00 0.00
+#&gt; SP33094     1  0.1637     0.8419 0.94 0.00 0.00 0.06
+#&gt; SP33496     1  0.2921     0.8006 0.86 0.00 0.00 0.14
+#&gt; SP33544     4  0.2647     0.7465 0.12 0.00 0.00 0.88
+#&gt; SP33688     3  0.1211     0.8369 0.00 0.04 0.96 0.00
+#&gt; SP33774     3  0.1211     0.8370 0.00 0.04 0.96 0.00
+#&gt; SP33837     2  0.0000     0.9542 0.00 1.00 0.00 0.00
+#&gt; SP34005     3  0.3975     0.6934 0.00 0.24 0.76 0.00
+#&gt; SP34186     2  0.0000     0.9542 0.00 1.00 0.00 0.00
+#&gt; SP34191     2  0.0000     0.9542 0.00 1.00 0.00 0.00
+#&gt; SP34431     2  0.0000     0.9542 0.00 1.00 0.00 0.00
+#&gt; SP34452     2  0.0000     0.9542 0.00 1.00 0.00 0.00
+#&gt; SP34493     2  0.0000     0.9542 0.00 1.00 0.00 0.00
+#&gt; SP35412     2  0.4713     0.4092 0.00 0.64 0.36 0.00
+#&gt; SP35617     4  0.2921     0.7844 0.00 0.14 0.00 0.86
+#&gt; SP35849     2  0.0000     0.9542 0.00 1.00 0.00 0.00
+#&gt; SP35951     2  0.0000     0.9542 0.00 1.00 0.00 0.00
+#&gt; SP35989     2  0.0000     0.9542 0.00 1.00 0.00 0.00
+#&gt;  [ reached &#39;max&#39; / getOption(&quot;max.print&quot;) -- omitted 2498 rows ]
+</code></pre>
+
+<script>
+$('#tab-ATC-skmeans-get-classes-3-a').parent().next().next().hide();
+$('#tab-ATC-skmeans-get-classes-3-a').click(function(){
+  $('#tab-ATC-skmeans-get-classes-3-a').parent().next().next().toggle();
+  return(false);
+});
+</script>
+</div>
+
+<div id='tab-ATC-skmeans-get-classes-4'>
+<p><a id='tab-ATC-skmeans-get-classes-4-a' style='color:#0366d6' href='#'>show/hide code output</a></p>
+<pre><code class="r">cbind(get_classes(res, k = 5), get_membership(res, k = 5))
+</code></pre>
+
+<pre><code>#&gt;         class entropy silhouette   p1   p2   p3   p4   p5
+#&gt; SP2143      1  0.4182      0.354 0.60 0.00 0.00 0.40 0.00
+#&gt; SP2144      5  0.1410      0.830 0.06 0.00 0.00 0.00 0.94
+#&gt; SP2145      5  0.2280      0.819 0.00 0.00 0.12 0.00 0.88
+#&gt; SP2146      5  0.2754      0.825 0.04 0.00 0.08 0.00 0.88
+#&gt; SP2147      4  0.0609      0.817 0.02 0.00 0.00 0.98 0.00
+#&gt; SP2148      5  0.0000      0.837 0.00 0.00 0.00 0.00 1.00
+#&gt; SP2149      1  0.0000      0.890 1.00 0.00 0.00 0.00 0.00
+#&gt; SP2150      1  0.0000      0.890 1.00 0.00 0.00 0.00 0.00
+#&gt; SP2151      1  0.0000      0.890 1.00 0.00 0.00 0.00 0.00
+#&gt; SP2152      5  0.2754      0.818 0.08 0.00 0.04 0.00 0.88
+#&gt; SP2153      1  0.0000      0.890 1.00 0.00 0.00 0.00 0.00
+#&gt; SP2154      4  0.3110      0.794 0.08 0.06 0.00 0.86 0.00
+#&gt; SP2155      1  0.0000      0.890 1.00 0.00 0.00 0.00 0.00
+#&gt; SP2156      1  0.0000      0.890 1.00 0.00 0.00 0.00 0.00
+#&gt; SP2157      2  0.0000      0.937 0.00 1.00 0.00 0.00 0.00
+#&gt; SP2158      1  0.0000      0.890 1.00 0.00 0.00 0.00 0.00
+#&gt; SP2159      5  0.2020      0.792 0.00 0.00 0.10 0.00 0.90
+#&gt; SP2160      1  0.0000      0.890 1.00 0.00 0.00 0.00 0.00
+#&gt; SP22031     2  0.0000      0.937 0.00 1.00 0.00 0.00 0.00
+#&gt; SP2357      1  0.0000      0.890 1.00 0.00 0.00 0.00 0.00
+#&gt; SP22750     2  0.0000      0.937 0.00 1.00 0.00 0.00 0.00
+#&gt; SP23078     1  0.4990      0.393 0.60 0.04 0.00 0.36 0.00
+#&gt; SP2293      3  0.0000      0.764 0.00 0.00 1.00 0.00 0.00
+#&gt; SP23431     3  0.2020      0.745 0.00 0.00 0.90 0.00 0.10
+#&gt; SP23435     3  0.0000      0.764 0.00 0.00 1.00 0.00 0.00
+#&gt; SP23439     3  0.2280      0.738 0.00 0.00 0.88 0.00 0.12
+#&gt; SP23443     3  0.0000      0.764 0.00 0.00 1.00 0.00 0.00
+#&gt; SP23447     3  0.0609      0.762 0.00 0.00 0.98 0.00 0.02
+#&gt; SP23451     3  0.0000      0.764 0.00 0.00 1.00 0.00 0.00
+#&gt; SP23455     3  0.0000      0.764 0.00 0.00 1.00 0.00 0.00
+#&gt; SP23459     2  0.0000      0.937 0.00 1.00 0.00 0.00 0.00
+#&gt; SP23463     2  0.0609      0.920 0.00 0.98 0.00 0.02 0.00
+#&gt; SP23467     3  0.5247      0.717 0.00 0.14 0.72 0.02 0.12
+#&gt; SP23477     3  0.0000      0.764 0.00 0.00 1.00 0.00 0.00
+#&gt; SP23479     3  0.2873      0.734 0.00 0.00 0.86 0.02 0.12
+#&gt; SP23481     2  0.0000      0.937 0.00 1.00 0.00 0.00 0.00
+#&gt; SP23483     2  0.0000      0.937 0.00 1.00 0.00 0.00 0.00
+#&gt; SP23496     5  0.0609      0.838 0.00 0.00 0.02 0.00 0.98
+#&gt; SP23498     1  0.3291      0.788 0.84 0.00 0.00 0.04 0.12
+#&gt; SP23500     3  0.4307     -0.268 0.00 0.00 0.50 0.00 0.50
+#&gt; SP23504     4  0.0609      0.834 0.00 0.02 0.00 0.98 0.00
+#&gt; SP23506     4  0.0609      0.817 0.02 0.00 0.00 0.98 0.00
+#&gt; SP23502     1  0.1410      0.859 0.94 0.00 0.00 0.00 0.06
+#&gt; SP23622     2  0.5599      0.437 0.00 0.62 0.26 0.12 0.00
+#&gt; SP23639     3  0.1648      0.739 0.00 0.04 0.94 0.02 0.00
+#&gt; SP23739     3  0.4398      0.532 0.00 0.24 0.72 0.00 0.04
+#&gt; SP23754     3  0.1043      0.755 0.00 0.00 0.96 0.00 0.04
+#&gt; SP23775     1  0.3109      0.734 0.80 0.00 0.00 0.20 0.00
+#&gt; SP23925     4  0.2516      0.801 0.00 0.14 0.00 0.86 0.00
+#&gt; SP24135     3  0.3106      0.730 0.00 0.00 0.84 0.02 0.14
+#&gt; SP24236     5  0.0609      0.833 0.00 0.00 0.02 0.00 0.98
+#&gt; SP24301     2  0.2280      0.824 0.00 0.88 0.00 0.12 0.00
+#&gt; SP24391     2  0.4252      0.549 0.00 0.70 0.28 0.02 0.00
+#&gt; SP24565     5  0.2280      0.819 0.00 0.00 0.12 0.00 0.88
+#&gt; SP24702     5  0.2873      0.813 0.00 0.02 0.12 0.00 0.86
+#&gt; SP24708     1  0.3424      0.582 0.76 0.24 0.00 0.00 0.00
+#&gt; SP24815     3  0.6094      0.261 0.36 0.00 0.54 0.02 0.08
+#&gt; SP25350     2  0.2616      0.826 0.10 0.88 0.02 0.00 0.00
+#&gt; SP25380     5  0.6592      0.427 0.24 0.00 0.30 0.00 0.46
+#&gt; SP25494     5  0.2873      0.813 0.00 0.02 0.12 0.00 0.86
+#&gt; SP25518     5  0.2516      0.815 0.00 0.00 0.14 0.00 0.86
+#&gt; SP25833     3  0.2280      0.738 0.00 0.00 0.88 0.00 0.12
+#&gt; SP25905     4  0.3796      0.590 0.00 0.30 0.00 0.70 0.00
+#&gt; SP26439     3  0.6629      0.432 0.00 0.14 0.50 0.02 0.34
+#&gt; SP26475     3  0.3796      0.357 0.00 0.00 0.70 0.00 0.30
+#&gt; SP26499     3  0.3684      0.527 0.00 0.28 0.72 0.00 0.00
+#&gt; SP26709     2  0.0609      0.920 0.00 0.98 0.00 0.02 0.00
+#&gt; SP2731      5  0.4182      0.352 0.40 0.00 0.00 0.00 0.60
+#&gt; SP2766      5  0.0000      0.837 0.00 0.00 0.00 0.00 1.00
+#&gt; SP2781      4  0.3274      0.719 0.00 0.22 0.00 0.78 0.00
+#&gt; SP2793      1  0.0000      0.890 1.00 0.00 0.00 0.00 0.00
+#&gt; SP2799      4  0.0609      0.834 0.00 0.02 0.00 0.98 0.00
+#&gt; SP2801      1  0.0000      0.890 1.00 0.00 0.00 0.00 0.00
+#&gt; SP27603     3  0.4126      0.167 0.00 0.00 0.62 0.00 0.38
+#&gt; SP2826      1  0.0609      0.883 0.98 0.00 0.00 0.02 0.00
+#&gt; SP27825     5  0.1043      0.836 0.00 0.00 0.04 0.00 0.96
+#&gt; SP27957     1  0.1410      0.856 0.94 0.00 0.00 0.00 0.06
+#&gt; SP28041     5  0.2616      0.776 0.00 0.10 0.02 0.00 0.88
+#&gt; SP2881      1  0.0609      0.883 0.98 0.00 0.00 0.02 0.00
+#&gt; SP28275     5  0.5673      0.215 0.42 0.00 0.08 0.00 0.50
+#&gt; SP28335     4  0.4613      0.389 0.36 0.02 0.00 0.62 0.00
+#&gt; SP28581     2  0.6036      0.350 0.00 0.60 0.28 0.02 0.10
+#&gt; SP2997      4  0.0609      0.834 0.00 0.02 0.00 0.98 0.00
+#&gt; SP29331     4  0.0609      0.834 0.00 0.02 0.00 0.98 0.00
+#&gt; SP3016      1  0.0000      0.890 1.00 0.00 0.00 0.00 0.00
+#&gt; SP29559     5  0.3037      0.747 0.00 0.04 0.10 0.00 0.86
+#&gt; SP29697     2  0.0000      0.937 0.00 1.00 0.00 0.00 0.00
+#&gt; SP29914     4  0.2516      0.801 0.00 0.14 0.00 0.86 0.00
+#&gt; SP29940     3  0.4182      0.403 0.00 0.40 0.60 0.00 0.00
+#&gt; SP29987     3  0.2020      0.682 0.00 0.00 0.90 0.00 0.10
+#&gt; SP30011     2  0.7380      0.144 0.00 0.50 0.28 0.12 0.10
+#&gt; SP30071     2  0.0000      0.937 0.00 1.00 0.00 0.00 0.00
+#&gt; SP30077     1  0.0000      0.890 1.00 0.00 0.00 0.00 0.00
+#&gt; SP30083     4  0.4060      0.398 0.36 0.00 0.00 0.64 0.00
+#&gt; SP30093     1  0.4060      0.467 0.64 0.00 0.00 0.36 0.00
+#&gt; SP30113     5  0.3109      0.700 0.00 0.00 0.20 0.00 0.80
+#&gt; SP30143     4  0.0609      0.834 0.00 0.02 0.00 0.98 0.00
+#&gt; SP30185     3  0.5247      0.717 0.00 0.14 0.72 0.02 0.12
+#&gt; SP30213     3  0.2280      0.738 0.00 0.00 0.88 0.00 0.12
+#&gt; SP30332     1  0.0000      0.890 1.00 0.00 0.00 0.00 0.00
+#&gt; SP30493     5  0.1043      0.814 0.00 0.04 0.00 0.00 0.96
+#&gt; SP30675     5  0.3561      0.642 0.26 0.00 0.00 0.00 0.74
+#&gt; SP30803     3  0.2280      0.738 0.00 0.00 0.88 0.00 0.12
+#&gt; SP30843     2  0.0000      0.937 0.00 1.00 0.00 0.00 0.00
+#&gt; SP30907     1  0.0609      0.883 0.98 0.00 0.00 0.02 0.00
+#&gt; SP31030     2  0.2280      0.824 0.00 0.88 0.00 0.12 0.00
+#&gt; SP31046     3  0.5247      0.717 0.00 0.14 0.72 0.02 0.12
+#&gt; SP31126     4  0.2732      0.718 0.16 0.00 0.00 0.84 0.00
+#&gt; SP31174     4  0.0609      0.834 0.00 0.02 0.00 0.98 0.00
+#&gt; SP31190     5  0.5555      0.664 0.14 0.00 0.22 0.00 0.64
+#&gt; SP31334     1  0.0000      0.890 1.00 0.00 0.00 0.00 0.00
+#&gt; SP31422     4  0.4060      0.378 0.36 0.00 0.00 0.64 0.00
+#&gt; SP31606     3  0.5083      0.489 0.00 0.00 0.70 0.16 0.14
+#&gt; SP31790     1  0.2929      0.760 0.82 0.00 0.00 0.18 0.00
+#&gt; SP31814     5  0.3561      0.712 0.00 0.00 0.26 0.00 0.74
+#&gt; SP31854     1  0.0000      0.890 1.00 0.00 0.00 0.00 0.00
+#&gt; SP32014     4  0.0000      0.818 0.00 0.00 0.00 1.00 0.00
+#&gt; SP32222     2  0.0000      0.937 0.00 1.00 0.00 0.00 0.00
+#&gt; SP3368      5  0.3037      0.747 0.00 0.04 0.10 0.00 0.86
+#&gt; SP32662     1  0.1410      0.860 0.94 0.00 0.00 0.06 0.00
+#&gt; SP32694     2  0.3796      0.552 0.00 0.70 0.00 0.30 0.00
+#&gt; SP32742     4  0.0609      0.834 0.00 0.02 0.00 0.98 0.00
+#&gt; SP32894     5  0.0609      0.833 0.00 0.00 0.02 0.00 0.98
+#&gt; SP32958     2  0.6854      0.108 0.00 0.50 0.28 0.02 0.20
+#&gt; SP3415      1  0.0000      0.890 1.00 0.00 0.00 0.00 0.00
+#&gt;  [ reached &#39;max&#39; / getOption(&quot;max.print&quot;) -- omitted 2515 rows ]
+</code></pre>
+
+<script>
+$('#tab-ATC-skmeans-get-classes-4-a').parent().next().next().hide();
+$('#tab-ATC-skmeans-get-classes-4-a').click(function(){
+  $('#tab-ATC-skmeans-get-classes-4-a').parent().next().next().toggle();
+  return(false);
+});
+</script>
+</div>
+
+<div id='tab-ATC-skmeans-get-classes-5'>
+<p><a id='tab-ATC-skmeans-get-classes-5-a' style='color:#0366d6' href='#'>show/hide code output</a></p>
+<pre><code class="r">cbind(get_classes(res, k = 6), get_membership(res, k = 6))
+</code></pre>
+
+<pre><code>#&gt;         class entropy silhouette   p1   p2   p3   p4   p5   p6
+#&gt; SP2143      1  0.5381    0.34931 0.52 0.00 0.04 0.40 0.00 0.04
+#&gt; SP2144      5  0.2512    0.82405 0.06 0.00 0.00 0.00 0.88 0.06
+#&gt; SP2145      5  0.1556    0.81314 0.00 0.00 0.08 0.00 0.92 0.00
+#&gt; SP2146      5  0.1814    0.81201 0.00 0.00 0.10 0.00 0.90 0.00
+#&gt; SP2147      4  0.0547    0.77426 0.02 0.00 0.00 0.98 0.00 0.00
+#&gt; SP2148      5  0.1814    0.82674 0.00 0.00 0.00 0.00 0.90 0.10
+#&gt; SP2149      1  0.0000    0.83554 1.00 0.00 0.00 0.00 0.00 0.00
+#&gt; SP2150      1  0.2403    0.82916 0.90 0.00 0.04 0.02 0.00 0.04
+#&gt; SP2151      1  0.0000    0.83554 1.00 0.00 0.00 0.00 0.00 0.00
+#&gt; SP2152      5  0.3420    0.79230 0.06 0.00 0.06 0.00 0.84 0.04
+#&gt; SP2153      1  0.0000    0.83554 1.00 0.00 0.00 0.00 0.00 0.00
+#&gt; SP2154      4  0.2728    0.74125 0.10 0.04 0.00 0.86 0.00 0.00
+#&gt; SP2155      1  0.2403    0.82916 0.90 0.00 0.04 0.02 0.00 0.04
+#&gt; SP2156      1  0.3633    0.80895 0.84 0.00 0.06 0.02 0.04 0.04
+#&gt; SP2157      2  0.0000    0.94131 0.00 1.00 0.00 0.00 0.00 0.00
+#&gt; SP2158      1  0.2403    0.82916 0.90 0.00 0.04 0.02 0.00 0.04
+#&gt; SP2159      5  0.3829    0.76338 0.00 0.00 0.06 0.00 0.76 0.18
+#&gt; SP2160      1  0.0000    0.83554 1.00 0.00 0.00 0.00 0.00 0.00
+#&gt; SP22031     2  0.0000    0.94131 0.00 1.00 0.00 0.00 0.00 0.00
+#&gt; SP2357      1  0.0000    0.83554 1.00 0.00 0.00 0.00 0.00 0.00
+#&gt; SP22750     2  0.0000    0.94131 0.00 1.00 0.00 0.00 0.00 0.00
+#&gt; SP23078     1  0.4534    0.32358 0.58 0.04 0.00 0.38 0.00 0.00
+#&gt; SP2293      3  0.3309    0.78128 0.00 0.00 0.72 0.00 0.00 0.28
+#&gt; SP23431     6  0.3864   -0.34768 0.00 0.00 0.48 0.00 0.00 0.52
+#&gt; SP23435     3  0.3309    0.78128 0.00 0.00 0.72 0.00 0.00 0.28
+#&gt; SP23439     3  0.3869    0.39086 0.00 0.00 0.50 0.00 0.00 0.50
+#&gt; SP23443     3  0.3309    0.78128 0.00 0.00 0.72 0.00 0.00 0.28
+#&gt; SP23447     3  0.3409    0.75771 0.00 0.00 0.70 0.00 0.00 0.30
+#&gt; SP23451     3  0.3309    0.78128 0.00 0.00 0.72 0.00 0.00 0.28
+#&gt; SP23455     3  0.3309    0.78128 0.00 0.00 0.72 0.00 0.00 0.28
+#&gt; SP23459     2  0.0000    0.94131 0.00 1.00 0.00 0.00 0.00 0.00
+#&gt; SP23463     2  0.0547    0.91845 0.00 0.98 0.00 0.00 0.00 0.02
+#&gt; SP23467     6  0.2260    0.84258 0.00 0.14 0.00 0.00 0.00 0.86
+#&gt; SP23477     3  0.3309    0.78128 0.00 0.00 0.72 0.00 0.00 0.28
+#&gt; SP23479     6  0.2260    0.60044 0.00 0.00 0.14 0.00 0.00 0.86
+#&gt; SP23481     2  0.0000    0.94131 0.00 1.00 0.00 0.00 0.00 0.00
+#&gt; SP23483     2  0.0000    0.94131 0.00 1.00 0.00 0.00 0.00 0.00
+#&gt; SP23496     5  0.0000    0.81083 0.00 0.00 0.00 0.00 1.00 0.00
+#&gt; SP23498     1  0.5600    0.46715 0.60 0.00 0.02 0.04 0.30 0.04
+#&gt; SP23500     3  0.3309    0.49557 0.00 0.00 0.72 0.00 0.28 0.00
+#&gt; SP23504     4  0.6226    0.60578 0.00 0.02 0.18 0.62 0.08 0.10
+#&gt; SP23506     4  0.0000    0.77449 0.00 0.00 0.00 1.00 0.00 0.00
+#&gt; SP23502     1  0.2260    0.74384 0.86 0.00 0.00 0.00 0.14 0.00
+#&gt; SP23622     3  0.1807    0.62108 0.00 0.06 0.92 0.02 0.00 0.00
+#&gt; SP23639     3  0.1480    0.63195 0.00 0.04 0.94 0.02 0.00 0.00
+#&gt; SP23739     3  0.3950    0.57467 0.00 0.24 0.72 0.00 0.04 0.00
+#&gt; SP23754     3  0.4462    0.71441 0.00 0.00 0.66 0.00 0.06 0.28
+#&gt; SP23775     1  0.2793    0.69973 0.80 0.00 0.00 0.20 0.00 0.00
+#&gt; SP23925     4  0.2260    0.76661 0.00 0.14 0.00 0.86 0.00 0.00
+#&gt; SP24135     6  0.2790    0.59735 0.00 0.00 0.14 0.00 0.02 0.84
+#&gt; SP24236     5  0.2260    0.81735 0.00 0.00 0.00 0.00 0.86 0.14
+#&gt; SP24301     2  0.7658    0.15806 0.00 0.48 0.22 0.12 0.08 0.10
+#&gt; SP24391     6  0.2941    0.77661 0.00 0.22 0.00 0.00 0.00 0.78
+#&gt; SP24565     5  0.2260    0.79632 0.00 0.00 0.14 0.00 0.86 0.00
+#&gt; SP24702     5  0.3315    0.74649 0.00 0.02 0.20 0.00 0.78 0.00
+#&gt; SP24708     1  0.6846    0.34233 0.50 0.32 0.10 0.02 0.02 0.04
+#&gt; SP24815     3  0.6225    0.28667 0.16 0.00 0.60 0.02 0.04 0.18
+#&gt; SP25350     2  0.4732    0.64873 0.10 0.76 0.04 0.02 0.00 0.08
+#&gt; SP25380     5  0.7439    0.27065 0.16 0.00 0.32 0.02 0.40 0.10
+#&gt; SP25494     5  0.2581    0.79307 0.00 0.02 0.12 0.00 0.86 0.00
+#&gt; SP25518     5  0.2581    0.79460 0.00 0.00 0.12 0.00 0.86 0.02
+#&gt; SP25833     6  0.3309    0.33367 0.00 0.00 0.28 0.00 0.00 0.72
+#&gt; SP25905     4  0.8304    0.29367 0.00 0.30 0.22 0.30 0.08 0.10
+#&gt; SP26439     6  0.2260    0.84258 0.00 0.14 0.00 0.00 0.00 0.86
+#&gt; SP26475     3  0.4377    0.67463 0.00 0.00 0.72 0.00 0.16 0.12
+#&gt; SP26499     3  0.3309    0.54953 0.00 0.28 0.72 0.00 0.00 0.00
+#&gt; SP26709     2  0.0547    0.91845 0.00 0.98 0.00 0.00 0.00 0.02
+#&gt; SP2731      5  0.5706    0.47918 0.26 0.00 0.06 0.02 0.62 0.04
+#&gt; SP2766      5  0.1814    0.82674 0.00 0.00 0.00 0.00 0.90 0.10
+#&gt; SP2781      4  0.3309    0.61259 0.00 0.28 0.00 0.72 0.00 0.00
+#&gt; SP2793      1  0.0000    0.83554 1.00 0.00 0.00 0.00 0.00 0.00
+#&gt; SP2799      4  0.0547    0.78841 0.00 0.02 0.00 0.98 0.00 0.00
+#&gt; SP2801      1  0.0547    0.83629 0.98 0.00 0.00 0.02 0.00 0.00
+#&gt; SP27603     3  0.4646    0.01990 0.00 0.00 0.50 0.00 0.46 0.04
+#&gt; SP2826      1  0.0547    0.83156 0.98 0.00 0.00 0.02 0.00 0.00
+#&gt; SP27825     5  0.2260    0.81735 0.00 0.00 0.00 0.00 0.86 0.14
+#&gt; SP27957     1  0.4877    0.72953 0.74 0.00 0.06 0.02 0.14 0.04
+#&gt; SP28041     5  0.2794    0.79577 0.00 0.06 0.00 0.00 0.86 0.08
+#&gt; SP2881      1  0.0547    0.83156 0.98 0.00 0.00 0.02 0.00 0.00
+#&gt; SP28275     5  0.6851    0.26730 0.32 0.00 0.08 0.02 0.48 0.10
+#&gt; SP28335     4  0.4238    0.58453 0.16 0.00 0.04 0.76 0.00 0.04
+#&gt; SP28581     6  0.4097    0.73121 0.00 0.10 0.06 0.02 0.02 0.80
+#&gt; SP2997      4  0.0547    0.77426 0.02 0.00 0.00 0.98 0.00 0.00
+#&gt; SP29331     4  0.1807    0.78064 0.00 0.02 0.00 0.92 0.06 0.00
+#&gt; SP3016      1  0.0000    0.83554 1.00 0.00 0.00 0.00 0.00 0.00
+#&gt; SP29559     5  0.4690    0.71183 0.00 0.04 0.04 0.00 0.70 0.22
+#&gt; SP29697     2  0.2403    0.83260 0.00 0.90 0.04 0.02 0.00 0.04
+#&gt; SP29914     4  0.2260    0.76661 0.00 0.14 0.00 0.86 0.00 0.00
+#&gt; SP29940     3  0.3706    0.40148 0.00 0.38 0.62 0.00 0.00 0.00
+#&gt; SP29987     3  0.4377    0.71870 0.00 0.00 0.72 0.00 0.12 0.16
+#&gt; SP30011     6  0.1865    0.69633 0.00 0.04 0.04 0.00 0.00 0.92
+#&gt; SP30071     2  0.0000    0.94131 0.00 1.00 0.00 0.00 0.00 0.00
+#&gt; SP30077     1  0.1480    0.83464 0.94 0.00 0.00 0.02 0.00 0.04
+#&gt; SP30083     1  0.6228    0.40710 0.52 0.00 0.02 0.34 0.08 0.04
+#&gt; SP30093     4  0.5381   -0.00101 0.40 0.00 0.04 0.52 0.00 0.04
+#&gt; SP30113     5  0.4244    0.72988 0.00 0.00 0.08 0.00 0.72 0.20
+#&gt; SP30143     4  0.6472    0.57418 0.00 0.02 0.22 0.58 0.08 0.10
+#&gt; SP30185     6  0.2260    0.84258 0.00 0.14 0.00 0.00 0.00 0.86
+#&gt; SP30213     6  0.2454    0.57238 0.00 0.00 0.16 0.00 0.00 0.84
+#&gt; SP30332     1  0.2403    0.82916 0.90 0.00 0.04 0.02 0.00 0.04
+#&gt; SP30493     5  0.2631    0.80223 0.00 0.00 0.00 0.00 0.82 0.18
+#&gt; SP30675     5  0.5358    0.62451 0.20 0.00 0.04 0.02 0.68 0.06
+#&gt; SP30803     6  0.3647    0.08384 0.00 0.00 0.36 0.00 0.00 0.64
+#&gt; SP30843     2  0.0000    0.94131 0.00 1.00 0.00 0.00 0.00 0.00
+#&gt; SP30907     1  0.0547    0.83156 0.98 0.00 0.00 0.02 0.00 0.00
+#&gt; SP31030     2  0.7658    0.15806 0.00 0.48 0.22 0.12 0.08 0.10
+#&gt; SP31046     6  0.2260    0.84258 0.00 0.14 0.00 0.00 0.00 0.86
+#&gt; SP31126     4  0.5115   -0.02390 0.46 0.00 0.00 0.46 0.08 0.00
+#&gt; SP31174     4  0.0547    0.78841 0.00 0.02 0.00 0.98 0.00 0.00
+#&gt; SP31190     5  0.6242    0.54575 0.10 0.00 0.28 0.02 0.56 0.04
+#&gt; SP31334     1  0.2403    0.82916 0.90 0.00 0.04 0.02 0.00 0.04
+#&gt;  [ reached &#39;max&#39; / getOption(&quot;max.print&quot;) -- omitted 2529 rows ]
+</code></pre>
+
+<script>
+$('#tab-ATC-skmeans-get-classes-5-a').parent().next().next().hide();
+$('#tab-ATC-skmeans-get-classes-5-a').click(function(){
+  $('#tab-ATC-skmeans-get-classes-5-a').parent().next().next().toggle();
+  return(false);
+});
+</script>
+</div>
+
+<div id='tab-ATC-skmeans-get-classes-6'>
+<p><a id='tab-ATC-skmeans-get-classes-6-a' style='color:#0366d6' href='#'>show/hide code output</a></p>
+<pre><code class="r">cbind(get_classes(res, k = 7), get_membership(res, k = 7))
+</code></pre>
+
+<pre><code>#&gt;         class entropy silhouette   p1   p2   p3   p4   p5   p6   p7
+#&gt; SP2143      7  0.2422     0.5613 0.00 0.00 0.00 0.18 0.00 0.00 0.82
+#&gt; SP2144      5  0.1433     0.8064 0.08 0.00 0.00 0.00 0.92 0.00 0.00
+#&gt; SP2145      5  0.1006     0.8153 0.02 0.00 0.00 0.00 0.96 0.02 0.00
+#&gt; SP2146      5  0.2163     0.7949 0.10 0.00 0.00 0.00 0.88 0.02 0.00
+#&gt; SP2147      4  0.1433     0.7080 0.08 0.00 0.00 0.92 0.00 0.00 0.00
+#&gt; SP2148      5  0.1166     0.8201 0.00 0.00 0.00 0.00 0.94 0.06 0.00
+#&gt; SP2149      1  0.4356     0.6178 0.56 0.00 0.00 0.02 0.00 0.02 0.40
+#&gt; SP2150      7  0.0000     0.6887 0.00 0.00 0.00 0.00 0.00 0.00 1.00
+#&gt; SP2151      7  0.4070     0.0393 0.30 0.00 0.00 0.02 0.00 0.02 0.66
+#&gt; SP2152      5  0.3863     0.6604 0.04 0.00 0.00 0.00 0.74 0.02 0.20
+#&gt; SP2153      1  0.3139     0.6524 0.70 0.00 0.00 0.00 0.00 0.00 0.30
+#&gt; SP2154      4  0.2278     0.7082 0.08 0.04 0.00 0.88 0.00 0.00 0.00
+#&gt; SP2155      7  0.0863     0.6849 0.04 0.00 0.00 0.00 0.00 0.00 0.96
+#&gt; SP2156      7  0.3494     0.6351 0.12 0.00 0.00 0.00 0.06 0.02 0.80
+#&gt; SP2157      2  0.0000     0.9225 0.00 1.00 0.00 0.00 0.00 0.00 0.00
+#&gt; SP2158      7  0.0000     0.6887 0.00 0.00 0.00 0.00 0.00 0.00 1.00
+#&gt; SP2159      5  0.3630     0.7883 0.04 0.00 0.06 0.00 0.80 0.10 0.00
+#&gt; SP2160      1  0.4356     0.6178 0.56 0.00 0.00 0.02 0.00 0.02 0.40
+#&gt; SP22031     2  0.0000     0.9225 0.00 1.00 0.00 0.00 0.00 0.00 0.00
+#&gt; SP2357      1  0.4212     0.6396 0.62 0.00 0.00 0.02 0.00 0.02 0.34
+#&gt; SP22750     2  0.0000     0.9225 0.00 1.00 0.00 0.00 0.00 0.00 0.00
+#&gt; SP23078     4  0.6556    -0.3602 0.36 0.04 0.00 0.36 0.00 0.02 0.22
+#&gt; SP2293      3  0.3047     0.7685 0.00 0.00 0.72 0.00 0.00 0.28 0.00
+#&gt; SP23431     3  0.3496     0.5922 0.00 0.00 0.58 0.00 0.00 0.42 0.00
+#&gt; SP23435     3  0.2832     0.7683 0.00 0.00 0.76 0.00 0.00 0.24 0.00
+#&gt; SP23439     3  0.3755     0.6668 0.00 0.00 0.64 0.00 0.02 0.34 0.00
+#&gt; SP23443     3  0.2832     0.7683 0.00 0.00 0.76 0.00 0.00 0.24 0.00
+#&gt; SP23447     3  0.3139     0.7548 0.00 0.00 0.70 0.00 0.00 0.30 0.00
+#&gt; SP23451     3  0.2832     0.7683 0.00 0.00 0.76 0.00 0.00 0.24 0.00
+#&gt; SP23455     3  0.2832     0.7683 0.00 0.00 0.76 0.00 0.00 0.24 0.00
+#&gt; SP23459     2  0.0863     0.8869 0.00 0.96 0.04 0.00 0.00 0.00 0.00
+#&gt; SP23463     2  0.2512     0.7721 0.00 0.86 0.04 0.00 0.00 0.10 0.00
+#&gt; SP23467     6  0.2912     0.8315 0.00 0.14 0.04 0.00 0.00 0.82 0.00
+#&gt; SP23477     3  0.2832     0.7683 0.00 0.00 0.76 0.00 0.00 0.24 0.00
+#&gt; SP23479     6  0.2422     0.6015 0.00 0.00 0.18 0.00 0.00 0.82 0.00
+#&gt; SP23481     2  0.2016     0.8238 0.00 0.90 0.04 0.00 0.00 0.06 0.00
+#&gt; SP23483     2  0.0000     0.9225 0.00 1.00 0.00 0.00 0.00 0.00 0.00
+#&gt; SP23496     5  0.0504     0.8191 0.02 0.00 0.00 0.00 0.98 0.00 0.00
+#&gt; SP23498     1  0.3541     0.5477 0.80 0.00 0.00 0.00 0.08 0.02 0.10
+#&gt; SP23500     3  0.3519     0.5625 0.00 0.00 0.74 0.00 0.22 0.04 0.00
+#&gt; SP23504     4  0.6799     0.3820 0.28 0.02 0.20 0.42 0.00 0.08 0.00
+#&gt; SP23506     4  0.0000     0.7336 0.00 0.00 0.00 1.00 0.00 0.00 0.00
+#&gt; SP23502     1  0.4356     0.4976 0.56 0.00 0.00 0.00 0.02 0.02 0.40
+#&gt; SP23622     3  0.1664     0.6230 0.00 0.06 0.92 0.02 0.00 0.00 0.00
+#&gt; SP23639     3  0.0504     0.6494 0.00 0.00 0.98 0.02 0.00 0.00 0.00
+#&gt; SP23739     3  0.3991     0.5958 0.00 0.22 0.72 0.00 0.04 0.02 0.00
+#&gt; SP23754     3  0.5687     0.6328 0.02 0.00 0.56 0.00 0.14 0.26 0.02
+#&gt; SP23775     1  0.4990     0.5696 0.58 0.00 0.00 0.20 0.00 0.00 0.22
+#&gt; SP23925     4  0.2081     0.7401 0.00 0.14 0.00 0.86 0.00 0.00 0.00
+#&gt; SP24135     6  0.3199     0.5717 0.00 0.00 0.14 0.00 0.06 0.80 0.00
+#&gt; SP24236     5  0.2081     0.7980 0.00 0.00 0.00 0.00 0.86 0.14 0.00
+#&gt; SP24301     2  0.7859    -0.2311 0.26 0.30 0.22 0.12 0.00 0.10 0.00
+#&gt; SP24391     6  0.3086     0.8190 0.00 0.16 0.04 0.00 0.00 0.80 0.00
+#&gt; SP24565     5  0.2081     0.7932 0.00 0.00 0.14 0.00 0.86 0.00 0.00
+#&gt; SP24702     5  0.4249     0.6653 0.02 0.02 0.24 0.00 0.70 0.02 0.00
+#&gt; SP24708     7  0.3052     0.4740 0.00 0.20 0.00 0.00 0.02 0.00 0.78
+#&gt; SP24815     7  0.4569     0.5398 0.00 0.00 0.18 0.00 0.08 0.04 0.70
+#&gt; SP25350     7  0.4108     0.3492 0.00 0.28 0.00 0.00 0.00 0.06 0.66
+#&gt; SP25380     7  0.5166     0.4731 0.02 0.00 0.20 0.00 0.08 0.04 0.66
+#&gt; SP25494     5  0.3722     0.7278 0.00 0.02 0.18 0.00 0.76 0.00 0.04
+#&gt; SP25518     5  0.2376     0.7901 0.00 0.00 0.12 0.00 0.86 0.02 0.00
+#&gt; SP25833     6  0.5190     0.0404 0.00 0.00 0.30 0.00 0.18 0.52 0.00
+#&gt; SP25905     2  0.7859    -0.2311 0.26 0.30 0.22 0.12 0.00 0.10 0.00
+#&gt; SP26439     6  0.2569     0.8211 0.00 0.14 0.02 0.00 0.00 0.84 0.00
+#&gt; SP26475     3  0.3985     0.6275 0.00 0.00 0.72 0.00 0.18 0.10 0.00
+#&gt; SP26499     3  0.2832     0.5798 0.00 0.24 0.76 0.00 0.00 0.00 0.00
+#&gt; SP26709     2  0.2512     0.7721 0.00 0.86 0.04 0.00 0.00 0.10 0.00
+#&gt; SP2731      7  0.4264     0.5255 0.06 0.00 0.00 0.00 0.22 0.02 0.70
+#&gt; SP2766      5  0.0000     0.8177 0.00 0.00 0.00 0.00 1.00 0.00 0.00
+#&gt; SP2781      4  0.4121     0.6024 0.00 0.20 0.00 0.70 0.00 0.00 0.10
+#&gt; SP2793      1  0.4356     0.6178 0.56 0.00 0.00 0.02 0.00 0.02 0.40
+#&gt; SP2799      4  0.0504     0.7500 0.00 0.02 0.00 0.98 0.00 0.00 0.00
+#&gt; SP2801      1  0.3558     0.4356 0.52 0.00 0.00 0.00 0.00 0.00 0.48
+#&gt; SP27603     5  0.4487     0.2487 0.00 0.00 0.42 0.00 0.52 0.06 0.00
+#&gt; SP2826      1  0.4778     0.6385 0.58 0.00 0.00 0.06 0.00 0.02 0.34
+#&gt; SP27825     5  0.2081     0.7980 0.00 0.00 0.00 0.00 0.86 0.14 0.00
+#&gt; SP27957     7  0.3765     0.6198 0.10 0.00 0.00 0.00 0.10 0.02 0.78
+#&gt; SP28041     5  0.2081     0.7980 0.00 0.00 0.00 0.00 0.86 0.14 0.00
+#&gt; SP2881      1  0.4901     0.5938 0.52 0.00 0.00 0.06 0.00 0.02 0.40
+#&gt; SP28275     7  0.4305     0.4839 0.04 0.00 0.02 0.00 0.28 0.00 0.66
+#&gt; SP28335     7  0.3413     0.3749 0.00 0.00 0.00 0.38 0.00 0.00 0.62
+#&gt; SP28581     6  0.5295     0.4085 0.00 0.08 0.00 0.00 0.04 0.54 0.34
+#&gt; SP2997      4  0.0000     0.7336 0.00 0.00 0.00 1.00 0.00 0.00 0.00
+#&gt; SP29331     4  0.3186     0.6655 0.22 0.02 0.00 0.76 0.00 0.00 0.00
+#&gt; SP3016      1  0.4356     0.6178 0.56 0.00 0.00 0.02 0.00 0.02 0.40
+#&gt; SP29559     5  0.5536     0.6405 0.06 0.04 0.00 0.00 0.66 0.14 0.10
+#&gt; SP29697     2  0.3562     0.0145 0.00 0.50 0.00 0.00 0.00 0.00 0.50
+#&gt; SP29914     4  0.2081     0.7401 0.00 0.14 0.00 0.86 0.00 0.00 0.00
+#&gt; SP29940     3  0.3517     0.5157 0.00 0.28 0.70 0.00 0.00 0.02 0.00
+#&gt; SP29987     3  0.3835     0.6458 0.00 0.00 0.74 0.00 0.16 0.10 0.00
+#&gt; SP30011     6  0.2912     0.6575 0.00 0.04 0.14 0.00 0.00 0.82 0.00
+#&gt; SP30071     2  0.2016     0.8357 0.00 0.90 0.04 0.00 0.00 0.06 0.00
+#&gt; SP30077     7  0.2572     0.4770 0.20 0.00 0.00 0.00 0.00 0.00 0.80
+#&gt; SP30083     1  0.4850     0.0731 0.56 0.00 0.00 0.12 0.00 0.00 0.32
+#&gt; SP30093     7  0.3459     0.3582 0.00 0.00 0.00 0.40 0.00 0.00 0.60
+#&gt; SP30113     5  0.4033     0.7014 0.00 0.00 0.08 0.00 0.70 0.22 0.00
+#&gt; SP30143     4  0.6867     0.3647 0.28 0.02 0.22 0.40 0.00 0.08 0.00
+#&gt; SP30185     6  0.2081     0.8278 0.00 0.14 0.00 0.00 0.00 0.86 0.00
+#&gt; SP30213     6  0.2422     0.5343 0.00 0.00 0.18 0.00 0.00 0.82 0.00
+#&gt; SP30332     7  0.1166     0.6475 0.06 0.00 0.00 0.00 0.00 0.00 0.94
+#&gt;  [ reached &#39;max&#39; / getOption(&quot;max.print&quot;) -- omitted 2540 rows ]
+</code></pre>
+
+<script>
+$('#tab-ATC-skmeans-get-classes-6-a').parent().next().next().hide();
+$('#tab-ATC-skmeans-get-classes-6-a').click(function(){
+  $('#tab-ATC-skmeans-get-classes-6-a').parent().next().next().toggle();
+  return(false);
+});
+</script>
+</div>
+
+<div id='tab-ATC-skmeans-get-classes-7'>
+<p><a id='tab-ATC-skmeans-get-classes-7-a' style='color:#0366d6' href='#'>show/hide code output</a></p>
+<pre><code class="r">cbind(get_classes(res, k = 8), get_membership(res, k = 8))
+</code></pre>
+
+<pre><code>#&gt;         class entropy silhouette   p1   p2   p3   p4   p5   p6   p7   p8
+#&gt; SP2143      7  0.4723    0.49976 0.34 0.00 0.00 0.14 0.00 0.00 0.52 0.00
+#&gt; SP2144      5  0.1275    0.70664 0.04 0.00 0.00 0.00 0.94 0.00 0.00 0.02
+#&gt; SP2145      5  0.3554    0.67691 0.00 0.00 0.08 0.00 0.80 0.02 0.02 0.08
+#&gt; SP2146      5  0.4841    0.59047 0.00 0.00 0.10 0.00 0.64 0.00 0.06 0.20
+#&gt; SP2147      4  0.3954    0.67190 0.04 0.00 0.00 0.78 0.00 0.08 0.06 0.04
+#&gt; SP2148      5  0.0000    0.71661 0.00 0.00 0.00 0.00 1.00 0.00 0.00 0.00
+#&gt; SP2149      1  0.0471    0.61940 0.98 0.00 0.00 0.00 0.00 0.00 0.02 0.00
+#&gt; SP2150      7  0.2938    0.65694 0.30 0.00 0.00 0.00 0.00 0.00 0.70 0.00
+#&gt; SP2151      1  0.3142   -0.03668 0.64 0.00 0.00 0.00 0.00 0.00 0.36 0.00
+#&gt; SP2152      5  0.7034    0.30790 0.00 0.00 0.10 0.02 0.40 0.04 0.26 0.18
+#&gt; SP2153      1  0.3951    0.62514 0.76 0.00 0.02 0.00 0.00 0.02 0.08 0.12
+#&gt; SP2154      4  0.1947    0.69599 0.14 0.00 0.00 0.86 0.00 0.00 0.00 0.00
+#&gt; SP2155      7  0.1765    0.67614 0.12 0.00 0.00 0.00 0.00 0.00 0.88 0.00
+#&gt; SP2156      7  0.5744    0.40008 0.00 0.00 0.10 0.02 0.04 0.04 0.60 0.20
+#&gt; SP2157      2  0.0000    0.94231 0.00 1.00 0.00 0.00 0.00 0.00 0.00 0.00
+#&gt; SP2158      7  0.2756    0.67484 0.26 0.00 0.00 0.00 0.00 0.00 0.74 0.00
+#&gt; SP2159      5  0.6064    0.57026 0.00 0.00 0.26 0.00 0.44 0.04 0.02 0.24
+#&gt; SP2160      1  0.0941    0.61886 0.96 0.00 0.00 0.02 0.00 0.00 0.02 0.00
+#&gt; SP22031     2  0.0000    0.94231 0.00 1.00 0.00 0.00 0.00 0.00 0.00 0.00
+#&gt; SP2357      1  0.2132    0.62835 0.88 0.00 0.00 0.00 0.00 0.00 0.08 0.04
+#&gt; SP22750     2  0.0471    0.92276 0.00 0.98 0.00 0.00 0.00 0.02 0.00 0.00
+#&gt; SP23078     1  0.2756    0.50202 0.74 0.00 0.00 0.26 0.00 0.00 0.00 0.00
+#&gt; SP2293      3  0.2756    0.75264 0.00 0.00 0.74 0.00 0.00 0.26 0.00 0.00
+#&gt; SP23431     6  0.4105   -0.09289 0.00 0.00 0.42 0.00 0.02 0.54 0.00 0.02
+#&gt; SP23435     3  0.2756    0.75578 0.00 0.00 0.74 0.00 0.00 0.26 0.00 0.00
+#&gt; SP23439     3  0.5459    0.52626 0.00 0.00 0.56 0.00 0.08 0.22 0.00 0.14
+#&gt; SP23443     3  0.2852    0.75051 0.00 0.00 0.72 0.00 0.00 0.28 0.00 0.00
+#&gt; SP23447     3  0.3198    0.74337 0.00 0.00 0.72 0.00 0.02 0.26 0.00 0.00
+#&gt; SP23451     3  0.2852    0.75051 0.00 0.00 0.72 0.00 0.00 0.28 0.00 0.00
+#&gt; SP23455     3  0.3083    0.70142 0.00 0.00 0.66 0.00 0.00 0.34 0.00 0.00
+#&gt; SP23459     2  0.2534    0.67673 0.00 0.78 0.00 0.00 0.00 0.22 0.00 0.00
+#&gt; SP23463     2  0.3329    0.00661 0.00 0.52 0.00 0.00 0.00 0.48 0.00 0.00
+#&gt; SP23467     6  0.1947    0.77218 0.00 0.14 0.00 0.00 0.00 0.86 0.00 0.00
+#&gt; SP23477     3  0.2852    0.75051 0.00 0.00 0.72 0.00 0.00 0.28 0.00 0.00
+#&gt; SP23479     6  0.3537    0.41108 0.00 0.02 0.24 0.00 0.02 0.72 0.00 0.00
+#&gt; SP23481     2  0.3237    0.28060 0.00 0.60 0.00 0.00 0.00 0.40 0.00 0.00
+#&gt; SP23483     2  0.0000    0.94231 0.00 1.00 0.00 0.00 0.00 0.00 0.00 0.00
+#&gt; SP23496     5  0.0000    0.71661 0.00 0.00 0.00 0.00 1.00 0.00 0.00 0.00
+#&gt; SP23498     1  0.6808    0.46819 0.38 0.00 0.02 0.02 0.00 0.08 0.22 0.28
+#&gt; SP23500     3  0.1947    0.61816 0.00 0.00 0.86 0.00 0.14 0.00 0.00 0.00
+#&gt; SP23504     4  0.5659    0.06811 0.00 0.02 0.00 0.44 0.00 0.08 0.06 0.40
+#&gt; SP23506     4  0.0471    0.74359 0.00 0.00 0.00 0.98 0.00 0.00 0.02 0.00
+#&gt; SP23502     1  0.6261    0.50437 0.48 0.00 0.02 0.02 0.04 0.00 0.24 0.20
+#&gt; SP23622     3  0.4427    0.55872 0.00 0.06 0.68 0.02 0.00 0.02 0.00 0.22
+#&gt; SP23639     3  0.3735    0.61939 0.00 0.00 0.72 0.02 0.00 0.04 0.00 0.22
+#&gt; SP23739     3  0.4138    0.63622 0.00 0.16 0.72 0.00 0.04 0.08 0.00 0.00
+#&gt; SP23754     3  0.6078    0.38575 0.00 0.00 0.52 0.00 0.04 0.16 0.06 0.22
+#&gt; SP23775     1  0.4650    0.57797 0.66 0.00 0.00 0.20 0.00 0.00 0.08 0.06
+#&gt; SP23925     4  0.1947    0.73724 0.00 0.14 0.00 0.86 0.00 0.00 0.00 0.00
+#&gt; SP24135     6  0.6271    0.31693 0.00 0.00 0.20 0.00 0.14 0.42 0.00 0.24
+#&gt; SP24236     5  0.1947    0.67470 0.00 0.00 0.00 0.00 0.86 0.14 0.00 0.00
+#&gt; SP24301     8  0.4538    0.67360 0.00 0.32 0.00 0.12 0.00 0.00 0.00 0.56
+#&gt; SP24391     6  0.1947    0.77218 0.00 0.14 0.00 0.00 0.00 0.86 0.00 0.00
+#&gt; SP24565     5  0.2224    0.67970 0.00 0.00 0.12 0.00 0.86 0.00 0.00 0.02
+#&gt; SP24702     3  0.5668   -0.20507 0.00 0.00 0.44 0.00 0.36 0.02 0.02 0.16
+#&gt; SP24708     7  0.3303    0.50229 0.02 0.20 0.02 0.00 0.00 0.00 0.76 0.00
+#&gt; SP24815     7  0.3616    0.61833 0.00 0.00 0.02 0.00 0.02 0.02 0.76 0.18
+#&gt; SP25350     7  0.3431    0.48516 0.00 0.20 0.00 0.00 0.00 0.06 0.74 0.00
+#&gt; SP25380     7  0.2856    0.60364 0.00 0.00 0.20 0.00 0.02 0.00 0.78 0.00
+#&gt; SP25494     5  0.4106    0.42017 0.00 0.02 0.30 0.00 0.64 0.00 0.00 0.04
+#&gt; SP25518     5  0.2224    0.67460 0.00 0.00 0.12 0.00 0.86 0.02 0.00 0.00
+#&gt; SP25833     5  0.5379    0.48103 0.00 0.00 0.28 0.00 0.52 0.04 0.00 0.16
+#&gt; SP25905     8  0.4622    0.66885 0.00 0.30 0.00 0.14 0.00 0.00 0.00 0.56
+#&gt; SP26439     6  0.5591    0.68140 0.00 0.12 0.10 0.00 0.02 0.60 0.00 0.16
+#&gt; SP26475     3  0.2267    0.55373 0.00 0.00 0.82 0.00 0.18 0.00 0.00 0.00
+#&gt; SP26499     3  0.3404    0.53010 0.00 0.24 0.72 0.00 0.00 0.04 0.00 0.00
+#&gt; SP26709     2  0.3333   -0.07870 0.00 0.50 0.00 0.00 0.00 0.50 0.00 0.00
+#&gt; SP2731      7  0.6389    0.27880 0.00 0.00 0.10 0.02 0.16 0.02 0.52 0.18
+#&gt; SP2766      5  0.0000    0.71661 0.00 0.00 0.00 0.00 1.00 0.00 0.00 0.00
+#&gt; SP2781      4  0.4882    0.48370 0.02 0.18 0.00 0.60 0.00 0.00 0.20 0.00
+#&gt; SP2793      1  0.0471    0.61940 0.98 0.00 0.00 0.00 0.00 0.00 0.02 0.00
+#&gt; SP2799      4  0.0471    0.75454 0.00 0.02 0.00 0.98 0.00 0.00 0.00 0.00
+#&gt; SP2801      1  0.5582    0.30380 0.44 0.00 0.02 0.02 0.00 0.00 0.38 0.14
+#&gt; SP27603     5  0.4040    0.45923 0.00 0.00 0.38 0.00 0.58 0.02 0.00 0.02
+#&gt; SP2826      1  0.0471    0.61940 0.98 0.00 0.00 0.00 0.00 0.00 0.02 0.00
+#&gt; SP27825     5  0.1947    0.67470 0.00 0.00 0.00 0.00 0.86 0.14 0.00 0.00
+#&gt; SP27957     7  0.3369    0.62377 0.04 0.00 0.04 0.02 0.00 0.00 0.82 0.08
+#&gt; SP28041     5  0.1947    0.67470 0.00 0.00 0.00 0.00 0.86 0.14 0.00 0.00
+#&gt; SP2881      1  0.1275    0.58936 0.94 0.00 0.00 0.04 0.00 0.00 0.02 0.00
+#&gt; SP28275     7  0.4188    0.56409 0.00 0.00 0.14 0.00 0.10 0.00 0.72 0.04
+#&gt; SP28335     7  0.2938    0.53851 0.00 0.00 0.00 0.30 0.00 0.00 0.70 0.00
+#&gt; SP28581     6  0.5782    0.34769 0.00 0.10 0.06 0.00 0.00 0.46 0.36 0.02
+#&gt; SP2997      4  0.0471    0.74447 0.02 0.00 0.00 0.98 0.00 0.00 0.00 0.00
+#&gt; SP29331     4  0.3319    0.68447 0.00 0.02 0.00 0.82 0.00 0.08 0.02 0.06
+#&gt; SP3016      1  0.0000    0.61452 1.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00
+#&gt; SP29559     5  0.8212    0.30958 0.00 0.04 0.10 0.02 0.32 0.14 0.18 0.20
+#&gt; SP29697     7  0.3318    0.05699 0.00 0.46 0.00 0.00 0.00 0.00 0.54 0.00
+#&gt; SP29914     4  0.1947    0.73724 0.00 0.14 0.00 0.86 0.00 0.00 0.00 0.00
+#&gt; SP29940     3  0.4849    0.40923 0.00 0.22 0.54 0.00 0.00 0.24 0.00 0.00
+#&gt; SP29987     3  0.1765    0.62623 0.00 0.00 0.88 0.00 0.12 0.00 0.00 0.00
+#&gt;  [ reached &#39;max&#39; / getOption(&quot;max.print&quot;) -- omitted 2550 rows ]
+</code></pre>
+
+<script>
+$('#tab-ATC-skmeans-get-classes-7-a').parent().next().next().hide();
+$('#tab-ATC-skmeans-get-classes-7-a').click(function(){
+  $('#tab-ATC-skmeans-get-classes-7-a').parent().next().next().toggle();
+  return(false);
+});
+</script>
+</div>
+
+<div id='tab-ATC-skmeans-get-classes-8'>
+<p><a id='tab-ATC-skmeans-get-classes-8-a' style='color:#0366d6' href='#'>show/hide code output</a></p>
+<pre><code class="r">cbind(get_classes(res, k = 9), get_membership(res, k = 9))
+</code></pre>
+
+<pre><code>#&gt;         class entropy silhouette   p1   p2   p3   p4   p5   p6   p7   p8   p9
+#&gt; SP2143      7  0.4106    0.53157 0.06 0.00 0.00 0.10 0.00 0.00 0.74 0.08 0.02
+#&gt; SP2144      5  0.2758    0.73080 0.08 0.00 0.00 0.00 0.84 0.00 0.00 0.04 0.04
+#&gt; SP2145      5  0.2708    0.69594 0.08 0.00 0.00 0.00 0.82 0.00 0.00 0.00 0.10
+#&gt; SP2146      1  0.4545   -0.14485 0.46 0.00 0.00 0.00 0.44 0.00 0.00 0.02 0.08
+#&gt; SP2147      4  0.3778    0.16521 0.04 0.00 0.00 0.52 0.00 0.00 0.00 0.44 0.00
+#&gt; SP2148      5  0.1269    0.74888 0.00 0.00 0.00 0.00 0.92 0.00 0.00 0.00 0.08
+#&gt; SP2149      1  0.5619    0.12530 0.36 0.00 0.02 0.00 0.00 0.00 0.24 0.36 0.02
+#&gt; SP2150      7  0.0000    0.69077 0.00 0.00 0.00 0.00 0.00 0.00 1.00 0.00 0.00
+#&gt; SP2151      7  0.4709    0.11347 0.28 0.00 0.02 0.00 0.00 0.00 0.56 0.14 0.00
+#&gt; SP2152      1  0.5063    0.04522 0.50 0.00 0.00 0.00 0.34 0.00 0.10 0.00 0.06
+#&gt; SP2153      8  0.4563    0.04466 0.24 0.00 0.02 0.00 0.00 0.00 0.14 0.60 0.00
+#&gt; SP2154      4  0.2222    0.65765 0.06 0.00 0.02 0.88 0.00 0.00 0.00 0.04 0.00
+#&gt; SP2155      7  0.1473    0.68679 0.02 0.00 0.00 0.00 0.00 0.00 0.92 0.06 0.00
+#&gt; SP2156      1  0.5626    0.08272 0.52 0.00 0.00 0.00 0.08 0.00 0.28 0.06 0.06
+#&gt; SP2157      2  0.0000    0.86665 0.00 1.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00
+#&gt; SP2158      7  0.0000    0.69077 0.00 0.00 0.00 0.00 0.00 0.00 1.00 0.00 0.00
+#&gt; SP2159      9  0.4473    0.49737 0.10 0.00 0.02 0.00 0.20 0.02 0.00 0.00 0.66
+#&gt; SP2160      1  0.5262    0.12268 0.38 0.00 0.00 0.00 0.00 0.00 0.24 0.36 0.02
+#&gt; SP22031     2  0.0000    0.86665 0.00 1.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00
+#&gt; SP2357      8  0.5449   -0.07584 0.36 0.00 0.02 0.00 0.00 0.00 0.18 0.42 0.02
+#&gt; SP22750     2  0.0764    0.83443 0.00 0.96 0.00 0.00 0.00 0.04 0.00 0.00 0.00
+#&gt; SP23078     4  0.6564   -0.26969 0.28 0.00 0.02 0.28 0.00 0.00 0.18 0.24 0.00
+#&gt; SP2293      3  0.3193    0.73363 0.00 0.00 0.68 0.00 0.00 0.30 0.00 0.00 0.02
+#&gt; SP23431     3  0.4318    0.41839 0.00 0.00 0.46 0.00 0.00 0.44 0.00 0.00 0.10
+#&gt; SP23435     3  0.2929    0.75817 0.00 0.00 0.74 0.00 0.00 0.24 0.00 0.00 0.02
+#&gt; SP23439     9  0.5431    0.38588 0.00 0.00 0.20 0.00 0.06 0.26 0.00 0.00 0.48
+#&gt; SP23443     3  0.2608    0.75701 0.00 0.00 0.74 0.00 0.00 0.26 0.00 0.00 0.00
+#&gt; SP23447     3  0.3478    0.71934 0.00 0.00 0.66 0.00 0.00 0.30 0.00 0.00 0.04
+#&gt; SP23451     3  0.2608    0.75701 0.00 0.00 0.74 0.00 0.00 0.26 0.00 0.00 0.00
+#&gt; SP23455     3  0.3096    0.62659 0.00 0.00 0.58 0.00 0.00 0.42 0.00 0.00 0.00
+#&gt; SP23459     2  0.3151   -0.06048 0.00 0.52 0.00 0.00 0.00 0.48 0.00 0.00 0.00
+#&gt; SP23463     6  0.3022    0.41383 0.00 0.38 0.00 0.00 0.00 0.62 0.00 0.00 0.00
+#&gt; SP23467     6  0.2706    0.66471 0.00 0.14 0.02 0.00 0.00 0.82 0.00 0.00 0.02
+#&gt; SP23477     3  0.2608    0.75701 0.00 0.00 0.74 0.00 0.00 0.26 0.00 0.00 0.00
+#&gt; SP23479     6  0.3556    0.18078 0.00 0.00 0.26 0.00 0.00 0.68 0.00 0.00 0.06
+#&gt; SP23481     6  0.3022    0.46110 0.00 0.38 0.00 0.00 0.00 0.62 0.00 0.00 0.00
+#&gt; SP23483     2  0.0000    0.86665 0.00 1.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00
+#&gt; SP23496     5  0.1843    0.74501 0.00 0.00 0.00 0.00 0.86 0.00 0.00 0.00 0.14
+#&gt; SP23498     8  0.3789    0.04080 0.46 0.00 0.00 0.00 0.04 0.00 0.00 0.50 0.00
+#&gt; SP23500     3  0.3402    0.53581 0.00 0.00 0.68 0.00 0.04 0.00 0.00 0.00 0.28
+#&gt; SP23504     8  0.5265    0.08782 0.08 0.02 0.02 0.38 0.00 0.00 0.00 0.48 0.02
+#&gt; SP23506     4  0.2104    0.62764 0.00 0.00 0.00 0.86 0.00 0.00 0.02 0.12 0.00
+#&gt; SP23502     1  0.4125    0.10458 0.54 0.00 0.00 0.00 0.02 0.00 0.04 0.40 0.00
+#&gt; SP23622     3  0.3818    0.46037 0.00 0.06 0.76 0.02 0.00 0.04 0.00 0.00 0.12
+#&gt; SP23639     3  0.1647    0.61998 0.00 0.00 0.92 0.02 0.00 0.04 0.00 0.00 0.02
+#&gt; SP23739     3  0.3624    0.71236 0.00 0.08 0.74 0.00 0.02 0.16 0.00 0.00 0.00
+#&gt; SP23754     9  0.6350    0.39499 0.16 0.00 0.16 0.00 0.08 0.12 0.00 0.00 0.48
+#&gt; SP23775     8  0.6159    0.06623 0.28 0.00 0.02 0.20 0.00 0.00 0.10 0.40 0.00
+#&gt; SP23925     4  0.1843    0.73350 0.00 0.14 0.00 0.86 0.00 0.00 0.00 0.00 0.00
+#&gt; SP24135     9  0.3877    0.64672 0.00 0.00 0.02 0.00 0.06 0.24 0.00 0.00 0.68
+#&gt; SP24236     5  0.2275    0.68182 0.00 0.00 0.02 0.00 0.84 0.14 0.00 0.00 0.00
+#&gt; SP24301     2  0.8184   -0.20143 0.08 0.28 0.22 0.12 0.00 0.10 0.00 0.04 0.16
+#&gt; SP24391     6  0.1843    0.67749 0.00 0.14 0.00 0.00 0.00 0.86 0.00 0.00 0.00
+#&gt; SP24565     5  0.2985    0.71860 0.00 0.00 0.16 0.00 0.78 0.00 0.00 0.00 0.06
+#&gt; SP24702     1  0.6003   -0.21995 0.34 0.00 0.22 0.00 0.32 0.00 0.00 0.00 0.12
+#&gt; SP24708     7  0.3703    0.50621 0.06 0.16 0.00 0.00 0.00 0.04 0.74 0.00 0.00
+#&gt; SP24815     7  0.4065    0.60639 0.06 0.00 0.06 0.00 0.02 0.00 0.74 0.00 0.12
+#&gt; SP25350     7  0.4651    0.57465 0.04 0.04 0.04 0.00 0.00 0.10 0.72 0.00 0.06
+#&gt; SP25380     7  0.3977    0.58059 0.06 0.00 0.14 0.00 0.02 0.00 0.74 0.00 0.04
+#&gt; SP25494     5  0.3777    0.63535 0.00 0.02 0.22 0.00 0.70 0.00 0.00 0.00 0.06
+#&gt; SP25518     5  0.2275    0.71473 0.00 0.00 0.14 0.00 0.84 0.02 0.00 0.00 0.00
+#&gt; SP25833     9  0.4232    0.58454 0.00 0.00 0.10 0.00 0.18 0.04 0.00 0.00 0.68
+#&gt; SP25905     2  0.8150   -0.18398 0.08 0.30 0.22 0.10 0.00 0.08 0.00 0.06 0.16
+#&gt; SP26439     9  0.4421    0.49254 0.02 0.10 0.00 0.00 0.00 0.28 0.00 0.00 0.60
+#&gt; SP26475     3  0.3347    0.60307 0.00 0.00 0.72 0.00 0.02 0.02 0.00 0.00 0.24
+#&gt; SP26499     3  0.3221    0.53593 0.00 0.24 0.72 0.00 0.00 0.04 0.00 0.00 0.00
+#&gt; SP26709     6  0.3022    0.41383 0.00 0.38 0.00 0.00 0.00 0.62 0.00 0.00 0.00
+#&gt; SP2731      1  0.4939   -0.04010 0.50 0.00 0.00 0.00 0.08 0.00 0.36 0.00 0.06
+#&gt; SP2766      5  0.1480    0.74955 0.00 0.00 0.00 0.00 0.90 0.00 0.00 0.00 0.10
+#&gt; SP2781      4  0.4316    0.47629 0.00 0.18 0.00 0.60 0.00 0.00 0.22 0.00 0.00
+#&gt; SP2793      8  0.5614   -0.12196 0.34 0.00 0.02 0.00 0.00 0.00 0.24 0.38 0.02
+#&gt; SP2799      4  0.0446    0.71140 0.00 0.02 0.00 0.98 0.00 0.00 0.00 0.00 0.00
+#&gt; SP2801      1  0.4858   -0.00986 0.40 0.00 0.00 0.00 0.00 0.00 0.38 0.22 0.00
+#&gt; SP27603     5  0.5024    0.35737 0.00 0.00 0.18 0.00 0.48 0.02 0.00 0.00 0.32
+#&gt; SP2826      8  0.5614   -0.11964 0.34 0.00 0.02 0.00 0.00 0.00 0.24 0.38 0.02
+#&gt; SP27825     5  0.2275    0.68182 0.00 0.00 0.02 0.00 0.84 0.14 0.00 0.00 0.00
+#&gt; SP27957     7  0.4148    0.32394 0.42 0.00 0.00 0.00 0.02 0.00 0.52 0.00 0.04
+#&gt; SP28041     5  0.2275    0.68182 0.00 0.00 0.02 0.00 0.84 0.14 0.00 0.00 0.00
+#&gt; SP2881      1  0.6174    0.15000 0.38 0.00 0.02 0.04 0.00 0.00 0.30 0.24 0.02
+#&gt; SP28275     7  0.4421    0.52505 0.16 0.00 0.00 0.00 0.14 0.00 0.66 0.00 0.04
+#&gt; SP28335     7  0.2608    0.57777 0.00 0.00 0.00 0.26 0.00 0.00 0.74 0.00 0.00
+#&gt; SP28581     6  0.6214    0.07655 0.04 0.06 0.02 0.00 0.04 0.42 0.38 0.00 0.04
+#&gt; SP2997      4  0.0446    0.69058 0.00 0.00 0.00 0.98 0.00 0.00 0.00 0.02 0.00
+#&gt;  [ reached &#39;max&#39; / getOption(&quot;max.print&quot;) -- omitted 2557 rows ]
+</code></pre>
+
+<script>
+$('#tab-ATC-skmeans-get-classes-8-a').parent().next().next().hide();
+$('#tab-ATC-skmeans-get-classes-8-a').click(function(){
+  $('#tab-ATC-skmeans-get-classes-8-a').parent().next().next().toggle();
+  return(false);
+});
+</script>
+</div>
+
+<div id='tab-ATC-skmeans-get-classes-9'>
+<p><a id='tab-ATC-skmeans-get-classes-9-a' style='color:#0366d6' href='#'>show/hide code output</a></p>
+<pre><code class="r">cbind(get_classes(res, k = 10), get_membership(res, k = 10))
+</code></pre>
+
+<pre><code>#&gt;         class entropy silhouette   p1   p2   p3   p4   p5   p6   p7   p8   p9  p10
+#&gt; SP2143      7  0.4800     0.3801 0.00 0.00 0.00 0.04 0.00 0.00 0.52 0.14 0.00 0.30
+#&gt; SP2144      5  0.2121     0.7184 0.00 0.00 0.00 0.00 0.88 0.00 0.00 0.04 0.02 0.06
+#&gt; SP2145      5  0.3165     0.5753 0.26 0.00 0.00 0.00 0.70 0.00 0.00 0.00 0.04 0.00
+#&gt; SP2146      1  0.5042     0.3859 0.52 0.00 0.02 0.00 0.34 0.00 0.06 0.04 0.00 0.02
+#&gt; SP2147      8  0.2923     0.4668 0.00 0.00 0.00 0.40 0.00 0.00 0.00 0.60 0.00 0.00
+#&gt; SP2148      5  0.0986     0.7565 0.00 0.00 0.00 0.00 0.94 0.00 0.00 0.00 0.06 0.00
+#&gt; SP2149     10  0.0850     0.6567 0.02 0.00 0.00 0.00 0.02 0.00 0.00 0.00 0.00 0.96
+#&gt; SP2150      7  0.2047     0.7144 0.00 0.00 0.00 0.00 0.00 0.00 0.82 0.00 0.00 0.18
+#&gt; SP2151     10  0.3770     0.4337 0.00 0.00 0.02 0.00 0.02 0.00 0.22 0.04 0.00 0.70
+#&gt; SP2152      1  0.2741     0.5487 0.78 0.00 0.00 0.00 0.18 0.00 0.04 0.00 0.00 0.00
+#&gt; SP2153     10  0.5310     0.3841 0.06 0.00 0.02 0.00 0.02 0.00 0.10 0.24 0.00 0.56
+#&gt; SP2154      4  0.2545     0.6741 0.00 0.00 0.00 0.82 0.00 0.00 0.00 0.06 0.00 0.12
+#&gt; SP2155      7  0.1828     0.7245 0.00 0.00 0.00 0.00 0.00 0.00 0.88 0.02 0.00 0.10
+#&gt; SP2156      1  0.2983     0.4621 0.76 0.00 0.02 0.00 0.00 0.00 0.20 0.02 0.00 0.00
+#&gt; SP2157      2  0.0000     0.9284 0.00 1.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00
+#&gt; SP2158      7  0.2456     0.7139 0.00 0.00 0.02 0.00 0.00 0.00 0.80 0.00 0.00 0.18
+#&gt; SP2159      9  0.3616     0.0785 0.46 0.00 0.00 0.00 0.04 0.00 0.00 0.00 0.50 0.00
+#&gt; SP2160     10  0.3163     0.6419 0.02 0.00 0.04 0.00 0.02 0.00 0.02 0.08 0.00 0.82
+#&gt; SP22031     2  0.0000     0.9284 0.00 1.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00
+#&gt; SP2357     10  0.3405     0.5900 0.06 0.00 0.02 0.00 0.02 0.00 0.08 0.02 0.00 0.80
+#&gt; SP22750     2  0.0850     0.9015 0.00 0.96 0.00 0.00 0.00 0.02 0.00 0.02 0.00 0.00
+#&gt; SP23078    10  0.3559     0.5077 0.00 0.00 0.00 0.26 0.00 0.00 0.02 0.04 0.00 0.68
+#&gt; SP2293      3  0.2369     0.7031 0.00 0.00 0.86 0.00 0.00 0.06 0.00 0.02 0.06 0.00
+#&gt; SP23431     3  0.3929     0.3126 0.00 0.00 0.62 0.00 0.00 0.06 0.00 0.02 0.30 0.00
+#&gt; SP23435     3  0.1406     0.7378 0.00 0.00 0.92 0.00 0.00 0.02 0.00 0.00 0.06 0.00
+#&gt; SP23439     9  0.4054     0.5878 0.00 0.00 0.26 0.00 0.06 0.04 0.00 0.00 0.64 0.00
+#&gt; SP23443     3  0.1412     0.7316 0.00 0.00 0.90 0.00 0.00 0.10 0.00 0.00 0.00 0.00
+#&gt; SP23447     3  0.2780     0.6682 0.00 0.00 0.82 0.00 0.00 0.06 0.00 0.02 0.10 0.00
+#&gt; SP23451     3  0.1412     0.7316 0.00 0.00 0.90 0.00 0.00 0.10 0.00 0.00 0.00 0.00
+#&gt; SP23455     3  0.3604     0.5743 0.00 0.00 0.70 0.00 0.00 0.22 0.00 0.02 0.06 0.00
+#&gt; SP23459     6  0.3868     0.4163 0.00 0.36 0.04 0.00 0.00 0.58 0.00 0.02 0.00 0.00
+#&gt; SP23463     6  0.4633     0.4412 0.00 0.22 0.04 0.00 0.00 0.62 0.00 0.02 0.10 0.00
+#&gt; SP23467     6  0.5293     0.4190 0.00 0.14 0.24 0.00 0.00 0.50 0.00 0.00 0.12 0.00
+#&gt; SP23477     3  0.1412     0.7316 0.00 0.00 0.90 0.00 0.00 0.10 0.00 0.00 0.00 0.00
+#&gt; SP23479     6  0.5012     0.0772 0.00 0.00 0.34 0.00 0.00 0.40 0.00 0.02 0.24 0.00
+#&gt; SP23481     6  0.4864     0.4684 0.00 0.24 0.12 0.00 0.00 0.58 0.00 0.02 0.04 0.00
+#&gt; SP23483     2  0.0850     0.9015 0.00 0.96 0.00 0.00 0.00 0.02 0.00 0.02 0.00 0.00
+#&gt; SP23496     5  0.1828     0.7432 0.02 0.00 0.00 0.00 0.88 0.00 0.00 0.00 0.10 0.00
+#&gt; SP23498     8  0.6384    -0.0315 0.28 0.00 0.04 0.00 0.02 0.00 0.10 0.38 0.00 0.18
+#&gt; SP23500     3  0.4074     0.5775 0.04 0.00 0.66 0.00 0.08 0.00 0.00 0.00 0.22 0.00
+#&gt; SP23504     8  0.3285     0.5693 0.00 0.02 0.00 0.26 0.00 0.00 0.02 0.70 0.00 0.00
+#&gt; SP23506     4  0.2795     0.5623 0.00 0.00 0.00 0.74 0.00 0.00 0.02 0.24 0.00 0.00
+#&gt; SP23502     1  0.6555     0.2079 0.40 0.00 0.04 0.00 0.04 0.00 0.10 0.22 0.00 0.20
+#&gt; SP23622     3  0.7041     0.2590 0.08 0.06 0.40 0.06 0.00 0.28 0.08 0.02 0.02 0.00
+#&gt; SP23639     3  0.4395     0.5953 0.06 0.00 0.66 0.02 0.00 0.20 0.00 0.00 0.06 0.00
+#&gt; SP23739     3  0.2802     0.7225 0.00 0.02 0.82 0.00 0.08 0.08 0.00 0.00 0.00 0.00
+#&gt; SP23754     1  0.4322    -0.0490 0.48 0.00 0.14 0.00 0.00 0.00 0.00 0.00 0.38 0.00
+#&gt; SP23775    10  0.6152     0.3679 0.06 0.00 0.02 0.20 0.00 0.00 0.08 0.16 0.00 0.48
+#&gt; SP23925     4  0.1759     0.7888 0.00 0.14 0.00 0.86 0.00 0.00 0.00 0.00 0.00 0.00
+#&gt; SP24135     9  0.3503     0.6289 0.00 0.00 0.02 0.00 0.10 0.14 0.00 0.00 0.74 0.00
+#&gt; SP24236     5  0.2582     0.7039 0.00 0.00 0.02 0.00 0.82 0.02 0.00 0.00 0.14 0.00
+#&gt; SP24301     6  0.6878     0.1464 0.08 0.22 0.00 0.04 0.00 0.42 0.08 0.14 0.02 0.00
+#&gt; SP24391     6  0.4908     0.4868 0.00 0.14 0.18 0.00 0.00 0.58 0.00 0.00 0.10 0.00
+#&gt; SP24565     5  0.3239     0.7038 0.04 0.00 0.12 0.00 0.78 0.00 0.00 0.00 0.06 0.00
+#&gt; SP24702     1  0.5035     0.1686 0.48 0.00 0.20 0.00 0.28 0.00 0.00 0.00 0.04 0.00
+#&gt; SP24708     7  0.3465     0.5939 0.04 0.10 0.00 0.00 0.00 0.10 0.76 0.00 0.00 0.00
+#&gt; SP24815     7  0.3285     0.6507 0.02 0.00 0.00 0.00 0.04 0.08 0.80 0.00 0.06 0.00
+#&gt; SP25350     7  0.3145     0.6417 0.04 0.00 0.00 0.00 0.00 0.18 0.76 0.00 0.02 0.00
+#&gt; SP25380     7  0.3688     0.6336 0.04 0.00 0.12 0.00 0.04 0.00 0.76 0.00 0.04 0.00
+#&gt; SP25494     5  0.3559     0.6812 0.04 0.02 0.14 0.00 0.76 0.00 0.00 0.00 0.04 0.00
+#&gt; SP25518     5  0.2711     0.7077 0.00 0.00 0.12 0.00 0.82 0.02 0.00 0.00 0.04 0.00
+#&gt; SP25833     9  0.3482     0.6121 0.00 0.00 0.20 0.00 0.10 0.00 0.00 0.00 0.70 0.00
+#&gt; SP25905     6  0.6796     0.1311 0.08 0.30 0.00 0.02 0.00 0.36 0.08 0.14 0.02 0.00
+#&gt; SP26439     9  0.4067     0.6198 0.10 0.08 0.12 0.00 0.00 0.00 0.00 0.00 0.70 0.00
+#&gt; SP26475     3  0.2393     0.6202 0.00 0.00 0.76 0.00 0.00 0.00 0.00 0.00 0.24 0.00
+#&gt; SP26499     3  0.3368     0.5908 0.00 0.18 0.72 0.00 0.00 0.10 0.00 0.00 0.00 0.00
+#&gt; SP26709     6  0.4896     0.4365 0.00 0.22 0.04 0.00 0.00 0.60 0.00 0.04 0.10 0.00
+#&gt; SP2731      1  0.3504     0.2540 0.64 0.00 0.02 0.00 0.00 0.00 0.32 0.02 0.00 0.00
+#&gt; SP2766      5  0.0850     0.7576 0.02 0.00 0.00 0.00 0.96 0.00 0.00 0.00 0.02 0.00
+#&gt; SP2781      4  0.4046     0.3167 0.00 0.12 0.00 0.58 0.00 0.00 0.30 0.00 0.00 0.00
+#&gt; SP2793     10  0.1272     0.6533 0.02 0.00 0.00 0.00 0.02 0.00 0.00 0.02 0.00 0.94
+#&gt; SP2799      4  0.0426     0.7730 0.00 0.02 0.00 0.98 0.00 0.00 0.00 0.00 0.00 0.00
+#&gt; SP2801      7  0.6207    -0.0285 0.20 0.00 0.04 0.00 0.00 0.00 0.36 0.12 0.00 0.28
+#&gt; SP27603     5  0.4557     0.5809 0.04 0.00 0.12 0.00 0.58 0.00 0.00 0.00 0.26 0.00
+#&gt; SP2826     10  0.1272     0.6578 0.02 0.00 0.00 0.00 0.02 0.00 0.00 0.02 0.00 0.94
+#&gt; SP27825     5  0.2584     0.6786 0.00 0.00 0.00 0.00 0.82 0.08 0.00 0.00 0.10 0.00
+#&gt;  [ reached &#39;max&#39; / getOption(&quot;max.print&quot;) -- omitted 2564 rows ]
+</code></pre>
+
+<script>
+$('#tab-ATC-skmeans-get-classes-9-a').parent().next().next().hide();
+$('#tab-ATC-skmeans-get-classes-9-a').click(function(){
+  $('#tab-ATC-skmeans-get-classes-9-a').parent().next().next().toggle();
+  return(false);
+});
+</script>
+</div>
+</div>
+
+Heatmaps for the consensus matrix. It visualizes the probability of two
+samples to be in a same group.
+
+
+
+
+<script>
+$( function() {
+	$( '#tabs-ATC-skmeans-consensus-heatmap' ).tabs();
+} );
+</script>
+<div id='tabs-ATC-skmeans-consensus-heatmap'>
+<ul>
+<li><a href='#tab-ATC-skmeans-consensus-heatmap-1'>k = 2</a></li>
+<li><a href='#tab-ATC-skmeans-consensus-heatmap-2'>k = 3</a></li>
+<li><a href='#tab-ATC-skmeans-consensus-heatmap-3'>k = 4</a></li>
+<li><a href='#tab-ATC-skmeans-consensus-heatmap-4'>k = 5</a></li>
+<li><a href='#tab-ATC-skmeans-consensus-heatmap-5'>k = 6</a></li>
+<li><a href='#tab-ATC-skmeans-consensus-heatmap-6'>k = 7</a></li>
+<li><a href='#tab-ATC-skmeans-consensus-heatmap-7'>k = 8</a></li>
+<li><a href='#tab-ATC-skmeans-consensus-heatmap-8'>k = 9</a></li>
+<li><a href='#tab-ATC-skmeans-consensus-heatmap-9'>k = 10</a></li>
+</ul>
+<div id='tab-ATC-skmeans-consensus-heatmap-1'>
+<pre><code class="r">consensus_heatmap(res, k = 2)
+</code></pre>
+
+<p><img src="figure_cola/tab-ATC-skmeans-consensus-heatmap-1-1.png" alt="plot of chunk tab-ATC-skmeans-consensus-heatmap-1"/></p>
+
+</div>
+<div id='tab-ATC-skmeans-consensus-heatmap-2'>
+<pre><code class="r">consensus_heatmap(res, k = 3)
+</code></pre>
+
+<p><img src="figure_cola/tab-ATC-skmeans-consensus-heatmap-2-1.png" alt="plot of chunk tab-ATC-skmeans-consensus-heatmap-2"/></p>
+
+</div>
+<div id='tab-ATC-skmeans-consensus-heatmap-3'>
+<pre><code class="r">consensus_heatmap(res, k = 4)
+</code></pre>
+
+<p><img src="figure_cola/tab-ATC-skmeans-consensus-heatmap-3-1.png" alt="plot of chunk tab-ATC-skmeans-consensus-heatmap-3"/></p>
+
+</div>
+<div id='tab-ATC-skmeans-consensus-heatmap-4'>
+<pre><code class="r">consensus_heatmap(res, k = 5)
+</code></pre>
+
+<p><img src="figure_cola/tab-ATC-skmeans-consensus-heatmap-4-1.png" alt="plot of chunk tab-ATC-skmeans-consensus-heatmap-4"/></p>
+
+</div>
+<div id='tab-ATC-skmeans-consensus-heatmap-5'>
+<pre><code class="r">consensus_heatmap(res, k = 6)
+</code></pre>
+
+<p><img src="figure_cola/tab-ATC-skmeans-consensus-heatmap-5-1.png" alt="plot of chunk tab-ATC-skmeans-consensus-heatmap-5"/></p>
+
+</div>
+<div id='tab-ATC-skmeans-consensus-heatmap-6'>
+<pre><code class="r">consensus_heatmap(res, k = 7)
+</code></pre>
+
+<p><img src="figure_cola/tab-ATC-skmeans-consensus-heatmap-6-1.png" alt="plot of chunk tab-ATC-skmeans-consensus-heatmap-6"/></p>
+
+</div>
+<div id='tab-ATC-skmeans-consensus-heatmap-7'>
+<pre><code class="r">consensus_heatmap(res, k = 8)
+</code></pre>
+
+<p><img src="figure_cola/tab-ATC-skmeans-consensus-heatmap-7-1.png" alt="plot of chunk tab-ATC-skmeans-consensus-heatmap-7"/></p>
+
+</div>
+<div id='tab-ATC-skmeans-consensus-heatmap-8'>
+<pre><code class="r">consensus_heatmap(res, k = 9)
+</code></pre>
+
+<p><img src="figure_cola/tab-ATC-skmeans-consensus-heatmap-8-1.png" alt="plot of chunk tab-ATC-skmeans-consensus-heatmap-8"/></p>
+
+</div>
+<div id='tab-ATC-skmeans-consensus-heatmap-9'>
+<pre><code class="r">consensus_heatmap(res, k = 10)
+</code></pre>
+
+<p><img src="figure_cola/tab-ATC-skmeans-consensus-heatmap-9-1.png" alt="plot of chunk tab-ATC-skmeans-consensus-heatmap-9"/></p>
+
+</div>
+</div>
+
+Heatmaps for the membership of samples in all partitions to see how consistent they are:
+
+
+
+
+
+<script>
+$( function() {
+	$( '#tabs-ATC-skmeans-membership-heatmap' ).tabs();
+} );
+</script>
+<div id='tabs-ATC-skmeans-membership-heatmap'>
+<ul>
+<li><a href='#tab-ATC-skmeans-membership-heatmap-1'>k = 2</a></li>
+<li><a href='#tab-ATC-skmeans-membership-heatmap-2'>k = 3</a></li>
+<li><a href='#tab-ATC-skmeans-membership-heatmap-3'>k = 4</a></li>
+<li><a href='#tab-ATC-skmeans-membership-heatmap-4'>k = 5</a></li>
+<li><a href='#tab-ATC-skmeans-membership-heatmap-5'>k = 6</a></li>
+<li><a href='#tab-ATC-skmeans-membership-heatmap-6'>k = 7</a></li>
+<li><a href='#tab-ATC-skmeans-membership-heatmap-7'>k = 8</a></li>
+<li><a href='#tab-ATC-skmeans-membership-heatmap-8'>k = 9</a></li>
+<li><a href='#tab-ATC-skmeans-membership-heatmap-9'>k = 10</a></li>
+</ul>
+<div id='tab-ATC-skmeans-membership-heatmap-1'>
+<pre><code class="r">membership_heatmap(res, k = 2)
+</code></pre>
+
+<p><img src="figure_cola/tab-ATC-skmeans-membership-heatmap-1-1.png" alt="plot of chunk tab-ATC-skmeans-membership-heatmap-1"/></p>
+
+</div>
+<div id='tab-ATC-skmeans-membership-heatmap-2'>
+<pre><code class="r">membership_heatmap(res, k = 3)
+</code></pre>
+
+<p><img src="figure_cola/tab-ATC-skmeans-membership-heatmap-2-1.png" alt="plot of chunk tab-ATC-skmeans-membership-heatmap-2"/></p>
+
+</div>
+<div id='tab-ATC-skmeans-membership-heatmap-3'>
+<pre><code class="r">membership_heatmap(res, k = 4)
+</code></pre>
+
+<p><img src="figure_cola/tab-ATC-skmeans-membership-heatmap-3-1.png" alt="plot of chunk tab-ATC-skmeans-membership-heatmap-3"/></p>
+
+</div>
+<div id='tab-ATC-skmeans-membership-heatmap-4'>
+<pre><code class="r">membership_heatmap(res, k = 5)
+</code></pre>
+
+<p><img src="figure_cola/tab-ATC-skmeans-membership-heatmap-4-1.png" alt="plot of chunk tab-ATC-skmeans-membership-heatmap-4"/></p>
+
+</div>
+<div id='tab-ATC-skmeans-membership-heatmap-5'>
+<pre><code class="r">membership_heatmap(res, k = 6)
+</code></pre>
+
+<p><img src="figure_cola/tab-ATC-skmeans-membership-heatmap-5-1.png" alt="plot of chunk tab-ATC-skmeans-membership-heatmap-5"/></p>
+
+</div>
+<div id='tab-ATC-skmeans-membership-heatmap-6'>
+<pre><code class="r">membership_heatmap(res, k = 7)
+</code></pre>
+
+<p><img src="figure_cola/tab-ATC-skmeans-membership-heatmap-6-1.png" alt="plot of chunk tab-ATC-skmeans-membership-heatmap-6"/></p>
+
+</div>
+<div id='tab-ATC-skmeans-membership-heatmap-7'>
+<pre><code class="r">membership_heatmap(res, k = 8)
+</code></pre>
+
+<p><img src="figure_cola/tab-ATC-skmeans-membership-heatmap-7-1.png" alt="plot of chunk tab-ATC-skmeans-membership-heatmap-7"/></p>
+
+</div>
+<div id='tab-ATC-skmeans-membership-heatmap-8'>
+<pre><code class="r">membership_heatmap(res, k = 9)
+</code></pre>
+
+<p><img src="figure_cola/tab-ATC-skmeans-membership-heatmap-8-1.png" alt="plot of chunk tab-ATC-skmeans-membership-heatmap-8"/></p>
+
+</div>
+<div id='tab-ATC-skmeans-membership-heatmap-9'>
+<pre><code class="r">membership_heatmap(res, k = 10)
+</code></pre>
+
+<p><img src="figure_cola/tab-ATC-skmeans-membership-heatmap-9-1.png" alt="plot of chunk tab-ATC-skmeans-membership-heatmap-9"/></p>
+
+</div>
+</div>
+
+As soon as the classes for columns are determined, the signatures
+that are significantly different between subgroups can be looked for. 
+Following are the heatmaps for signatures.
+
+
+
+
+Signature heatmaps where rows are scaled:
+
+
+
+<script>
+$( function() {
+	$( '#tabs-ATC-skmeans-get-signatures' ).tabs();
+} );
+</script>
+<div id='tabs-ATC-skmeans-get-signatures'>
+<ul>
+<li><a href='#tab-ATC-skmeans-get-signatures-1'>k = 2</a></li>
+<li><a href='#tab-ATC-skmeans-get-signatures-2'>k = 3</a></li>
+<li><a href='#tab-ATC-skmeans-get-signatures-3'>k = 4</a></li>
+<li><a href='#tab-ATC-skmeans-get-signatures-4'>k = 5</a></li>
+<li><a href='#tab-ATC-skmeans-get-signatures-5'>k = 6</a></li>
+<li><a href='#tab-ATC-skmeans-get-signatures-6'>k = 7</a></li>
+<li><a href='#tab-ATC-skmeans-get-signatures-7'>k = 8</a></li>
+<li><a href='#tab-ATC-skmeans-get-signatures-8'>k = 9</a></li>
+<li><a href='#tab-ATC-skmeans-get-signatures-9'>k = 10</a></li>
+</ul>
+<div id='tab-ATC-skmeans-get-signatures-1'>
+<pre><code class="r">get_signatures(res, k = 2)
+</code></pre>
+
+<p><img src="figure_cola/tab-ATC-skmeans-get-signatures-1-1.png" alt="plot of chunk tab-ATC-skmeans-get-signatures-1"/></p>
+
+</div>
+<div id='tab-ATC-skmeans-get-signatures-2'>
+<pre><code class="r">get_signatures(res, k = 3)
+</code></pre>
+
+<p><img src="figure_cola/tab-ATC-skmeans-get-signatures-2-1.png" alt="plot of chunk tab-ATC-skmeans-get-signatures-2"/></p>
+
+</div>
+<div id='tab-ATC-skmeans-get-signatures-3'>
+<pre><code class="r">get_signatures(res, k = 4)
+</code></pre>
+
+<p><img src="figure_cola/tab-ATC-skmeans-get-signatures-3-1.png" alt="plot of chunk tab-ATC-skmeans-get-signatures-3"/></p>
+
+</div>
+<div id='tab-ATC-skmeans-get-signatures-4'>
+<pre><code class="r">get_signatures(res, k = 5)
+</code></pre>
+
+<p><img src="figure_cola/tab-ATC-skmeans-get-signatures-4-1.png" alt="plot of chunk tab-ATC-skmeans-get-signatures-4"/></p>
+
+</div>
+<div id='tab-ATC-skmeans-get-signatures-5'>
+<pre><code class="r">get_signatures(res, k = 6)
+</code></pre>
+
+<p><img src="figure_cola/tab-ATC-skmeans-get-signatures-5-1.png" alt="plot of chunk tab-ATC-skmeans-get-signatures-5"/></p>
+
+</div>
+<div id='tab-ATC-skmeans-get-signatures-6'>
+<pre><code class="r">get_signatures(res, k = 7)
+</code></pre>
+
+<p><img src="figure_cola/tab-ATC-skmeans-get-signatures-6-1.png" alt="plot of chunk tab-ATC-skmeans-get-signatures-6"/></p>
+
+</div>
+<div id='tab-ATC-skmeans-get-signatures-7'>
+<pre><code class="r">get_signatures(res, k = 8)
+</code></pre>
+
+<p><img src="figure_cola/tab-ATC-skmeans-get-signatures-7-1.png" alt="plot of chunk tab-ATC-skmeans-get-signatures-7"/></p>
+
+</div>
+<div id='tab-ATC-skmeans-get-signatures-8'>
+<pre><code class="r">get_signatures(res, k = 9)
+</code></pre>
+
+<p><img src="figure_cola/tab-ATC-skmeans-get-signatures-8-1.png" alt="plot of chunk tab-ATC-skmeans-get-signatures-8"/></p>
+
+</div>
+<div id='tab-ATC-skmeans-get-signatures-9'>
+<pre><code class="r">get_signatures(res, k = 10)
+</code></pre>
+
+<p><img src="figure_cola/tab-ATC-skmeans-get-signatures-9-1.png" alt="plot of chunk tab-ATC-skmeans-get-signatures-9"/></p>
+
+</div>
+</div>
+
+
+
+Signature heatmaps where rows are not scaled:
+
+
+<script>
+$( function() {
+	$( '#tabs-ATC-skmeans-get-signatures-no-scale' ).tabs();
+} );
+</script>
+<div id='tabs-ATC-skmeans-get-signatures-no-scale'>
+<ul>
+<li><a href='#tab-ATC-skmeans-get-signatures-no-scale-1'>k = 2</a></li>
+<li><a href='#tab-ATC-skmeans-get-signatures-no-scale-2'>k = 3</a></li>
+<li><a href='#tab-ATC-skmeans-get-signatures-no-scale-3'>k = 4</a></li>
+<li><a href='#tab-ATC-skmeans-get-signatures-no-scale-4'>k = 5</a></li>
+<li><a href='#tab-ATC-skmeans-get-signatures-no-scale-5'>k = 6</a></li>
+<li><a href='#tab-ATC-skmeans-get-signatures-no-scale-6'>k = 7</a></li>
+<li><a href='#tab-ATC-skmeans-get-signatures-no-scale-7'>k = 8</a></li>
+<li><a href='#tab-ATC-skmeans-get-signatures-no-scale-8'>k = 9</a></li>
+<li><a href='#tab-ATC-skmeans-get-signatures-no-scale-9'>k = 10</a></li>
+</ul>
+<div id='tab-ATC-skmeans-get-signatures-no-scale-1'>
+<pre><code class="r">get_signatures(res, k = 2, scale_rows = FALSE)
+</code></pre>
+
+<p><img src="figure_cola/tab-ATC-skmeans-get-signatures-no-scale-1-1.png" alt="plot of chunk tab-ATC-skmeans-get-signatures-no-scale-1"/></p>
+
+</div>
+<div id='tab-ATC-skmeans-get-signatures-no-scale-2'>
+<pre><code class="r">get_signatures(res, k = 3, scale_rows = FALSE)
+</code></pre>
+
+<p><img src="figure_cola/tab-ATC-skmeans-get-signatures-no-scale-2-1.png" alt="plot of chunk tab-ATC-skmeans-get-signatures-no-scale-2"/></p>
+
+</div>
+<div id='tab-ATC-skmeans-get-signatures-no-scale-3'>
+<pre><code class="r">get_signatures(res, k = 4, scale_rows = FALSE)
+</code></pre>
+
+<p><img src="figure_cola/tab-ATC-skmeans-get-signatures-no-scale-3-1.png" alt="plot of chunk tab-ATC-skmeans-get-signatures-no-scale-3"/></p>
+
+</div>
+<div id='tab-ATC-skmeans-get-signatures-no-scale-4'>
+<pre><code class="r">get_signatures(res, k = 5, scale_rows = FALSE)
+</code></pre>
+
+<p><img src="figure_cola/tab-ATC-skmeans-get-signatures-no-scale-4-1.png" alt="plot of chunk tab-ATC-skmeans-get-signatures-no-scale-4"/></p>
+
+</div>
+<div id='tab-ATC-skmeans-get-signatures-no-scale-5'>
+<pre><code class="r">get_signatures(res, k = 6, scale_rows = FALSE)
+</code></pre>
+
+<p><img src="figure_cola/tab-ATC-skmeans-get-signatures-no-scale-5-1.png" alt="plot of chunk tab-ATC-skmeans-get-signatures-no-scale-5"/></p>
+
+</div>
+<div id='tab-ATC-skmeans-get-signatures-no-scale-6'>
+<pre><code class="r">get_signatures(res, k = 7, scale_rows = FALSE)
+</code></pre>
+
+<p><img src="figure_cola/tab-ATC-skmeans-get-signatures-no-scale-6-1.png" alt="plot of chunk tab-ATC-skmeans-get-signatures-no-scale-6"/></p>
+
+</div>
+<div id='tab-ATC-skmeans-get-signatures-no-scale-7'>
+<pre><code class="r">get_signatures(res, k = 8, scale_rows = FALSE)
+</code></pre>
+
+<p><img src="figure_cola/tab-ATC-skmeans-get-signatures-no-scale-7-1.png" alt="plot of chunk tab-ATC-skmeans-get-signatures-no-scale-7"/></p>
+
+</div>
+<div id='tab-ATC-skmeans-get-signatures-no-scale-8'>
+<pre><code class="r">get_signatures(res, k = 9, scale_rows = FALSE)
+</code></pre>
+
+<p><img src="figure_cola/tab-ATC-skmeans-get-signatures-no-scale-8-1.png" alt="plot of chunk tab-ATC-skmeans-get-signatures-no-scale-8"/></p>
+
+</div>
+<div id='tab-ATC-skmeans-get-signatures-no-scale-9'>
+<pre><code class="r">get_signatures(res, k = 10, scale_rows = FALSE)
+</code></pre>
+
+<p><img src="figure_cola/tab-ATC-skmeans-get-signatures-no-scale-9-1.png" alt="plot of chunk tab-ATC-skmeans-get-signatures-no-scale-9"/></p>
+
+</div>
+</div>
+
+
+
+Compare the overlap of signatures from different k:
+
+```r
+compare_signatures(res)
+```
+
+![plot of chunk ATC-skmeans-signature_compare](figure_cola/ATC-skmeans-signature_compare-1.png)
+
+`get_signature()` returns a data frame invisibly. To get the list of signatures, the function
+call should be assigned to a variable explicitly. In following code, if `plot` argument is set
+to `FALSE`, no heatmap is plotted while only the differential analysis is performed.
+
+```r
+# code only for demonstration
+tb = get_signature(res, k = ..., plot = FALSE)
+```
+
+An example of the output of `tb` is:
+
+```
+#>   which_row         fdr    mean_1    mean_2 scaled_mean_1 scaled_mean_2 km
+#> 1        38 0.042760348  8.373488  9.131774    -0.5533452     0.5164555  1
+#> 2        40 0.018707592  7.106213  8.469186    -0.6173731     0.5762149  1
+#> 3        55 0.019134737 10.221463 11.207825    -0.6159697     0.5749050  1
+#> 4        59 0.006059896  5.921854  7.869574    -0.6899429     0.6439467  1
+#> 5        60 0.018055526  8.928898 10.211722    -0.6204761     0.5791110  1
+#> 6        98 0.009384629 15.714769 14.887706     0.6635654    -0.6193277  2
+...
+```
+
+The columns in `tb` are:
+
+1. `which_row`: row indices corresponding to the input matrix.
+2. `fdr`: FDR for the differential test. 
+3. `mean_x`: The mean value in group x.
+4. `scaled_mean_x`: The mean value in group x after rows are scaled.
+5. `km`: Row groups if k-means clustering is applied to rows (which is done by automatically selecting number of clusters).
+
+If there are too many signatures, `top_signatures = ...` can be set to only show the 
+signatures with the highest FDRs:
+
+```r
+# code only for demonstration
+# e.g. to show the top 500 most significant rows
+tb = get_signature(res, k = ..., top_signatures = 500)
+```
+
+
+
+
+t-SNE plot which shows how samples are separated.
+
+
+<script>
+$( function() {
+	$( '#tabs-ATC-skmeans-dimension-reduction' ).tabs();
+} );
+</script>
+<div id='tabs-ATC-skmeans-dimension-reduction'>
+<ul>
+<li><a href='#tab-ATC-skmeans-dimension-reduction-1'>k = 2</a></li>
+<li><a href='#tab-ATC-skmeans-dimension-reduction-2'>k = 3</a></li>
+<li><a href='#tab-ATC-skmeans-dimension-reduction-3'>k = 4</a></li>
+<li><a href='#tab-ATC-skmeans-dimension-reduction-4'>k = 5</a></li>
+<li><a href='#tab-ATC-skmeans-dimension-reduction-5'>k = 6</a></li>
+<li><a href='#tab-ATC-skmeans-dimension-reduction-6'>k = 7</a></li>
+<li><a href='#tab-ATC-skmeans-dimension-reduction-7'>k = 8</a></li>
+<li><a href='#tab-ATC-skmeans-dimension-reduction-8'>k = 9</a></li>
+<li><a href='#tab-ATC-skmeans-dimension-reduction-9'>k = 10</a></li>
+</ul>
+<div id='tab-ATC-skmeans-dimension-reduction-1'>
+<pre><code class="r">dimension_reduction(res, k = 2, method = &quot;t-SNE&quot;)
+</code></pre>
+
+<pre><code>#&gt; Error in Rtsne.default(X = structure(c(1.23309154291294, 2.59375608208288, : Remove duplicates before running TSNE.
+</code></pre>
+
+</div>
+<div id='tab-ATC-skmeans-dimension-reduction-2'>
+<pre><code class="r">dimension_reduction(res, k = 3, method = &quot;t-SNE&quot;)
+</code></pre>
+
+<pre><code>#&gt; Error in Rtsne.default(X = structure(c(1.23309154291294, 2.59375608208288, : Remove duplicates before running TSNE.
+</code></pre>
+
+</div>
+<div id='tab-ATC-skmeans-dimension-reduction-3'>
+<pre><code class="r">dimension_reduction(res, k = 4, method = &quot;t-SNE&quot;)
+</code></pre>
+
+<pre><code>#&gt; Error in Rtsne.default(X = structure(c(1.23309154291294, 2.59375608208288, : Remove duplicates before running TSNE.
+</code></pre>
+
+</div>
+<div id='tab-ATC-skmeans-dimension-reduction-4'>
+<pre><code class="r">dimension_reduction(res, k = 5, method = &quot;t-SNE&quot;)
+</code></pre>
+
+<pre><code>#&gt; Error in Rtsne.default(X = structure(c(1.23309154291294, 2.59375608208288, : Remove duplicates before running TSNE.
+</code></pre>
+
+</div>
+<div id='tab-ATC-skmeans-dimension-reduction-5'>
+<pre><code class="r">dimension_reduction(res, k = 6, method = &quot;t-SNE&quot;)
+</code></pre>
+
+<pre><code>#&gt; Error in Rtsne.default(X = structure(c(1.23309154291294, 2.59375608208288, : Remove duplicates before running TSNE.
+</code></pre>
+
+</div>
+<div id='tab-ATC-skmeans-dimension-reduction-6'>
+<pre><code class="r">dimension_reduction(res, k = 7, method = &quot;t-SNE&quot;)
+</code></pre>
+
+<pre><code>#&gt; Error in Rtsne.default(X = structure(c(1.23309154291294, 2.59375608208288, : Remove duplicates before running TSNE.
+</code></pre>
+
+</div>
+<div id='tab-ATC-skmeans-dimension-reduction-7'>
+<pre><code class="r">dimension_reduction(res, k = 8, method = &quot;t-SNE&quot;)
+</code></pre>
+
+<pre><code>#&gt; Error in Rtsne.default(X = structure(c(1.23309154291294, 2.59375608208288, : Remove duplicates before running TSNE.
+</code></pre>
+
+</div>
+<div id='tab-ATC-skmeans-dimension-reduction-8'>
+<pre><code class="r">dimension_reduction(res, k = 9, method = &quot;t-SNE&quot;)
+</code></pre>
+
+<pre><code>#&gt; Error in Rtsne.default(X = structure(c(1.23309154291294, 2.59375608208288, : Remove duplicates before running TSNE.
+</code></pre>
+
+</div>
+<div id='tab-ATC-skmeans-dimension-reduction-9'>
+<pre><code class="r">dimension_reduction(res, k = 10, method = &quot;t-SNE&quot;)
+</code></pre>
+
+<pre><code>#&gt; Error in Rtsne.default(X = structure(c(1.23309154291294, 2.59375608208288, : Remove duplicates before running TSNE.
+</code></pre>
+
+</div>
+</div>
+
+
+
+Following heatmap shows how subgroups are split when increasing `k`:
+
+```r
+collect_classes(res)
+```
+
+![plot of chunk ATC-skmeans-collect-classes](figure_cola/ATC-skmeans-collect-classes-1.png)
+
+
+
+If matrix rows can be associated to genes, consider to use `functional_enrichment(res,
+...)` to perform function enrichment for the signature genes. See [this vignette](http://bioconductor.org/packages/devel/bioc/vignettes/cola/inst/doc/functional_enrichment.html) for more detailed explanations.
+
+
+ 
+
+## Session info
+
+
+```r
+sessionInfo()
+```
+
+```
+#> R version 4.0.2 (2020-06-22)
+#> Platform: x86_64-apple-darwin17.0 (64-bit)
+#> Running under: macOS High Sierra 10.13.6
+#> 
+#> Matrix products: default
+#> BLAS:   /System/Library/Frameworks/Accelerate.framework/Versions/A/Frameworks/vecLib.framework/Versions/A/libBLAS.dylib
+#> LAPACK: /Library/Frameworks/R.framework/Versions/4.0/Resources/lib/libRlapack.dylib
+#> 
+#> locale:
+#> [1] zh_CN.UTF-8/zh_CN.UTF-8/zh_CN.UTF-8/C/zh_CN.UTF-8/zh_CN.UTF-8
+#> 
+#> attached base packages:
+#> [1] grid      stats     graphics  grDevices utils     datasets  methods   base     
+#> 
+#> other attached packages:
+#>  [1] genefilter_1.70.0         ComplexHeatmap_2.7.2.1000 markdown_1.1             
+#>  [4] knitr_1.30                forcats_0.5.0             stringr_1.4.0            
+#>  [7] dplyr_1.0.2               purrr_0.3.4               readr_1.4.0              
+#> [10] tidyr_1.1.2               tibble_3.0.4              ggplot2_3.3.2            
+#> [13] tidyverse_1.3.0           cola_1.9.0.1012           roxytest_0.0.1           
+#> [16] pacman_0.5.1             
+#> 
+#> loaded via a namespace (and not attached):
+#>  [1] bitops_1.0-6         matrixStats_0.57.0   fs_1.5.0             bit64_4.0.5         
+#>  [5] lubridate_1.7.9.2    RColorBrewer_1.1-2   httr_1.4.2           tools_4.0.2         
+#>  [9] backports_1.2.1      R6_2.5.0             DBI_1.1.0            BiocGenerics_0.34.0 
+#> [13] colorspace_2.0-0     GetoptLong_1.0.5     withr_2.3.0          tidyselect_1.1.0    
+#> [17] bit_4.0.4            compiler_4.0.2       cli_2.2.0            rvest_0.3.6         
+#> [21] Biobase_2.48.0       Cairo_1.5-12.2       xml2_1.3.2           microbenchmark_1.4-7
+#> [25] slam_0.1-48          scales_1.1.1         digest_0.6.27        pkgconfig_2.0.3     
+#> [29] highr_0.8            dbplyr_2.0.0         rlang_0.4.9          GlobalOptions_0.1.2 
+#> [33] readxl_1.3.1         RSQLite_2.2.1        rstudioapi_0.13      impute_1.62.0       
+#> [37] shape_1.4.5          generics_0.1.0       jsonlite_1.7.2       mclust_5.4.7        
+#> [41] RCurl_1.98-1.2       magrittr_2.0.1       Matrix_1.2-18        Rcpp_1.0.5          
+#> [45] munsell_0.5.0        S4Vectors_0.26.1     fansi_0.4.1          lifecycle_0.2.0     
+#> [49] stringi_1.5.3        yaml_2.2.1           Rtsne_0.15           blob_1.2.1          
+#> [53] parallel_4.0.2       crayon_1.3.4         lattice_0.20-41      splines_4.0.2       
+#> [57] haven_2.3.1          annotate_1.66.0      circlize_0.4.11      hms_0.5.3           
+#> [61] polylabelr_0.2.0     magick_2.5.2         languageserver_0.3.9 pillar_1.4.7        
+#> [65] rjson_0.2.20         stats4_4.0.2         reprex_0.3.0         XML_3.99-0.5        
+#> [69] glue_1.4.2           evaluate_0.14        BiocManager_1.30.10  modelr_0.1.8        
+#> [73] png_0.1-7            vctrs_0.3.6          cellranger_1.1.0     polyclip_1.10-0     
+#> [77] gtable_0.3.0         clue_0.3-58          assertthat_0.2.1     xfun_0.19           
+#> [81] eulerr_6.1.0         xtable_1.8-4         broom_0.7.3          skmeans_0.2-13      
+#> [85] roxygen2_7.1.1       survival_3.2-7       rvcheck_0.1.8        memoise_1.1.0       
+#> [89] AnnotationDbi_1.50.3 IRanges_2.22.2       cluster_2.1.0        ellipsis_0.3.1      
+#> [93] brew_1.0-6
+```
+
+
