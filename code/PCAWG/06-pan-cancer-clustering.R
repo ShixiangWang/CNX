@@ -70,3 +70,5 @@ final_cmb <- run_all_consensus_partition_methods(
 cola_report(final_cmb, output_dir = "output/cola_report/pcawg_cmb_sigs_500_sampls_final", mc.cores = 8)
 
 save(final_abs, final_rel, final_cmb, file = "output/cola_report/final_result.RData")
+# Check all cola reports and find ABS features is the best option
+save(final_abs, file = "data/pcawg_cola_result.rds")
