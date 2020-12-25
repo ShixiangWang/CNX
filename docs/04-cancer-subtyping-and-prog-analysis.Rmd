@@ -130,7 +130,7 @@ colnames(expo_abs) <- c("sample", paste0("Abs_", colnames(expo_abs)[-1]))
 expo_rel <- pcawg_activity$rel_activity[, lapply(.SD, function(x) if (is.numeric(x)) round(x, digits = 3) else x)]
 colnames(expo_rel) <- c("sample", paste0("Rel_", colnames(expo_rel)[-1]))
 
-pcawg_activity2 <- merge(expo_abs, expo_rel, by = "sample")
+pcawg_activity2 <- dplyr::left_join(expo_abs, expo_rel, by = "sample")
 pcawg_activity2$similarity <- pcawg_activity$similarity
 pcawg_activity <- pcawg_activity2
 pcawg_activity$keep <- pcawg_activity$similarity >= 0.75

@@ -1,8 +1,13 @@
 library(sigminer)
 library(tidyverse)
 
+cluster_df <- readRDS("data/pcawg_clusters.rds") %>%
+  as.data.frame() %>%
+  tibble::rownames_to_column("sample")
+
 pcawg_types <- readRDS("data/pcawg_type_info.rds")
 pcawg_activity <- readRDS("data/pcawg_cn_sigs_CN176_activity.rds")
+
 cli <- readRDS("data/pcawg_samp_info_sp.rds")
 os <- cli$pcawg_donor_clinical_August2016_v9_sp %>%
   select(xena_sample, donor_vital_status, donor_survival_time) %>%
@@ -123,3 +128,12 @@ for (i in names(typeList)) {
          plot = p6, width = 7, height = 5)
 }
 
+
+# Cluster OS --------------------------------------------------------------
+
+df_cluster = left_join(df, cluster_df, by = "sample")
+df
+
+library(ezcox)
+
+show_forest(df_cluster, covariates = )
