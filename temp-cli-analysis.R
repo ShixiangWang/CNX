@@ -132,8 +132,10 @@ for (i in names(typeList)) {
 # Cluster OS --------------------------------------------------------------
 
 df_cluster = left_join(df, cluster_df, by = "sample")
-df
+colnames(df_cluster)[c(16, 17)] <- c("three_clusters", "six_clusters")
+df_cluster$three_clusters <- factor(df_cluster$three_clusters, levels = c(2, 1, 3))
+df_cluster$six_clusters <- factor(df_cluster$six_clusters, levels = c(2, 1, 3:6))
 
 library(ezcox)
 
-show_forest(df_cluster, covariates = )
+show_forest(df_cluster, covariates = c("three_clusters", "six_clusters"), status = "os", add_caption = FALSE)

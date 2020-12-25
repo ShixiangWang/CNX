@@ -399,10 +399,9 @@ The reasons for `k = 3`:
 
 The reasons for `k = 6`:
 
-1. Measure `1 - PAC` reaches convergence at `k = 6`. Although `k = 7` has higher value, see the second point.
+1. Measure `1 - PAC` reaches top value at `k = 6`.
 2. Measure `Jaccard` increases significantly at `k = 6` which indicate the subgroups at `k = 7` are highly similar as `k = 6`.
-
-In general `k = 3` is better than `k = 6`, however, `k = 6` is acceptable considering so many cancer types included in this study.
+3. Measure `Silhouette` start dropping at `k = 6`.
 
 I will draw another plot to show why the two `k`s are suitable.
 
