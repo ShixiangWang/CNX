@@ -71,7 +71,7 @@ cola_report(final_cmb, output_dir = "output/cola_report/pcawg_cmb_sigs_all_sampl
 
 save(final_abs, final_rel, final_cmb, file = "output/cola_report/final_result.RData")
 # Check all cola reports and find ABS features is the best option
-save(final_abs, file = "data/pcawg_cola_result.rds")
+saveRDS(final_abs, file = "data/pcawg_cola_result.rds")
 
 res = final_abs["ATC", "skmeans"]
 select_partition_number(res)

@@ -32,9 +32,8 @@ Sys.setenv("LANGUAGE" = "EN")
 ```
 
 ```{r include=FALSE}
-ReTidying = TRUE
+ReTidying = FALSE
 ```
-
 
 In this part, we would like to cluster all tumors based on CN signatures and use the clusters to explore Pan-Cancer heterogeneity.
 
@@ -289,8 +288,245 @@ rm(list = ls())
 
 ## Clustering with signature activity
 
+Here, we use recent consensus clustering toolkit [cola](https://github.com/jokergoo/cola).
+
+We take 2 steps to obtain a robust clustering result:
+
+1. We sort all samples by their total signature activities and randomly select `500` samples for running multiple methods provided by `cola` at the same time, then pick up the optimal method combination.
+2. We run clustering for all samples by the method combination above and check the cola report to determine the suitable cluster number.
+
+### Step 1: select suitable method combination
+
+There are 2 key arguments in `cola` clustering function:
+
+1. `top_value_method`: used to extract rows (i.e. signatures here) with top values.
+2. `partition_method`: used to select partition method.
+
+We try all combinations with randomly selected `500` samples to explore the suitable setting.
+
+```{r, eval=FALSE}
+library(cola)
+library(tidyverse)
+
+df <- readRDS("../data/pcawg_sample_tidy_info.rds")
+
+mat_abs <- df %>%
+  filter(keep) %>%
+  select(sample, starts_with("Abs_Sig")) %>%
+  column_to_rownames("sample") %>%
+  t()
+mat_abs <- adjust_matrix(mat_abs)
+rownames(mat_abs)
+
+
+# Select suitable parameters ----------------------------------------------
+
+ds <- colSums(mat_abs)
+boxplot(ds)
+
+set.seed(123)
+select_samps <- sample(names(sort(ds)), 500)
+
+boxplot(ds[select_samps])
+
+rl_abs <- run_all_consensus_partition_methods(mat_abs[, select_samps], top_n = 10, mc.cores = 8, max_k = 10)
+cola_report(rl_abs, output_dir = "../output/cola_report/pcawg_abs_sigs_500_sampls", mc.cores = 8)
+```
+
+The `cola` output report is very big and isn't suitable to show, here I only include key figures to determine the parameter setting.
+
+```{r out.width="100%"}
+# Cluster number 2
+knitr::include_graphics("cola-test-figs/tab-collect-stats-from-consensus-partition-list-1-1.png")
+# Cluster number 3
+knitr::include_graphics("cola-test-figs/tab-collect-stats-from-consensus-partition-list-2-1.png")
+# Cluster number 4
+knitr::include_graphics("cola-test-figs/tab-collect-stats-from-consensus-partition-list-3-1.png")
+# Cluster number 5
+knitr::include_graphics("cola-test-figs/tab-collect-stats-from-consensus-partition-list-4-1.png")
+# Cluster number 6
+knitr::include_graphics("cola-test-figs/tab-collect-stats-from-consensus-partition-list-5-1.png")
+# Cluster number 7
+knitr::include_graphics("cola-test-figs/tab-collect-stats-from-consensus-partition-list-6-1.png")
+# Cluster number 8
+knitr::include_graphics("cola-test-figs/tab-collect-stats-from-consensus-partition-list-7-1.png")
+# Cluster number 9
+knitr::include_graphics("cola-test-figs/tab-collect-stats-from-consensus-partition-list-8-1.png")
+# Cluster number 10
+knitr::include_graphics("cola-test-figs/tab-collect-stats-from-consensus-partition-list-9-1.png")
+```
+
+### Step 2: select suitable cluster number
+
+From figures above we do clearly see that the `skmeans` partition method fits our data and any `top_value_method` is okay. Finally, we choose combine `skmeans` (partition method) and `ATC` (top value method introduced firstly by `cola`) to run clustering for all samples.
+
+```{r eval=FALSE}
+final_abs <- run_all_consensus_partition_methods(
+  mat_abs,
+  top_value_method = "ATC",
+  partition_method = "skmeans",
+  top_n = 10, mc.cores = 8, max_k = 10
+)
+cola_report(final_abs, output_dir = "../output/cola_report/pcawg_abs_sigs_all_sampls_final", mc.cores = 8)
+```
+
+The report can be viewed at [here](./pcawg_abs_sigs_all_sampls_final/cola_report.html).
+
+Next, we will load the data and visualize to select suitable cluster number.
+
+```{r}
+library(cola)
+library(ComplexHeatmap)
+library(tidyverse)
+
+cluster_res <- readRDS("../data/pcawg_cola_result.rds")
+cluster_res <- cluster_res["ATC", "skmeans"]
+cluster_res
+```
+
+Show different statistics along with different cluster number `k`, which helps to determine the "best k".
+
+```{r}
+select_partition_number(cluster_res)
+```
+There are many details about all statistical measures shown above at [cola vignette](http://bioconductor.org/packages/devel/bioc/vignettes/cola/inst/doc/cola.html#toc_13). The best k `2` is suggested by `cola` package due to its better statistical measures. However, in this practice, I think `3` or `6` is more suitable. I have the following strong reasons.
+
+The reasons for `k = 3`:
+
+1. Measure `1 - PAC` reaches a local maximal at `k = 3` which indicates the subgroups are less due to ambiguously assigned.
+2. Measure `area_increased` drops sharply at `k = 3` which indicates increasing `k` won't change the consensus matrix too much.
+3. Measure `Jaccard` increases significantly at `k = 3` which indicate the subgroups at `k = 4` are highly similar as `k = 3`.
+
+The reasons for `k = 6`:
+
+1. Measure `1 - PAC` reaches convergence at `k = 6`. Although `k = 7` has higher value, see the second point.
+2. Measure `Jaccard` increases significantly at `k = 6` which indicate the subgroups at `k = 7` are highly similar as `k = 6`.
+
+In general `k = 3` is better than `k = 6`, however, `k = 6` is acceptable considering so many cancer types included in this study.
+
+I will draw another plot to show why the two `k`s are suitable.
+
+```{r, fig.width=13}
+collect_classes(cluster_res)
+```
+We can see that subgroups for `k = 3, 4, 5` are similar and subgroups for `k = 6, 7, 8, 9, 10` are similar.
+
+Draw all plots into one single page.
+
+```{r, eval=FALSE}
+pdf(file = "../output/cola_all_plots.pdf", width = 16, height = 10)
+collect_plots(cluster_res)
+dev.off()
+```
+
+Now we get the cluster labels of samples for downstream analysis.
+
+```{r, eval=FALSE}
+pcawg_clusters <- get_classes(cluster_res, k = c(3, 6))
+saveRDS(pcawg_clusters, file = "../data/pcawg_clusters.rds")
+```
 
 
 ## Heatmap for clustering and genotype/phenotype features
 
+Load tidy sample info.
+
+```{r}
+tidy_info <- readRDS("../data/pcawg_sample_tidy_info.rds")
+```
+
+Clean some info.
+
+```{r}
+detect_any <- function(x, p) {
+  if (length(p) == 1L) {
+    y <- stringr::str_detect(x, p)
+  } else {
+    y <- purrr::map(p, ~stringr::str_detect(x, .))
+    y <- purrr::reduce(y, `|`)
+  }
+  y[is.na(y)] <- FALSE
+  y
+}
+
+tidy_info <- tidy_info %>% 
+  dplyr::mutate(
+    # Roughly reassign the staging to TNM stages
+    # Basically follow 7th TNM staging version, see plot <https://bkimg.cdn.bcebos.com/pic/a8014c086e061d952019ec8773f40ad162d9ca36?x-bce-process=image/watermark,image_d2F0ZXIvYmFpa2U4MA==,g_7,xp_5,yp_5>
+    #
+    # Other references:
+    # https://www.cancer.org/treatment/understanding-your-diagnosis/staging.html
+    # https://www.cancer.gov/publications/dictionaries/cancer-terms/def/abcd-rating
+    # https://web.archive.org/web/20081004121942/http://www.oncologychannel.com/prostatecancer/stagingsystems.shtml
+    # https://baike.baidu.com/item/TNM%E5%88%86%E6%9C%9F%E7%B3%BB%E7%BB%9F/10700513
+    tumour_stage = case_when(
+      tumour_stage %in% c("1", "1a", "1b", "A", "I", "IA", "IB", "T1c", "T1N0") | detect_any(tumour_stage, c("T1N0M0", "T1aN0M0", "T1bN0M0", "T2aN0M0")) ~ "I",
+      tumour_stage %in% c("2", "2a", "2b", "B", "II", "IIA", "IIB", "T3a", "T3aN0") | detect_any(tumour_stage, c("T2bN0M0", "T3N0M0", "T[^34]N1.*M0")) ~ "II",
+      tumour_stage %in% c("3", "3a", "3b", "3c", "C", "III", "IIIA", "IIIB", "IIIC") | detect_any(tumour_stage, c("N[23].*M0", "T3N1.*M0", "T4.*M0")) ~ "III",
+      tumour_stage %in% c("4", "IV", "IVA") | detect_any(tumour_stage, "M[^0X]") ~ "IV",
+      TRUE ~ "Unknown"
+    ),
+    first_therapy_type = ifelse(first_therapy_type == "monoclonal antibodies (for liquid tumours)",
+                                "other therapy", first_therapy_type)
+  )
+```
+
+Generate annotation data for plotting.
+
+```{r}
+anno_df = tidy_info %>% 
+  dplyr::filter(keep) %>% 
+  dplyr::select(sample, 
+                donor_age_at_diagnosis, n_of_amp, n_of_del, n_of_vchr, cna_burden, purity, ploidy,
+                n_LOH, n_fusion, n_chromo, n_amplicon_BFB, n_amplicon_ecDNA, n_amplicon_HR, n_amplicon_Linear,
+                tel_content_log2,
+                donor_sex, tumour_stage, wgd_status, hrd_status) %>%
+  dplyr::mutate_at(
+    vars(n_fusion, n_chromo, n_amplicon_BFB, n_amplicon_ecDNA, n_amplicon_HR, n_amplicon_Linear),
+    ~ifelse(is.na(.), 0, .)
+    ) %>% 
+  dplyr::mutate(hrd_status = ifelse(hrd_status, "hrd", "no_hrd")) %>% 
+  rename(
+    Age = donor_age_at_diagnosis,
+    AMPs = n_of_amp,
+    DELs = n_of_del,
+    Affected_Chrs = n_of_vchr,
+    CNA_Burden = cna_burden,
+    Purity = purity,
+    Ploidy = ploidy,
+    LOHs = n_LOH,
+    Fusions = n_fusion,
+    Chromothripsis = n_chromo,
+    BFBs = n_amplicon_BFB,
+    ecDNAs = n_amplicon_ecDNA,
+    HRs = n_amplicon_HR,
+    Linear_Amplicons = n_amplicon_Linear,
+    `Telomere_Content(log2)` = tel_content_log2,
+    Sex = donor_sex,
+    Tumor_Stage = tumour_stage,
+    WGD_Status = wgd_status,
+    HRD_Status = hrd_status
+  ) %>% 
+  tibble::column_to_rownames("sample")
+
+left_annotation = rowAnnotation(foo = anno_text(paste0("Sig", c(1:4, 6:11))))
+```
+
+Show heatmap for clusters based on signature activities.
+
+```{r error=TRUE, fig.width=22, fig.height=10}
+get_signatures(cluster_res, k = 6, silhouette_cutoff = 0.2, anno = anno_df,
+               left_annotation = left_annotation)
+```
+
+Save to file.
+
+```{r}
+pdf(file = "../output/pcawg_cluster_heatmap.pdf", width = 22, height = 10, onefile = FALSE)
+get_signatures(cluster_res, k = 6, silhouette_cutoff = 0.2, anno = anno_df, left_annotation = left_annotation)
+dev.off()
+```
+
 ## Exploration of patients' prognosis difference across clusters
+
+
