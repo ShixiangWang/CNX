@@ -146,7 +146,7 @@ We have two results above, so we can compare the signatures from two different p
 
 ```{r}
 sim <- get_sig_similarity(solution1000$object$K11, solution100$object$K11)
-ComplexHeatmap::pheatmap(sim$similarity, cluster_rows = FALSE, cluster_cols = FALSE, display_numbers = TRUE)
+pheatmap::pheatmap(sim$similarity, cluster_rows = FALSE, cluster_cols = FALSE, display_numbers = TRUE)
 ```
 
 *We can know that the results contain same signature profile! This practice indicates that 100 NMF runs for each signature number is enough.*

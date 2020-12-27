@@ -519,7 +519,7 @@ get_signatures(cluster_res, k = 6, silhouette_cutoff = 0.2, anno = anno_df,
 
 Save to file.
 
-```{r error = TRUE}
+```{r}
 pdf(file = "../output/pcawg_cluster_heatmap.pdf", width = 22, height = 10, onefile = FALSE)
 get_signatures(cluster_res, k = 6, silhouette_cutoff = 0.2, anno = anno_df, left_annotation = left_annotation)
 dev.off()
@@ -621,6 +621,7 @@ colnames(df_merged) <- gsub("Abs_", "", colnames(df_merged))
 #### Enrichment analysis for copy number signatures
 
 ```{r}
+library(sigminer)
 enrich_result_cn <- group_enrichment(
   df_merged,
   grp_vars = "cluster",
@@ -655,7 +656,7 @@ enrich_result_sbs <- group_enrichment(
 )
 ```
 
-```{r}
+```{r, fig.height=12}
 enrich_result_sbs$enrich_var <- factor(enrich_result_sbs$enrich_var, nm_sbs)
 
 p <- show_group_enrichment(
