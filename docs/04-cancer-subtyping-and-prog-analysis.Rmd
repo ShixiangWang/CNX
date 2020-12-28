@@ -374,7 +374,7 @@ The report can be viewed at [here](./pcawg_abs_sigs_all_sampls_final/cola_report
 
 Next, we will load the data and visualize to select suitable cluster number.
 
-```{r}
+```{r message=FALSE}
 library(cola)
 library(ComplexHeatmap)
 library(tidyverse)
@@ -507,6 +507,8 @@ anno_df = tidy_info %>%
   ) %>% 
   tibble::column_to_rownames("sample")
 
+saveRDS(anno_df, file = "../data/pcawg_tidy_anno_df.rds")
+
 left_annotation = rowAnnotation(foo = anno_text(paste0("Sig", c(1:4, 6:11))))
 ```
 
@@ -592,7 +594,7 @@ The result has similar meaning as forest plot.
 
 Load SBS/DBS/ID signature activities generated from PCAWG Nature Study.
 
-```{r}
+```{r message=FALSE}
 pcawg_sbs <- read_csv("../data/PCAWG/PCAWG_sigProfiler_SBS_signatures_in_samples.csv")
 pcawg_dbs <- read_csv("../data/PCAWG/PCAWG_sigProfiler_DBS_signatures_in_samples.csv")
 pcawg_id <- read_csv("../data/PCAWG/PCAWG_SigProfiler_ID_signatures_in_samples.csv")
@@ -721,4 +723,213 @@ p <- p$cluster + labs(x = NULL, y = NULL)
 p + coord_flip()
 ```
 
+
+#### Word cloud plot for COSMIC signature etiologies
+
+There are so many COSMIC signatures above, it is not easy to summaize the data. Considering all COSMIC signatures are labelled and many of them have been assigned to a specific etiology, here we try to use word cloud plot to summarize the result above.
+
+Merge all COSMIC signature results.
+
+```{r}
+enrich_result_cosmic <- purrr::reduce(
+  list(enrich_result_sbs, enrich_result_dbs, enrich_result_id),
+  rbind
+)
+```
+
+Load etiologies of COSMIC signatures.
+
+```{r}
+cosmic_ets <- purrr::reduce(
+  list(
+    sigminer::get_sig_db("SBS")$aetiology %>% tibble::rownames_to_column("sig_name"),
+    sigminer::get_sig_db("DBS")$aetiology %>% tibble::rownames_to_column("sig_name"),
+    sigminer::get_sig_db("ID")$aetiology %>% tibble::rownames_to_column("sig_name")
+  ),
+  rbind
+)
+```
+
+```{r}
+DT::datatable(cosmic_ets)
+```
+
+
+Generate a `data.frame` for plotting. We only keep significantly and positively enriched signatures in each subgroup.
+We note that descriptions for many signatures are too long, thus we use short names.
+
+```{r}
+df_ets <- enrich_result_cosmic %>% 
+  dplyr::filter(p_value < 0.05 & measure_observed > 1) %>% 
+  dplyr::select(grp1, enrich_var) %>% 
+  dplyr::left_join(cosmic_ets, by = c("enrich_var"="sig_name")) %>% 
+  dplyr::mutate(
+    aetiology = dplyr::case_when(
+      grepl("APOBEC", aetiology) ~ "APOBEC",
+      grepl("Tobacco", aetiology) ~ "Tobacco",
+      grepl("clock", aetiology) ~ "Clock",
+      grepl("Ultraviolet", aetiology, ignore.case = TRUE) ~ "UV",
+      grepl("homologous recombination", aetiology) ~ "HRD",
+      grepl("mismatch repair", aetiology) ~ "dMMR",
+      grepl("Slippage", aetiology) ~ "Slippage",
+      grepl("base excision repair", aetiology) ~ "dBER",
+      grepl("NHEJ", aetiology) ~ "NHEJ repair",
+      grepl("reactive oxygen", aetiology) ~ "ROS",
+      grepl("Polymerase epsilon exonuclease", aetiology) ~ "Polymerase epsilon mutation",
+      grepl("eta somatic hypermutation", aetiology) ~ "Polimerase eta hypermutation",
+      TRUE ~ aetiology
+    )
+  ) %>%
+  dplyr::count(grp1, aetiology) %>% 
+  dplyr::filter(!aetiology %in% c("Unknown", "Possible sequencing artefact"))
+```
+
+Plotting.
+
+```{r, fig.width=10}
+library(ggwordcloud)
+
+set.seed(42)
+ggplot(df_ets, aes(label = aetiology, size = n)) +
+  geom_text_wordcloud_area(eccentricity = .35, shape = "square") +
+  scale_size_area(max_size = 14) +
+  facet_wrap(~grp1) +
+  theme_bw()
+```
+
+
 ### Other integrated variables
+
+```{r}
+df_others <- readRDS("../data/pcawg_tidy_anno_df.rds") %>% 
+  tibble::rownames_to_column("sample") %>% 
+  dplyr::left_join(
+    cluster_df[, -2] %>% purrr::set_names(c("sample", "cluster")),
+    by = "sample"
+  ) %>% 
+  dplyr::mutate(
+    Tumor_Stage = dplyr::case_when(
+      Tumor_Stage == "I" ~ 1,
+      Tumor_Stage == "II" ~ 2,
+      Tumor_Stage == "III" ~ 3,
+      Tumor_Stage == "IV" ~ 4),
+    isFemale = Sex == "female",
+    isWGD = WGD_Status == "wgd",
+    isHRD = HRD_Status == "hrd",
+    cluster = paste0("subgroup", cluster)
+  ) %>% 
+  dplyr::select(-c(Sex, WGD_Status, HRD_Status))
+```
+
+
+```{r}
+nm_others <- setdiff(colnames(df_others), c("sample", "cluster"))
+
+enrich_result_others <- group_enrichment(
+  df_others,
+  grp_vars = "cluster",
+  enrich_vars = nm_others,
+  co_method = "wilcox.test"
+)
+```
+
+```{r, fig.height=9}
+enrich_result_others$enrich_var <- factor(enrich_result_others$enrich_var, nm_others)
+
+p <- show_group_enrichment(
+  enrich_result_others,
+  fill_by_p_value = TRUE,
+  cut_p_value = TRUE,
+  return_list = T
+)
+p <- p$cluster + labs(x = NULL, y = NULL)
+p + coord_flip()
+```
+
+> The `HR` here represents `Heavily rearrangement`, don't mix it with `HRD` which means `Defective homologous recombination DNA damage repair`.
+
+### Driver genes
+
+We have already observed that there are different mutational processes across different groups. Here we try to go further study if different driver genes activate in different groups.
+
+#### Variant number and driver gene number comparison
+
+We obtained coding driver mutations from [UCSC Xena database](https://xena.hiplot.com.cn/datapages/?dataset=pcawg_whitelist_coding_drivers_v1_sep302016.sp.xena&host=https%3A%2F%2Fxena-pcawg.hiplot.com.cn). For known driver genes, we focus on driver gene list obtained from @martinez-jimenezCompendiumMutationalCancer2020.
+
+```{r}
+load("../data/pcawg_driver_info.RData")
+df_mut <- dplyr::left_join(df_others[, c("sample", "cluster")], 
+                           pcawg_driver_number, by = "sample")
+colnames(df_mut)[3] <- "Driver_variants"
+df_mut$Driver_variants <- ifelse(is.na(df_mut$Driver_variants), 0, df_mut$Driver_variants)
+
+driver_gene_num <- pcawg_driver_gene %>% 
+  dplyr::group_by(sample, ROLE) %>% 
+  dplyr::summarise(driver_genes = n(), .groups = "drop") %>%
+  tidyr::pivot_wider(names_from = "ROLE", values_from = "driver_genes", values_fill = 0)
+
+df_mut <- dplyr::left_join(df_mut, driver_gene_num, by = "sample")
+colnames(df_mut)[4:5] <- c("Act_genes", "LoF_genes")
+df_mut$Act_genes <- ifelse(is.na(df_mut$Act_genes), 0, df_mut$Act_genes)
+df_mut$LoF_genes <- ifelse(is.na(df_mut$LoF_genes), 0, df_mut$LoF_genes)
+```
+
+```{r include=FALSE, eval=FALSE}
+library(ggpubr)
+
+ggboxplot(df_mut, x = "cluster", y = "Driver_variants",
+          color = "cluster",add = "jitter", palette = "nejm")+
+  stat_compare_means(method = "anova")
+```
+
+
+```{r}
+enrich_result_mut <- group_enrichment(
+  df_mut,
+  grp_vars = "cluster",
+  enrich_vars = c("Driver_variants", "Act_genes", "LoF_genes"),
+  co_method = "wilcox.test"
+)
+```
+
+```{r fig.height=4}
+enrich_result_mut$enrich_var <- factor(enrich_result_mut$enrich_var, c("Driver_variants", "Act_genes", "LoF_genes"))
+
+p <- show_group_enrichment(
+  enrich_result_mut,
+  fill_by_p_value = TRUE,
+  cut_p_value = TRUE,
+  return_list = T
+)
+p <- p$cluster + labs(x = NULL, y = NULL)
+p + coord_flip()
+```
+
+#### Mutant gene list comparison
+
+```{r include=F, eval=F}
+df_genes <- dplyr::left_join(df_others[, c("sample", "cluster")], 
+                           pcawg_driver_gene, by = "sample") %>% 
+  dplyr::count(cluster, ROLE, gene) %>% na.omit()
+```
+
+```{r include=F, eval=F}
+library(ggplot2)
+
+ggplot(df_genes, aes(x = gene, y = n, fill = ROLE)) +
+  geom_bar(stat = "identity") +
+  facet_wrap(~cluster, scales = "free") +
+  theme(
+    axis.text.x = element_text(size = 4, angle = 90)
+  )
+```
+
+```{r}
+df_genes <- dplyr::left_join(df_others[, c("sample", "cluster")], 
+                           pcawg_driver_gene, by = "sample") %>% 
+  na.omit() %>% 
+  tidyr::pivot_wider(names_from = "gene", values_from = "ROLE")
+
+ComplexHeatmap::Heatmap(df_genes[, c(-1, -2)])
+```
+
