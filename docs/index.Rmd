@@ -4,7 +4,7 @@ author: ["Shixiang Wang, Ziyu Tao, Tao Wu, Huimin Li, Xue-Song Liu (Correspondin
 date: "`r Sys.Date()`"
 output:
   rmdformats::downcute:
-    self_contained: true
+    self_contained: false
     toc_depth: 3
     gallery: true
 bibliography: ref.bib
