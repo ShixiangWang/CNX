@@ -632,7 +632,7 @@ enrich_result_cn <- group_enrichment(
 )
 ```
 
-```{r}
+```{r fig.height=5, fig.width=6.5}
 enrich_result_cn$enrich_var <- factor(enrich_result_cn$enrich_var, paste0("Sig", 1:11))
 
 p <- show_group_enrichment(
@@ -658,7 +658,7 @@ enrich_result_sbs <- group_enrichment(
 )
 ```
 
-```{r, fig.height=12}
+```{r fig.height=12, fig.width=6.5}
 enrich_result_sbs$enrich_var <- factor(enrich_result_sbs$enrich_var, nm_sbs)
 
 p <- show_group_enrichment(
@@ -684,7 +684,7 @@ enrich_result_dbs <- group_enrichment(
 )
 ```
 
-```{r}
+```{r fig.height=5, fig.width=6.5}
 enrich_result_dbs$enrich_var <- factor(enrich_result_dbs$enrich_var, nm_dbs)
 
 p <- show_group_enrichment(
@@ -710,7 +710,7 @@ enrich_result_id <- group_enrichment(
 )
 ```
 
-```{r}
+```{r fig.height=5.5, fig.width=6.5}
 enrich_result_id$enrich_var <- factor(enrich_result_id$enrich_var, nm_id)
 
 p <- show_group_enrichment(
@@ -833,7 +833,7 @@ enrich_result_others <- group_enrichment(
 )
 ```
 
-```{r, fig.height=9}
+```{r fig.height=7, fig.width=6.5}
 enrich_result_others$enrich_var <- factor(enrich_result_others$enrich_var, nm_others)
 
 p <- show_group_enrichment(
@@ -851,8 +851,6 @@ p + coord_flip()
 ### Driver genes
 
 We have already observed that there are different mutational processes across different groups. Here we try to go further study if different driver genes activate in different groups.
-
-#### Variant number and driver gene number comparison
 
 We obtained coding driver mutations from [UCSC Xena database](https://xena.hiplot.com.cn/datapages/?dataset=pcawg_whitelist_coding_drivers_v1_sep302016.sp.xena&host=https%3A%2F%2Fxena-pcawg.hiplot.com.cn). For known driver genes, we focus on driver gene list obtained from @martinez-jimenezCompendiumMutationalCancer2020.
 
@@ -874,6 +872,27 @@ df_mut$Act_genes <- ifelse(is.na(df_mut$Act_genes), 0, df_mut$Act_genes)
 df_mut$LoF_genes <- ifelse(is.na(df_mut$LoF_genes), 0, df_mut$LoF_genes)
 ```
 
+Also merge into info of each driver gene.
+
+```{r}
+df_mut2 <- df_mut %>% 
+  dplyr::left_join(
+    pcawg_driver_gene %>% 
+      tidyr::pivot_wider(names_from = "gene", values_from = "ROLE") %>% 
+      dplyr::mutate_at(vars(-sample), ~!is.na(.)),
+    by = "sample"
+  )
+
+## Filter out driver genes with < 10 mutation
+gene_sum <- sort(colSums(df_mut2[, -c(1:5)], na.rm = TRUE), decreasing = TRUE)
+
+
+# 基因按突变数量排序
+
+df_mut2 <- df_mut2 %>% dplyr::select_at(c(colnames(df_mut2)[1:5], names(gene_sum[gene_sum >= 10])))
+```
+
+
 ```{r include=FALSE, eval=FALSE}
 library(ggpubr)
 
@@ -883,29 +902,45 @@ ggboxplot(df_mut, x = "cluster", y = "Driver_variants",
 ```
 
 
-```{r}
+```{r message=FALSE}
+nm_mut <- setdiff(colnames(df_mut2), c("sample", "cluster"))
+
 enrich_result_mut <- group_enrichment(
-  df_mut,
+  df_mut2,
   grp_vars = "cluster",
-  enrich_vars = c("Driver_variants", "Act_genes", "LoF_genes"),
+  enrich_vars = nm_mut,
   co_method = "wilcox.test"
 )
 ```
 
-```{r fig.height=4}
-enrich_result_mut$enrich_var <- factor(enrich_result_mut$enrich_var, c("Driver_variants", "Act_genes", "LoF_genes"))
+
+Filter out genes insignificant in all subgroups.
+
+```{r}
+keep_df <- enrich_result_mut[ , .(count = sum(p_value < 0.05)), by = enrich_var]
+drop_vars <- keep_df[count == 0]$enrich_var
+
+enrich_result_mut2 <- enrich_result_mut[!enrich_var %in% drop_vars]
+```
+
+Plotting.
+
+```{r fig.height=10, fig.width=6.5, message=FALSE}
+enrich_result_mut2$enrich_var <- factor(enrich_result_mut2$enrich_var, setdiff(nm_mut, drop_vars))
+
+keep_vars <- setdiff(nm_mut, drop_vars)[-c(1:3)]
+labels <- c(nm_mut[1:3], paste0(keep_vars, " (", gene_sum[keep_vars], ")"))
 
 p <- show_group_enrichment(
-  enrich_result_mut,
+  enrich_result_mut2,
   fill_by_p_value = TRUE,
   cut_p_value = TRUE,
   return_list = T
 )
 p <- p$cluster + labs(x = NULL, y = NULL)
-p + coord_flip()
+p + coord_flip() + scale_x_discrete(labels = labels)
 ```
 
-#### Mutant gene list comparison
 
 ```{r include=F, eval=F}
 df_genes <- dplyr::left_join(df_others[, c("sample", "cluster")], 
@@ -924,12 +959,10 @@ ggplot(df_genes, aes(x = gene, y = n, fill = ROLE)) +
   )
 ```
 
-```{r}
+```{r include=F, eval=F}
 df_genes <- dplyr::left_join(df_others[, c("sample", "cluster")], 
                            pcawg_driver_gene, by = "sample") %>% 
   na.omit() %>% 
   tidyr::pivot_wider(names_from = "gene", values_from = "ROLE")
-
-ComplexHeatmap::Heatmap(df_genes[, c(-1, -2)])
 ```
 
