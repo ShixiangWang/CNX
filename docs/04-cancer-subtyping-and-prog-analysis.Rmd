@@ -892,6 +892,12 @@ gene_sum <- sort(colSums(df_mut2[, -c(1:5)], na.rm = TRUE), decreasing = TRUE)
 df_mut2 <- df_mut2 %>% dplyr::select_at(c(colnames(df_mut2)[1:5], names(gene_sum[gene_sum >= 10])))
 ```
 
+Save the data.
+
+```{r eval=FALSE}
+saveRDS(df_mut2, file = "../data/pcawg_mut_df.rds")
+```
+
 
 ```{r include=FALSE, eval=FALSE}
 library(ggpubr)
@@ -939,6 +945,11 @@ p <- show_group_enrichment(
 )
 p <- p$cluster + labs(x = NULL, y = NULL)
 p + coord_flip() + scale_x_discrete(labels = labels)
+```
+
+
+```{r}
+rm(list = ls())
 ```
 
 
