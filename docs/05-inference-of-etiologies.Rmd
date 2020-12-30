@@ -90,51 +90,198 @@ saveRDS(df_merged, file = "../data/pcawg_merged_df.rds")
 
 ## Association analysis for copy number signatures
 
-```{r}
-pcawg_expo <- readRDS("../data/pcawg_cn_sigs_CN176_activity.rds")
-keep_samples <- pcawg_expo$similarity >= 0.75
-pcawg_expo$abs_activity <- pcawg_expo$abs_activity[keep_samples]
-pcawg_expo$rel_activity <- pcawg_expo$rel_activity[keep_samples]
-```
-
-### Signature activity association
+### Copy number signature activity self-association
 
 For absolute signature activity.
 
 ```{r}
-show_cor(pcawg_expo$abs_activity[, -1])
+show_cor(dplyr::select(df_merged, starts_with("Sig")))
 ```
 
 For relative signature activity.
 
 ```{r}
-show_cor(pcawg_expo$rel_activity[, -1])
+show_cor(dplyr::select(df_merged, starts_with("Rel_Sig")) %>% 
+           dplyr::rename_all(~sub("Rel_", "", .)))
 ```
+We can find that most the signatures are correlated. Therefore, it will add difficulty in understanding etiologies by association analysis.
+
+### Copy number signatures and COSMIC signatures
+
+```{r fig.height=20, fig.width=6}
+p_cosmic <- show_cor(
+  data = df_merged,
+  x_vars = colnames(df_merged)[grepl("^Sig", colnames(df_merged))],
+  y_vars = colnames(df_merged)[grepl("^SBS|^DBS|^ID[0-9]+", colnames(df_merged))],
+  hc_order = FALSE,
+  test = FALSE,
+  lab_size = 2
+)
+
+p_cosmic
+```
+
 
 ### Signature clustering
 
-We can take a try to cluster signatures based on their relative activities.
+We can take a try to cluster signatures based on their activity association.
+
+First get the correlation data.
 
 ```{r}
-expo_mat_rel <- pcawg_expo$rel_activity %>% 
-  tibble::column_to_rownames("sample") %>% 
-  as.matrix() %>% 
-  t()
+p_all <- show_cor(
+  data = df_merged,
+  x_vars = colnames(df_merged)[grepl("^Sig|^SBS|^DBS|^ID[0-9]+", colnames(df_merged))],
+  y_vars = colnames(df_merged)[grepl("^Sig|^SBS|^DBS|^ID[0-9]+", colnames(df_merged))],
+  hc_order = FALSE,
+  test = FALSE,
+  lab_size = 3
+)
+```
 
-hc <- hclust(dist(expo_mat_rel))
+Get the correlation matrix and convert it into distance matrix.
+
+```{r}
+p_all_cor <- p_all$cor$cor_mat
+all_dist <- 1 - p_all_cor
+# Set the NA value to 2
+all_dist[is.na(all_dist)] <- 2
+```
+
+#### Only include copy number signatures
+
+```{r}
+dist_cn <- as.dist(all_dist[1:11, 1:11])
+hc_cn <- hclust(dist_cn)
+plot(hc_cn)
+```
+
+Roughly there is 3 clusters.
+
+```{r}
+factoextra::fviz_dend(hc_cn, k = 3, rect = T)
+```
+
+#### All signatures
+
+```{r fig.width=12}
+dist_all <- as.dist(all_dist)
+hc_all <- hclust(dist_all)
+plot(hc_all)
+```
+Here we manually set 10 clusters for better visualization.
+
+```{r fig.width=8, fig.height=8}
+factoextra::fviz_dend(
+  hc_all, k = 10, 
+  cex = 0.6, rect = F,
+  type = "circular") + theme_void() +
+  theme(
+    panel.border = element_blank()
+  )
+  # theme(
+  #   panel.background = element_rect(fill = "transparent", colour = NA),
+  #   plot.background = element_rect(fill = "transparent", colour = NA),
+  #   panel.grid = element_blank(),
+  #   panel.border = element_blank(),
+  #   plot.margin = unit(c(0, 0, 0, 0), "null"),
+  #   panel.margin = unit(c(0, 0, 0, 0), "null"),
+  #   axis.ticks = element_blank(),
+  #   axis.text = element_blank(),
+  #   axis.title = element_blank(),
+  #   axis.line = element_blank(),
+  #   legend.position = "none",
+  #   axis.ticks.length = unit(0, "null"),
+  #   axis.ticks.margin = unit(0, "null"),
+  #   legend.margin = unit(0, "null")
+  # )
+```
+
+### Association between CNS and genotype/phenotype features
+
+#### Association between CNS and continuous variables
+
+```{r fig.width=9, fig.height=7}
+p_cn_others <- show_cor(
+  data = df_merged,
+  x_vars = colnames(df_merged)[2:12],
+  y_vars = colnames(df_merged)[c(24:38, 119:121)],
+  lab_size = 3
+)
+p_cn_others
+```
+
+#### Association between CNS and discrete variables
+
+Here we directly compare the CNS activity between different discrete variable groups.
+
+Here 3 variables including `WGD_Status`, `HRD_Status` and `Tumor_Stage` are included.
+
+```{r}
+df_ds <- tidy_info %>% 
+  dplyr::filter(keep) %>% 
+  dplyr::select(sample, starts_with("Abs")) %>% 
+  dplyr::mutate_if(is.numeric, ~log2(.+1)) %>% 
+  purrr::set_names(c("sample", paste0("Sig", 1:11))) %>% 
+  dplyr::left_join(
+    tidy_anno %>%
+      tibble::rownames_to_column("sample") %>% 
+      dplyr::select(sample, WGD_Status, HRD_Status, Tumor_Stage),
+    by = "sample"
+  ) %>% 
+  dplyr::mutate(Tumor_Stage = ifelse(Tumor_Stage == "Unknown", NA, Tumor_Stage)) %>% 
+  tidyr::pivot_longer(
+    starts_with("Sig"),
+    names_to = "sig_name",
+    values_to = "activity"
+  )
+```
+
+
+```{r}
+library(ggpubr)
+```
+
+
+```{r}
+ggboxplot(
+  df_ds, 
+  x = "sig_name", y = "activity",
+  color = "WGD_Status", 
+  palette = "jco", width = .3,
+  xlab = FALSE, ylab = "log2(Activity)",
+  outlier.size = 0.05) +
+  stat_compare_means(aes(group = WGD_Status), label = "p.signif")
+```
+```{r}
+ggboxplot(
+  df_ds %>% 
+    dplyr::mutate(HRD_Status = factor(HRD_Status, c("no_hrd", "hrd"))), 
+  x = "sig_name", y = "activity",
+  color = "HRD_Status", 
+  palette = "jco", width = .3,
+  xlab = FALSE, ylab = "log2(Activity)",
+  outlier.size = 0.05) +
+  stat_compare_means(aes(group = HRD_Status), label = "p.signif")
 ```
 
 ```{r}
-factoextra::fviz_dend(hc, k = 3, rect = T)
+ggboxplot(
+  df_ds %>% dplyr::filter(!is.na(Tumor_Stage)), 
+  x = "sig_name", y = "activity",
+  color = "Tumor_Stage", 
+  palette = "jco", width = .3,
+  xlab = FALSE, ylab = "log2(Activity)",
+  outlier.size = 0.05) +
+  stat_compare_means(aes(group = Tumor_Stage), label = "p.signif",
+                     method = "anova")
 ```
 
-## Association between copy number signatures (CNS) and other types of signatures (SBS, DBS, ID)
+#### Association between CNS and driver gene mutation
 
-### CNS and SBS
+- <https://shixiangwang.github.io/sigminer/reference/get_sig_feature_association.html>
 
-### CNS and DBS
-
-### CNS and ID
+### Association between CNS and patients' prognosis
 
 ## Signature similarity comparison between different types of signatures
 
@@ -143,9 +290,5 @@ factoextra::fviz_dend(hc, k = 3, rect = T)
 ## Signature association network construction and visualization
 
 > Try to learn from NC paper
-
-## Association between CNS and genotype/phenotype features
-
-## Association between CNS and patients' prognosis
 
 ## Data summary and inference of signature etiologies
