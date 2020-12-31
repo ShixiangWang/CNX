@@ -33,15 +33,19 @@ Sys.setenv("LANGUAGE" = "EN")
 
 In this part, we will add some supplementary analyses.
 
+## Signature association network construction and visualization
+
+> Try to learn from NC paper
+
 ## TCGA CNS analysis
+
+> Think and check in future
 
 ### Copy number signatures
 
 ### Cancer subtyping
 
 ### Prognosis
-
-## Contribution of CNS to AMP/DEL events
 
 ## Exploration of differnt signature extraction methods
 

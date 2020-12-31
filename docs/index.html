@@ -7,12 +7,12 @@
 
         <meta name="author" content="Shixiang Wang, Ziyu Tao, Tao Wu, Huimin Li, Xue-Song Liu (Corresponding author)" />
     
-        <meta name="date" content="2020-12-28" />
+        <meta name="date" content="2020-12-31" />
     
     <title>Pan-Cancer Copy Number Signature Identification and Analysis</title>
 
         <script src="index_files/header-attrs-2.6/header-attrs.js"></script>
-        <script src="index_files/jquery-1.11.3/jquery.min.js"></script>
+        <script src="index_files/jquery-1.12.4/jquery.min.js"></script>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link href="index_files/bootstrap-3.3.7/css/bootstrap.min.css" rel="stylesheet" />
         <script src="index_files/bootstrap-3.3.7/js/bootstrap.min.js"></script>
@@ -24,6 +24,14 @@
         <link href="index_files/downcute-0.1/downcute_fonts_embed.css" rel="stylesheet" />
         <script src="index_files/downcute-0.1/downcute.js"></script>
         <script src="index_files/prism-1.22/prism.js"></script>
+        <script src="index_files/htmlwidgets-1.5.3/htmlwidgets.js"></script>
+        <link href="index_files/datatables-css-0.0.0/datatables-crosstalk.css" rel="stylesheet" />
+        <script src="index_files/datatables-binding-0.16/datatables.js"></script>
+        <link href="index_files/dt-core-1.10.20/css/jquery.dataTables.min.css" rel="stylesheet" />
+        <link href="index_files/dt-core-1.10.20/css/jquery.dataTables.extra.css" rel="stylesheet" />
+        <script src="index_files/dt-core-1.10.20/js/jquery.dataTables.min.js"></script>
+        <link href="index_files/crosstalk-1.1.0.1/css/crosstalk.css" rel="stylesheet" />
+        <script src="index_files/crosstalk-1.1.0.1/js/crosstalk.min.js"></script>
     
     
     
@@ -185,36 +193,31 @@
             <ul>
             <li><a href="#signatures">Signatures</a></li>
             <li><a href="#other-integrated-variables">Other integrated variables</a></li>
+            <li><a href="#driver-genes">Driver genes</a></li>
             </ul></li>
             </ul></li>
             <li><a href="#part-5-inference-of-copy-number-signature-etiologies">PART 5: Inference of copy number signature etiologies</a>
             <ul>
             <li><a href="#association-analysis-for-copy-number-signatures">Association analysis for copy number signatures</a>
             <ul>
-            <li><a href="#signature-activity-association">Signature activity association</a></li>
+            <li><a href="#copy-number-signature-activity-self-association">Copy number signature activity self-association</a></li>
+            <li><a href="#copy-number-signatures-and-cosmic-signatures">Copy number signatures and COSMIC signatures</a></li>
             <li><a href="#signature-clustering">Signature clustering</a></li>
-            </ul></li>
-            <li><a href="#association-between-copy-number-signatures-cns-and-other-types-of-signatures-sbs-dbs-id">Association between copy number signatures (CNS) and other types of signatures (SBS, DBS, ID)</a>
-            <ul>
-            <li><a href="#cns-and-sbs">CNS and SBS</a></li>
-            <li><a href="#cns-and-dbs">CNS and DBS</a></li>
-            <li><a href="#cns-and-id">CNS and ID</a></li>
-            </ul></li>
-            <li><a href="#signature-similarity-comparison-between-different-types-of-signatures">Signature similarity comparison between different types of signatures</a></li>
-            <li><a href="#signature-association-network-construction-and-visualization">Signature association network construction and visualization</a></li>
             <li><a href="#association-between-cns-and-genotypephenotype-features">Association between CNS and genotype/phenotype features</a></li>
             <li><a href="#association-between-cns-and-patients-prognosis">Association between CNS and patients’ prognosis</a></li>
+            </ul></li>
+            <li><a href="#signature-similarity-comparison-between-different-types-of-signatures">Signature similarity comparison between different types of signatures</a></li>
             <li><a href="#data-summary-and-inference-of-signature-etiologies">Data summary and inference of signature etiologies</a></li>
             </ul></li>
             <li><a href="#supplementary-analyses">Supplementary Analyses</a>
             <ul>
+            <li><a href="#signature-association-network-construction-and-visualization">Signature association network construction and visualization</a></li>
             <li><a href="#tcga-cns-analysis">TCGA CNS analysis</a>
             <ul>
             <li><a href="#copy-number-signatures">Copy number signatures</a></li>
             <li><a href="#cancer-subtyping">Cancer subtyping</a></li>
             <li><a href="#prognosis">Prognosis</a></li>
             </ul></li>
-            <li><a href="#contribution-of-cns-to-ampdel-events">Contribution of CNS to AMP/DEL events</a></li>
             <li><a href="#exploration-of-differnt-signature-extraction-methods">Exploration of differnt signature extraction methods</a></li>
             </ul></li>
             <li><a href="#r-session">R Session:</a></li>
@@ -233,7 +236,7 @@
       <p class="authors">
            <span class="glyphicon glyphicon-user"></span> Shixiang Wang, Ziyu Tao, Tao Wu, Huimin Li, Xue-Song Liu (Corresponding author)
       </p>
-         <p class="date"><span class="glyphicon glyphicon-calendar"></span> 2020-12-28</p>
+         <p class="date"><span class="glyphicon glyphicon-calendar"></span> 2020-12-31</p>
            
 
    
@@ -1497,6 +1500,8 @@ tidy_info &lt;- tidy_info %&gt;%
   ) %&gt;%
   tibble::column_to_rownames(&quot;sample&quot;)
 
+saveRDS(anno_df, file = &quot;../data/pcawg_tidy_anno_df.rds&quot;)
+
 left_annotation &lt;- rowAnnotation(foo = anno_text(paste0(&quot;Sig&quot;, c(1:4, 6:11))))</code></pre>
 <p>Show heatmap for clusters based on signature activities.</p>
 <pre class="r"><code>get_signatures(cluster_res,
@@ -1511,18 +1516,8 @@ left_annotation &lt;- rowAnnotation(foo = anno_text(paste0(&quot;Sig&quot;, c(1:
 <p><img src="index_files/figure-html/unnamed-chunk-91-1.png" width="6600" /></p>
 <p>Save to file.</p>
 <pre class="r"><code>pdf(file = &quot;../output/pcawg_cluster_heatmap.pdf&quot;, width = 22, height = 10, onefile = FALSE)
-get_signatures(cluster_res, k = 6, silhouette_cutoff = 0.2, anno = anno_df, left_annotation = left_annotation)</code></pre>
-<pre><code>* 2522/2640 samples (in 6 classes) remain after filtering by silhouette (&gt;= 0.2).
-* cache hash: adc95c3acc3e95ec20e2157e35327ca3 (seed 888).
-* calculating row difference between subgroups by Ftest.
-  - row difference is extracted from cache.
-  - row order for the scaled matrix is extracted from cache.
-* 10 signatures (100.0%) under fdr &lt; 0.05, group_diff &gt; 0.
-* making heatmaps for signatures.
-  - use row order from cache.</code></pre>
-<pre class="r"><code>dev.off()</code></pre>
-<pre><code>quartz_off_screen 
-                2 </code></pre>
+get_signatures(cluster_res, k = 6, silhouette_cutoff = 0.2, anno = anno_df, left_annotation = left_annotation)
+dev.off()</code></pre>
 <p>Considering the results of <code>6</code> clusters gives confident labels for <code>&gt;90%</code> samples and thus there is no need to use <code>3</code> clusters in this study.</p>
 </div>
 <div id="exploration-of-patients-prognosis-difference-across-clusters" class="section level2">
@@ -1583,7 +1578,9 @@ pcawg_id &lt;- read_csv(&quot;../data/PCAWG/PCAWG_SigProfiler_ID_signatures_in_s
 <pre class="r"><code>df_merged &lt;- purrr::reduce(
   list(
     tidy_info,
-    pcawg_sbs[, -c(1, 3)] %&gt;% dplyr::rename(sample = `Sample Names`),
+    pcawg_sbs[, -c(1, 3)] %&gt;% dplyr::rename(sample = `Sample Names`) %&gt;%
+      # Drop Possible sequencing artefact associated signatures
+      dplyr::select(-SBS43, -c(SBS45:SBS60)),
     pcawg_dbs[, -c(1, 3)] %&gt;% dplyr::rename(sample = `Sample Names`),
     pcawg_id[, -c(1, 3)] %&gt;% dplyr::rename(sample = `Sample Names`),
     cluster_df[, -2] %&gt;% purrr::set_names(c(&quot;sample&quot;, &quot;cluster&quot;))
@@ -1614,7 +1611,7 @@ p &lt;- show_group_enrichment(
 )
 p &lt;- p$cluster + labs(x = NULL, y = NULL)
 p + coord_flip()</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-101-1.png" width="2400" /></p>
+<p><img src="index_files/figure-html/unnamed-chunk-101-1.png" width="1950" /></p>
 </div>
 <div id="enrichment-analysis-for-sbs-signatures" class="section level4">
 <h4>Enrichment analysis for SBS signatures</h4>
@@ -1636,7 +1633,7 @@ p &lt;- show_group_enrichment(
 )
 p &lt;- p$cluster + labs(x = NULL, y = NULL)
 p + coord_flip()</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-103-1.png" width="2400" /></p>
+<p><img src="index_files/figure-html/unnamed-chunk-103-1.png" width="1950" /></p>
 </div>
 <div id="enrichment-analysis-for-dbs-signatures" class="section level4">
 <h4>Enrichment analysis for DBS signatures</h4>
@@ -1658,11 +1655,11 @@ p &lt;- show_group_enrichment(
 )
 p &lt;- p$cluster + labs(x = NULL, y = NULL)
 p + coord_flip()</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-105-1.png" width="2400" /></p>
+<p><img src="index_files/figure-html/unnamed-chunk-105-1.png" width="1950" /></p>
 </div>
 <div id="enrichment-analysis-for-id-signatures" class="section level4">
 <h4>Enrichment analysis for ID signatures</h4>
-<pre class="r"><code>nm_id &lt;- colnames(df_merged)[grepl(&quot;ID&quot;, colnames(df_merged))]
+<pre class="r"><code>nm_id &lt;- colnames(df_merged)[grepl(&quot;^ID[0-9]+&quot;, colnames(df_merged))]
 
 enrich_result_id &lt;- group_enrichment(
   df_merged,
@@ -1680,84 +1677,561 @@ p &lt;- show_group_enrichment(
 )
 p &lt;- p$cluster + labs(x = NULL, y = NULL)
 p + coord_flip()</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-107-1.png" width="2400" /></p>
+<p><img src="index_files/figure-html/unnamed-chunk-107-1.png" width="1950" /></p>
+</div>
+<div id="combined-cosmic-signature-result" class="section level4">
+<h4>Combined COSMIC signature result</h4>
+<p>Merge all COSMIC signature results.</p>
+<pre class="r"><code>enrich_result_cosmic &lt;- purrr::reduce(
+  list(enrich_result_sbs, enrich_result_dbs, enrich_result_id),
+  rbind
+)</code></pre>
+<blockquote>
+<p>移除带 NA 和 Inf 的 signatures 结果，然后绘制一个汇总图，对 signatures 进行聚类，以确定 signature 排序。</p>
+</blockquote>
+</div>
+<div id="word-cloud-plot-for-cosmic-signature-etiologies" class="section level4">
+<h4>Word cloud plot for COSMIC signature etiologies</h4>
+<p>There are so many COSMIC signatures above, it is not easy to summarize the data. Considering all COSMIC signatures are labeled and many of them have been assigned to a specific etiology, here we try to use word cloud plot to summarize the result above.</p>
+<p>Load etiologies of COSMIC signatures.</p>
+<pre class="r"><code>cosmic_ets &lt;- purrr::reduce(
+  list(
+    sigminer::get_sig_db(&quot;SBS&quot;)$aetiology %&gt;% tibble::rownames_to_column(&quot;sig_name&quot;),
+    sigminer::get_sig_db(&quot;DBS&quot;)$aetiology %&gt;% tibble::rownames_to_column(&quot;sig_name&quot;),
+    sigminer::get_sig_db(&quot;ID&quot;)$aetiology %&gt;% tibble::rownames_to_column(&quot;sig_name&quot;)
+  ),
+  rbind
+)</code></pre>
+<pre class="r"><code>DT::datatable(cosmic_ets)</code></pre>
+<div id="htmlwidget-18f151ff8c7d6fa42bf4" style="width:100%;height:auto;" class="datatables html-widget"></div>
+<script type="application/json" data-for="htmlwidget-18f151ff8c7d6fa42bf4">{"x":{"filter":"none","data":[["1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20","21","22","23","24","25","26","27","28","29","30","31","32","33","34","35","36","37","38","39","40","41","42","43","44","45","46","47","48","49","50","51","52","53","54","55","56","57","58","59","60","61","62","63","64","65","66","67","68","69","70","71","72","73","74","75","76","77","78","79","80","81","82","83","84","85","86","87","88","89","90","91","92","93","94","95","96","97","98","99","100","101"],["SBS1","SBS2","SBS3","SBS4","SBS5","SBS6","SBS7a","SBS7b","SBS7c","SBS7d","SBS8","SBS9","SBS10a","SBS10b","SBS11","SBS12","SBS13","SBS14","SBS15","SBS16","SBS17a","SBS17b","SBS18","SBS19","SBS20","SBS21","SBS22","SBS23","SBS24","SBS25","SBS26","SBS27","SBS28","SBS29","SBS30","SBS31","SBS32","SBS33","SBS34","SBS35","SBS36","SBS37","SBS38","SBS39","SBS40","SBS41","SBS42","SBS43","SBS44","SBS45","SBS46","SBS47","SBS48","SBS49","SBS50","SBS51","SBS52","SBS53","SBS54","SBS55","SBS56","SBS57","SBS58","SBS59","SBS60","SBS84","SBS85","SBS86","SBS87","SBS88","SBS89","SBS90","DBS1","DBS2","DBS3","DBS4","DBS5","DBS6","DBS7","DBS8","DBS9","DBS10","DBS11","ID1","ID2","ID3","ID4","ID5","ID6","ID7","ID8","ID9","ID10","ID11","ID12","ID13","ID14","ID15","ID16","ID17","ID18"],["Spontaneous deamination of 5-methylcytosine (clock-like signature)","Activity of APOBEC family of cytidine deaminases","Defective homologous recombination DNA damage repair","Tobacco smoking","Unknown (clock-like signature)","Defective DNA mismatch repair","Ultraviolet light exposure","Ultraviolet light exposure","Ultraviolet light exposure","Ultraviolet light exposure","Unknown","Polimerase eta somatic hypermutation activity","Polymerase epsilon exonuclease domain mutations","Polymerase epsilon exonuclease domain mutations","Temozolomide treatment","Unknown","Activity of APOBEC family of cytidine deaminases","Concurrent polymerase epsilon mutation and defective DNA mismatch repair","Defective DNA mismatch repair","Unknown","Unknown","Unknown","Damage by reactive oxygen species","Unknown","Concurrent POLD1 mutations and defective DNA mismatch repair","Defective DNA mismatch repair","Aristolochic acid exposure","Unknown","Aflatoxin exposure","Chemotherapy treatment","Defective DNA mismatch repair","Possible sequencing artefact","Unknown","Tobacco chewing","Defective DNA base excision repair due to NTHL1 mutations","Platinum chemotherapy treatment","Azathioprine treatment","Unknown","Unknown","Platinum chemotherapy treatment","Defective DNA base excision repair due to MUTYH mutations","Unknown","Indirect effect of ultraviolet light","Unknown","Unknown","Unknown","Haloalkane exposure","Possible sequencing artefact","Defective DNA mismatch repair","Possible sequencing artefact","Possible sequencing artefact","Possible sequencing artefact","Possible sequencing artefact","Possible sequencing artefact","Possible sequencing artefact","Possible sequencing artefact","Possible sequencing artefact","Possible sequencing artefact","Possible sequencing artefact","Possible sequencing artefact","Possible sequencing artefact","Possible sequencing artefact","Possible sequencing artefact","Possible sequencing artefact","Possible sequencing artefact","Activity of activation-induced cytidine deaminase (AID)","Indirect effects of activation-induced cytidine deaminase (AID)","Unknown chemotherapy treatment","Thiopurine chemotherapy treatment","Colibactin exposure (E.coli bacteria carrying pks pathogenicity island)","Unknown","Duocarmycin exposure","Ultraviolet light exposure","Tobacco smoking and other mutagens","Polymerase epsilon exonuclease domain mutations","Unknown","Platinum chemotherapy treatment","Unknown","Defective DNA mismatch repair","Unknown","Unknown","Defective DNA mismatch repair","Unknown (possibly related to APOBEC mutagenesis)","Slippage during DNA replication of the replicated DNA strand","Slippage during DNA replication of the template DNA strand","Tobacco smoking","Unknown","Unknown","Defective homologous recombination DNA damage repair","Defective DNA mismatch repair","Repair of DNA double strand breaks by NHEJ mechanisms or mutations in topoisomerase TOP2A","Unknown","Unknown","Unknown","Unknown","Ultraviolet light exposure","Unknown","Unknown","Unknown","Mutations in topoisomerase TOP2A","Colibactin exposure (E.coli bacteria carrying pks pathogenicity island)"]],"container":"<table class=\"display\">\n  <thead>\n    <tr>\n      <th> <\/th>\n      <th>sig_name<\/th>\n      <th>aetiology<\/th>\n    <\/tr>\n  <\/thead>\n<\/table>","options":{"order":[],"autoWidth":false,"orderClasses":false,"columnDefs":[{"orderable":false,"targets":0}]}},"evals":[],"jsHooks":[]}</script>
+<p>Generate a <code>data.frame</code> for plotting. We only keep significantly and positively enriched signatures in each subgroup. We note that descriptions for many signatures are too long, thus we use short names.</p>
+<pre class="r"><code>df_ets &lt;- enrich_result_cosmic %&gt;%
+  dplyr::filter(p_value &lt; 0.05 &amp; measure_observed &gt; 1) %&gt;%
+  dplyr::select(grp1, enrich_var) %&gt;%
+  dplyr::left_join(cosmic_ets, by = c(&quot;enrich_var&quot; = &quot;sig_name&quot;)) %&gt;%
+  dplyr::mutate(
+    aetiology = dplyr::case_when(
+      grepl(&quot;APOBEC&quot;, aetiology) ~ &quot;APOBEC&quot;,
+      grepl(&quot;Tobacco&quot;, aetiology) ~ &quot;Tobacco&quot;,
+      grepl(&quot;clock&quot;, aetiology) ~ &quot;Clock&quot;,
+      grepl(&quot;Ultraviolet&quot;, aetiology, ignore.case = TRUE) ~ &quot;UV&quot;,
+      grepl(&quot;homologous recombination&quot;, aetiology) ~ &quot;HRD&quot;,
+      grepl(&quot;mismatch repair&quot;, aetiology) ~ &quot;dMMR&quot;,
+      grepl(&quot;Slippage&quot;, aetiology) ~ &quot;Slippage&quot;,
+      grepl(&quot;base excision repair&quot;, aetiology) ~ &quot;dBER&quot;,
+      grepl(&quot;NHEJ&quot;, aetiology) ~ &quot;NHEJ repair&quot;,
+      grepl(&quot;reactive oxygen&quot;, aetiology) ~ &quot;ROS&quot;,
+      grepl(&quot;Polymerase epsilon exonuclease&quot;, aetiology) ~ &quot;Polymerase epsilon mutation&quot;,
+      grepl(&quot;eta somatic hypermutation&quot;, aetiology) ~ &quot;Polimerase eta hypermutation&quot;,
+      TRUE ~ aetiology
+    )
+  ) %&gt;%
+  dplyr::count(grp1, aetiology) %&gt;%
+  dplyr::filter(!aetiology %in% c(&quot;Unknown&quot;, &quot;Possible sequencing artefact&quot;))</code></pre>
+<p>Plotting.</p>
+<pre class="r"><code>library(ggwordcloud)
+
+set.seed(42)
+ggplot(df_ets, aes(label = aetiology, size = n)) +
+  geom_text_wordcloud_area(eccentricity = .35, shape = &quot;square&quot;) +
+  scale_size_area(max_size = 14) +
+  facet_wrap(~grp1) +
+  theme_bw()</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-112-1.png" width="3000" /></p>
 </div>
 </div>
 <div id="other-integrated-variables" class="section level3">
 <h3>Other integrated variables</h3>
+<pre class="r"><code>df_others &lt;- readRDS(&quot;../data/pcawg_tidy_anno_df.rds&quot;) %&gt;%
+  tibble::rownames_to_column(&quot;sample&quot;) %&gt;%
+  dplyr::left_join(
+    cluster_df[, -2] %&gt;% purrr::set_names(c(&quot;sample&quot;, &quot;cluster&quot;)),
+    by = &quot;sample&quot;
+  ) %&gt;%
+  dplyr::mutate(
+    Tumor_Stage = dplyr::case_when(
+      Tumor_Stage == &quot;I&quot; ~ 1,
+      Tumor_Stage == &quot;II&quot; ~ 2,
+      Tumor_Stage == &quot;III&quot; ~ 3,
+      Tumor_Stage == &quot;IV&quot; ~ 4
+    ),
+    isFemale = Sex == &quot;female&quot;,
+    isWGD = WGD_Status == &quot;wgd&quot;,
+    isHRD = HRD_Status == &quot;hrd&quot;,
+    cluster = paste0(&quot;subgroup&quot;, cluster)
+  ) %&gt;%
+  dplyr::select(-c(Sex, WGD_Status, HRD_Status))</code></pre>
+<pre class="r"><code>nm_others &lt;- setdiff(colnames(df_others), c(&quot;sample&quot;, &quot;cluster&quot;))
+
+enrich_result_others &lt;- group_enrichment(
+  df_others,
+  grp_vars = &quot;cluster&quot;,
+  enrich_vars = nm_others,
+  co_method = &quot;wilcox.test&quot;
+)</code></pre>
+<pre class="r"><code>enrich_result_others$enrich_var &lt;- factor(enrich_result_others$enrich_var, nm_others)
+
+p &lt;- show_group_enrichment(
+  enrich_result_others,
+  fill_by_p_value = TRUE,
+  cut_p_value = TRUE,
+  return_list = T
+)
+p &lt;- p$cluster + labs(x = NULL, y = NULL)
+p + coord_flip()</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-115-1.png" width="1950" /></p>
+<blockquote>
+<p>The <code>HR</code> here represents <code>Heavily rearrangement</code>, don’t mix it with <code>HRD</code> which means <code>Defective homologous recombination DNA damage repair</code>.</p>
+</blockquote>
+</div>
+<div id="driver-genes" class="section level3">
+<h3>Driver genes</h3>
+<p>We have already observed that there are different mutational processes across different groups. Here we try to go further study if different driver genes activate in different groups.</p>
+<p>We obtained coding driver mutations from <a href="https://xena.hiplot.com.cn/datapages/?dataset=pcawg_whitelist_coding_drivers_v1_sep302016.sp.xena&amp;host=https%3A%2F%2Fxena-pcawg.hiplot.com.cn">UCSC Xena database</a>. For known driver genes, we focus on driver gene list obtained from <span class="citation"><a href="#ref-martinez-jimenezCompendiumMutationalCancer2020" role="doc-biblioref">Martínez-Jiménez et al.</a> (<a href="#ref-martinez-jimenezCompendiumMutationalCancer2020" role="doc-biblioref">2020</a>)</span>.</p>
+<pre class="r"><code>load(&quot;../data/pcawg_driver_info.RData&quot;)
+df_mut &lt;- dplyr::left_join(df_others[, c(&quot;sample&quot;, &quot;cluster&quot;)],
+  pcawg_driver_number,
+  by = &quot;sample&quot;
+)
+colnames(df_mut)[3] &lt;- &quot;Driver_variants&quot;
+df_mut$Driver_variants &lt;- ifelse(is.na(df_mut$Driver_variants), 0, df_mut$Driver_variants)
+
+driver_gene_num &lt;- pcawg_driver_gene %&gt;%
+  dplyr::group_by(sample, ROLE) %&gt;%
+  dplyr::summarise(driver_genes = n(), .groups = &quot;drop&quot;) %&gt;%
+  tidyr::pivot_wider(names_from = &quot;ROLE&quot;, values_from = &quot;driver_genes&quot;, values_fill = 0)
+
+df_mut &lt;- dplyr::left_join(df_mut, driver_gene_num, by = &quot;sample&quot;)
+colnames(df_mut)[4:5] &lt;- c(&quot;Act_genes&quot;, &quot;LoF_genes&quot;)
+df_mut$Act_genes &lt;- ifelse(is.na(df_mut$Act_genes), 0, df_mut$Act_genes)
+df_mut$LoF_genes &lt;- ifelse(is.na(df_mut$LoF_genes), 0, df_mut$LoF_genes)</code></pre>
+<p>Also merge into info of each driver gene.</p>
+<pre class="r"><code>df_mut2 &lt;- df_mut %&gt;%
+  dplyr::left_join(
+    pcawg_driver_gene %&gt;%
+      tidyr::pivot_wider(names_from = &quot;gene&quot;, values_from = &quot;ROLE&quot;) %&gt;%
+      dplyr::mutate_at(vars(-sample), ~ !is.na(.)),
+    by = &quot;sample&quot;
+  )
+
+## Filter out driver genes with &lt; 10 mutation
+gene_sum &lt;- sort(colSums(df_mut2[, -c(1:5)], na.rm = TRUE), decreasing = TRUE)
+
+
+# 基因按突变数量排序
+
+df_mut2 &lt;- df_mut2 %&gt;% dplyr::select_at(c(colnames(df_mut2)[1:5], names(gene_sum[gene_sum &gt;= 10])))</code></pre>
+<p>Save the data.</p>
+<pre class="r"><code>saveRDS(df_mut2, file = &quot;../data/pcawg_mut_df.rds&quot;)</code></pre>
+<pre class="r"><code>nm_mut &lt;- setdiff(colnames(df_mut2), c(&quot;sample&quot;, &quot;cluster&quot;))
+
+enrich_result_mut &lt;- group_enrichment(
+  df_mut2,
+  grp_vars = &quot;cluster&quot;,
+  enrich_vars = nm_mut,
+  co_method = &quot;wilcox.test&quot;
+)</code></pre>
+<p>Filter out genes insignificant in all subgroups.</p>
+<pre class="r"><code>keep_df &lt;- enrich_result_mut[, .(count = sum(p_value &lt; 0.05)), by = enrich_var]
+drop_vars &lt;- keep_df[count == 0]$enrich_var
+
+enrich_result_mut2 &lt;- enrich_result_mut[!enrich_var %in% drop_vars]</code></pre>
+<p>Plotting.</p>
+<pre class="r"><code>enrich_result_mut2$enrich_var &lt;- factor(enrich_result_mut2$enrich_var, setdiff(nm_mut, drop_vars))
+
+keep_vars &lt;- setdiff(nm_mut, drop_vars)[-c(1:3)]
+labels &lt;- c(nm_mut[1:3], paste0(keep_vars, &quot; (&quot;, gene_sum[keep_vars], &quot;)&quot;))
+
+p &lt;- show_group_enrichment(
+  enrich_result_mut2,
+  fill_by_p_value = TRUE,
+  cut_p_value = TRUE,
+  return_list = T
+)
+p &lt;- p$cluster + labs(x = NULL, y = NULL)
+p + coord_flip() + scale_x_discrete(labels = labels)</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-122-1.png" width="1950" /></p>
+<pre class="r"><code>rm(list = ls())</code></pre>
 </div>
 </div>
 </div>
 <div id="part-5-inference-of-copy-number-signature-etiologies" class="section level1">
 <h1>PART 5: Inference of copy number signature etiologies</h1>
 <p>In this part, we would like to explore CN signatures in more details with association analysis and summarize what we get to infer their etiologies.</p>
+<p>Let’s merge load all data we got and combine them.</p>
+<pre class="r"><code>library(tidyverse)
+library(sigminer)
+
+tidy_info &lt;- readRDS(&quot;../data/pcawg_sample_tidy_info.rds&quot;)
+tidy_anno &lt;- readRDS(&quot;../data/pcawg_tidy_anno_df.rds&quot;)
+tidy_mut &lt;- readRDS(&quot;../data/pcawg_mut_df.rds&quot;)
+pcawg_sbs &lt;- read_csv(&quot;../data/PCAWG/PCAWG_sigProfiler_SBS_signatures_in_samples.csv&quot;)
+pcawg_dbs &lt;- read_csv(&quot;../data/PCAWG/PCAWG_sigProfiler_DBS_signatures_in_samples.csv&quot;)
+pcawg_id &lt;- read_csv(&quot;../data/PCAWG/PCAWG_SigProfiler_ID_signatures_in_samples.csv&quot;)</code></pre>
+<p>Merge data.</p>
+<pre class="r"><code>df_merged &lt;- purrr::reduce(
+  list(
+    tidy_info %&gt;%
+      dplyr::filter(keep) %&gt;%
+      dplyr::select(sample, starts_with(&quot;Abs&quot;), starts_with(&quot;Rel&quot;)),
+    tidy_anno %&gt;%
+      tibble::rownames_to_column(&quot;sample&quot;) %&gt;%
+      dplyr::mutate(
+        Tumor_Stage = dplyr::case_when(
+          Tumor_Stage == &quot;I&quot; ~ 1,
+          Tumor_Stage == &quot;II&quot; ~ 2,
+          Tumor_Stage == &quot;III&quot; ~ 3,
+          Tumor_Stage == &quot;IV&quot; ~ 4
+        ),
+        isFemale = Sex == &quot;female&quot;,
+        isWGD = WGD_Status == &quot;wgd&quot;,
+        isHRD = HRD_Status == &quot;hrd&quot;
+      ) %&gt;%
+      dplyr::select(-c(Sex, WGD_Status, HRD_Status)),
+    pcawg_sbs[, -c(1, 3)] %&gt;% dplyr::rename(sample = `Sample Names`) %&gt;%
+      # Drop Possible sequencing artefact associated signatures
+      dplyr::select(-SBS43, -c(SBS45:SBS60)),
+    pcawg_dbs[, -c(1, 3)] %&gt;% dplyr::rename(sample = `Sample Names`),
+    pcawg_id[, -c(1, 3)] %&gt;% dplyr::rename(sample = `Sample Names`),
+    tidy_mut %&gt;% dplyr::select(-cluster)
+  ),
+  dplyr::left_join,
+  by = &quot;sample&quot;
+) %&gt;%
+  dplyr::mutate_if(
+    is.logical,
+    ~ ifelse(is.na(.), FALSE, .)
+  )
+
+colnames(df_merged) &lt;- gsub(&quot;Abs_&quot;, &quot;&quot;, colnames(df_merged))
+
+saveRDS(df_merged, file = &quot;../data/pcawg_merged_df.rds&quot;)</code></pre>
 <div id="association-analysis-for-copy-number-signatures" class="section level2">
 <h2>Association analysis for copy number signatures</h2>
-<pre class="r"><code>pcawg_expo &lt;- readRDS(&quot;../data/pcawg_cn_sigs_CN176_activity.rds&quot;)
-keep_samples &lt;- pcawg_expo$similarity &gt;= 0.75
-pcawg_expo$abs_activity &lt;- pcawg_expo$abs_activity[keep_samples]
-pcawg_expo$rel_activity &lt;- pcawg_expo$rel_activity[keep_samples]</code></pre>
-<div id="signature-activity-association" class="section level3">
-<h3>Signature activity association</h3>
+<div id="copy-number-signature-activity-self-association" class="section level3">
+<h3>Copy number signature activity self-association</h3>
 <p>For absolute signature activity.</p>
-<pre class="r"><code>show_cor(pcawg_expo$abs_activity[, -1])</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-109-1.png" width="2400" /></p>
+<pre class="r"><code>show_cor(dplyr::select(df_merged, starts_with(&quot;Sig&quot;)))</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-129-1.png" width="2400" /></p>
 <p>For relative signature activity.</p>
-<pre class="r"><code>show_cor(pcawg_expo$rel_activity[, -1])</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-110-1.png" width="2400" /></p>
+<pre class="r"><code>show_cor(dplyr::select(df_merged, starts_with(&quot;Rel_Sig&quot;)) %&gt;%
+  dplyr::rename_all(~ sub(&quot;Rel_&quot;, &quot;&quot;, .)))</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-130-1.png" width="2400" /> We can find that most the signatures are correlated. Therefore, it will add difficulty in understanding etiologies by association analysis.</p>
+</div>
+<div id="copy-number-signatures-and-cosmic-signatures" class="section level3">
+<h3>Copy number signatures and COSMIC signatures</h3>
+<pre class="r"><code>p_cosmic &lt;- show_cor(
+  data = df_merged,
+  x_vars = colnames(df_merged)[grepl(&quot;^Sig&quot;, colnames(df_merged))],
+  y_vars = colnames(df_merged)[grepl(&quot;^SBS|^DBS|^ID[0-9]+&quot;, colnames(df_merged))],
+  hc_order = FALSE,
+  test = FALSE,
+  lab_size = 2
+)
+
+p_cosmic</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-131-1.png" width="1800" /></p>
 </div>
 <div id="signature-clustering" class="section level3">
 <h3>Signature clustering</h3>
-<p>We can take a try to cluster signatures based on their relative activities.</p>
-<pre class="r"><code>expo_mat_rel &lt;- pcawg_expo$rel_activity %&gt;%
-  tibble::column_to_rownames(&quot;sample&quot;) %&gt;%
-  as.matrix() %&gt;%
-  t()
+<p>We can take a try to cluster signatures based on their activity association.</p>
+<p>First get the correlation data.</p>
+<pre class="r"><code>p_all &lt;- show_cor(
+  data = df_merged,
+  x_vars = colnames(df_merged)[grepl(&quot;^Sig|^SBS|^DBS|^ID[0-9]+&quot;, colnames(df_merged))],
+  y_vars = colnames(df_merged)[grepl(&quot;^Sig|^SBS|^DBS|^ID[0-9]+&quot;, colnames(df_merged))],
+  hc_order = FALSE,
+  test = FALSE,
+  lab_size = 3
+)</code></pre>
+<p>Get the correlation matrix and convert it into distance matrix.</p>
+<pre class="r"><code>p_all_cor &lt;- p_all$cor$cor_mat
+all_dist &lt;- 1 - p_all_cor
+# Set the NA value to 2
+all_dist[is.na(all_dist)] &lt;- 2</code></pre>
+<div id="only-include-copy-number-signatures" class="section level4">
+<h4>Only include copy number signatures</h4>
+<pre class="r"><code>dist_cn &lt;- as.dist(all_dist[1:11, 1:11])
+hc_cn &lt;- hclust(dist_cn)
+plot(hc_cn)</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-134-1.png" width="2400" /></p>
+<p>Roughly there is 3 clusters.</p>
+<pre class="r"><code>factoextra::fviz_dend(hc_cn, k = 3, rect = T)</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-135-1.png" width="2400" /></p>
+</div>
+<div id="all-signatures" class="section level4">
+<h4>All signatures</h4>
+<pre class="r"><code>dist_all &lt;- as.dist(all_dist)
+hc_all &lt;- hclust(dist_all)
+plot(hc_all)</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-136-1.png" width="3600" /> Here we manually set 10 clusters for better visualization.</p>
+<pre class="r"><code>factoextra::fviz_dend(
+  hc_all,
+  k = 10,
+  cex = 0.6, rect = F,
+  type = &quot;circular&quot;
+) + theme_void() +
+  theme(
+    panel.border = element_blank()
+  )</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-137-1.png" width="2400" /></p>
+<pre class="r"><code># theme(
+#   panel.background = element_rect(fill = &quot;transparent&quot;, colour = NA),
+#   plot.background = element_rect(fill = &quot;transparent&quot;, colour = NA),
+#   panel.grid = element_blank(),
+#   panel.border = element_blank(),
+#   plot.margin = unit(c(0, 0, 0, 0), &quot;null&quot;),
+#   panel.margin = unit(c(0, 0, 0, 0), &quot;null&quot;),
+#   axis.ticks = element_blank(),
+#   axis.text = element_blank(),
+#   axis.title = element_blank(),
+#   axis.line = element_blank(),
+#   legend.position = &quot;none&quot;,
+#   axis.ticks.length = unit(0, &quot;null&quot;),
+#   axis.ticks.margin = unit(0, &quot;null&quot;),
+#   legend.margin = unit(0, &quot;null&quot;)
+# )</code></pre>
+</div>
+</div>
+<div id="association-between-cns-and-genotypephenotype-features" class="section level3">
+<h3>Association between CNS and genotype/phenotype features</h3>
+<div id="association-between-cns-and-continuous-variables" class="section level4">
+<h4>Association between CNS and continuous variables</h4>
+<pre class="r"><code>p_cn_others &lt;- show_cor(
+  data = df_merged,
+  x_vars = colnames(df_merged)[2:12],
+  y_vars = colnames(df_merged)[c(24:38, 119:121)],
+  lab_size = 3
+)
+p_cn_others</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-138-1.png" width="2700" /></p>
+</div>
+<div id="association-between-cns-and-discrete-variables" class="section level4">
+<h4>Association between CNS and discrete variables</h4>
+<p>Here we directly compare the CNS activity between different discrete variable groups.</p>
+<p>Here 3 variables including <code>WGD_Status</code>, <code>HRD_Status</code> and <code>Tumor_Stage</code> are included.</p>
+<pre class="r"><code>df_ds &lt;- tidy_info %&gt;%
+  dplyr::filter(keep) %&gt;%
+  dplyr::select(sample, starts_with(&quot;Abs&quot;)) %&gt;%
+  dplyr::mutate_if(is.numeric, ~ log2(. + 1)) %&gt;%
+  purrr::set_names(c(&quot;sample&quot;, paste0(&quot;Sig&quot;, 1:11))) %&gt;%
+  dplyr::left_join(
+    tidy_anno %&gt;%
+      tibble::rownames_to_column(&quot;sample&quot;) %&gt;%
+      dplyr::select(sample, WGD_Status, HRD_Status, Tumor_Stage),
+    by = &quot;sample&quot;
+  ) %&gt;%
+  dplyr::mutate(Tumor_Stage = ifelse(Tumor_Stage == &quot;Unknown&quot;, NA, Tumor_Stage)) %&gt;%
+  tidyr::pivot_longer(
+    starts_with(&quot;Sig&quot;),
+    names_to = &quot;sig_name&quot;,
+    values_to = &quot;activity&quot;
+  )</code></pre>
+<pre class="r"><code>library(ggpubr)</code></pre>
+<p>For WGD.</p>
+<pre class="r"><code>ggboxplot(
+  df_ds,
+  x = &quot;sig_name&quot;, y = &quot;activity&quot;,
+  color = &quot;WGD_Status&quot;,
+  palette = &quot;jco&quot;, width = .3,
+  xlab = FALSE, ylab = &quot;log2(Activity)&quot;,
+  outlier.size = 0.05
+) +
+  stat_compare_means(aes(group = WGD_Status), label = &quot;p.signif&quot;)</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-141-1.png" width="2400" /> For HRD.</p>
+<pre class="r"><code>ggboxplot(
+  df_ds %&gt;%
+    dplyr::mutate(HRD_Status = factor(HRD_Status, c(&quot;no_hrd&quot;, &quot;hrd&quot;))),
+  x = &quot;sig_name&quot;, y = &quot;activity&quot;,
+  color = &quot;HRD_Status&quot;,
+  palette = &quot;jco&quot;, width = .3,
+  xlab = FALSE, ylab = &quot;log2(Activity)&quot;,
+  outlier.size = 0.05
+) +
+  stat_compare_means(aes(group = HRD_Status), label = &quot;p.signif&quot;)</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-142-1.png" width="2400" /></p>
+<p>For tumor stage.</p>
+<pre class="r"><code>ggboxplot(
+  df_ds %&gt;% dplyr::filter(!is.na(Tumor_Stage)),
+  x = &quot;sig_name&quot;, y = &quot;activity&quot;,
+  color = &quot;Tumor_Stage&quot;,
+  palette = &quot;jco&quot;, width = .3,
+  xlab = FALSE, ylab = &quot;log2(Activity)&quot;,
+  outlier.size = 0.05
+) +
+  stat_compare_means(aes(group = Tumor_Stage),
+    label = &quot;p.signif&quot;,
+    method = &quot;anova&quot;
+  )</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-143-1.png" width="2400" /></p>
+</div>
+<div id="association-between-cns-and-driver-gene-mutation" class="section level4">
+<h4>Association between CNS and driver gene mutation</h4>
+<pre class="r"><code>asso_res &lt;- get_sig_feature_association(
+  df_merged,
+  cols_to_sigs = paste0(&quot;Sig&quot;, 1:11),
+  cols_to_features = colnames(df_merged)[122:205],
+  method_ca = wilcox.test,
+  min_n = 0
+)
 
-hc &lt;- hclust(dist(expo_mat_rel))</code></pre>
-<pre class="r"><code>factoextra::fviz_dend(hc, k = 3, rect = T)</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-112-1.png" width="2400" /></p>
+asso_res_tidy &lt;- get_tidy_association(asso_res)</code></pre>
+<p>Plotting.</p>
+<pre class="r"><code>show_sig_feature_corrplot(
+  asso_res_tidy,
+  sig_orders = paste0(&quot;Sig&quot;, 1:11),
+  p_val = 0.05,
+  breaks_count = NA,
+  ylab = NULL,
+  xlab = NULL
+) + ggpubr::rotate_x_text(0, hjust = 0.5) +
+  labs(color = &quot;Difference\nin means of\nactivity&quot;)</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-145-1.png" width="2700" /></p>
 </div>
 </div>
-<div id="association-between-copy-number-signatures-cns-and-other-types-of-signatures-sbs-dbs-id" class="section level2">
-<h2>Association between copy number signatures (CNS) and other types of signatures (SBS, DBS, ID)</h2>
-<div id="cns-and-sbs" class="section level3">
-<h3>CNS and SBS</h3>
+<div id="association-between-cns-and-patients-prognosis" class="section level3">
+<h3>Association between CNS and patients’ prognosis</h3>
+<p>Get tidy data fro survival analysis.</p>
+<pre class="r"><code>library(ezcox)
+
+cluster_df &lt;- readRDS(&quot;../data/pcawg_clusters.rds&quot;) %&gt;%
+  as.data.frame() %&gt;%
+  tibble::rownames_to_column(&quot;sample&quot;)
+
+df_surv &lt;- tidy_info %&gt;%
+  dplyr::filter(keep) %&gt;%
+  dplyr::select(
+    sample, cancer_type, donor_survival_time, donor_vital_status,
+    dplyr::starts_with(&quot;Abs_&quot;)
+  ) %&gt;%
+  dplyr::left_join(
+    cluster_df,
+    by = &quot;sample&quot;
+  ) %&gt;%
+  na.omit() %&gt;%
+  dplyr::rename(
+    time = donor_survival_time,
+    status = donor_vital_status,
+    cluster = `k=6`
+  ) %&gt;%
+  dplyr::mutate(
+    status = ifelse(status == &quot;deceased&quot;, 1, 0)
+  ) %&gt;%
+  dplyr::rename_at(vars(starts_with(&quot;Abs_&quot;)), ~ sub(&quot;Abs_&quot;, &quot;&quot;, .)) %&gt;%
+  dplyr::mutate_at(vars(starts_with(&quot;Sig&quot;)), ~ . / 10)</code></pre>
+<p>We divide all signature activity by 10 to explore the HR change per 10 records contributed by a signature.</p>
+<div id="unicox-analysis-for-cns" class="section level4">
+<h4>Unicox analysis for CNS</h4>
+<p>Here we focus on the association between each CNS and patients’ overall survival time.</p>
+<pre class="r"><code>p1 &lt;- show_forest(df_surv,
+  covariates = paste0(&quot;Sig&quot;, 1:11),
+  merge_models = TRUE, add_caption = FALSE, point_size = 2
+)
+p1</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-147-1.png" width="2400" /></p>
 </div>
-<div id="cns-and-dbs" class="section level3">
-<h3>CNS and DBS</h3>
+<div id="multivariate-cox-analysis-for-cns" class="section level4">
+<h4>Multivariate cox analysis for CNS</h4>
+<p>We also build a multivariate cox model to explore if all CNSs are included, which is more important?</p>
+<pre class="r"><code>p2 &lt;- show_forest(df_surv,
+  covariates = &quot;Sig1&quot;, controls = paste0(&quot;Sig&quot;, 2:11),
+  merge_models = TRUE, add_caption = FALSE, point_size = 2
+)
+p2</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-148-1.png" width="2400" /></p>
 </div>
-<div id="cns-and-id" class="section level3">
-<h3>CNS and ID</h3>
 </div>
 </div>
 <div id="signature-similarity-comparison-between-different-types-of-signatures" class="section level2">
 <h2>Signature similarity comparison between different types of signatures</h2>
+<p>The similarity between signatures is a key parameter, it determines how hard it is to distinguish between signatures and the precision to assign the contribution to a signature. If you have read the paper <span class="citation"><a href="#ref-mauraPracticalGuideMutational2019" role="doc-biblioref">Maura et al.</a> (<a href="#ref-mauraPracticalGuideMutational2019" role="doc-biblioref">2019</a>)</span>, you may know that 2 of 3 main issues proposed by the authors are actually because of high similarity between mutational signatures:</p>
+<ul>
+<li><strong>the ambiguous signature assignment</strong> that occurs when different combinations of signatures can explain equally well the same mutational catalog.</li>
+<li><strong>bleeding of signatures</strong> that signatures present in only part of the set are also erroneously assigned to the entire set.</li>
+</ul>
+<p>In this section, we explore the similarity of CNSs discovered in this study and known COSMIC signatures.</p>
+<p>Load data.</p>
+<pre class="r"><code>CNS &lt;- readRDS(&quot;../data/pcawg_cn_sigs_CN176_signature.rds&quot;)
+SBSv2 &lt;- get_sig_db()
+SBS &lt;- get_sig_db(&quot;SBS&quot;)
+DBS &lt;- get_sig_db(&quot;DBS&quot;)
+ID &lt;- get_sig_db(&quot;ID&quot;)</code></pre>
+<p>Get signature similarity in each signature type.</p>
+<pre class="r"><code>sim_CNS &lt;- get_sig_similarity(CNS, CNS)$similarity
+sim_SBSv2 &lt;- get_sig_similarity(SBSv2$db, SBSv2$db)$similarity
+sim_SBS &lt;- get_sig_similarity(SBS$db, SBS$db)$similarity
+sim_DBS &lt;- get_sig_similarity(DBS$db, DBS$db)$similarity
+sim_ID &lt;- get_sig_similarity(ID$db, ID$db)$similarity</code></pre>
+<p>Only use upper matrix to get similarity between one signature and non-self signatures.</p>
+<pre class="r"><code>a &lt;- sim_CNS[upper.tri(sim_CNS)]
+b &lt;- sim_SBSv2[upper.tri(sim_SBSv2)]
+c &lt;- sim_SBS[upper.tri(sim_SBS)]
+d &lt;- sim_DBS[upper.tri(sim_DBS)]
+e &lt;- sim_ID[upper.tri(sim_ID)]
+
+
+df_sim &lt;- dplyr::tibble(
+  sig_type = rep(
+    c(&quot;CNS&quot;, &quot;SBSv2&quot;, &quot;SBS&quot;, &quot;DBS&quot;, &quot;ID&quot;),
+    c(length(a), length(b), length(c), length(d), length(e))
+  ),
+  similarity = c(a, b, c, d, e)
+)</code></pre>
+<p>See header rows:</p>
+<pre class="r"><code>head(df_sim)</code></pre>
+<pre><code># A tibble: 6 x 2
+  sig_type similarity
+  &lt;chr&gt;         &lt;dbl&gt;
+1 CNS           0.455
+2 CNS           0.015
+3 CNS           0    
+4 CNS           0.131
+5 CNS           0.001
+6 CNS           0.059</code></pre>
+<p>Let’s visualize it and use ‘CNS’ as reference group to run statistical test (‘wilcox.test’ method).</p>
+<pre class="r"><code>library(ggpubr)
+
+ggboxplot(df_sim,
+  x = &quot;sig_type&quot;, y = &quot;similarity&quot;,
+  color = &quot;sig_type&quot;,
+  xlab = FALSE,
+  ylab = &quot;Similarity between signatures&quot;,
+  legend = &quot;none&quot;,
+  palette = &quot;jco&quot;,
+  width = 0.3,
+  outlier.size = 0.05
+) +
+  # stat_compare_means(method = &quot;anova&quot;) +
+  stat_compare_means(
+    label = &quot;p.signif&quot;, method = &quot;wilcox.test&quot;,
+    ref.group = &quot;CNS&quot;
+  )</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-153-1.png" width="1200" /> We can see that signature type CNS has lowest similarity level and CNS signatures are not likely similar to others. CNS has much lower similarity level than all other signature types except DBS.</p>
+</div>
+<div id="data-summary-and-inference-of-signature-etiologies" class="section level2">
+<h2>Data summary and inference of signature etiologies</h2>
+<p>This is a summary section, we utilize all data we got from analyses in this study and infer how should we explore each copy number signature.</p>
+<p>We will list all CNSs, and their features, associations and our inferences here.</p>
 <blockquote>
-<p>比较不同 signature type 的平均相似性</p>
+<p>TODO</p>
 </blockquote>
 </div>
+</div>
+<div id="supplementary-analyses" class="section level1">
+<h1>Supplementary Analyses</h1>
+<p>In this part, we will add some supplementary analyses.</p>
 <div id="signature-association-network-construction-and-visualization" class="section level2">
 <h2>Signature association network construction and visualization</h2>
 <blockquote>
 <p>Try to learn from NC paper</p>
 </blockquote>
 </div>
-<div id="association-between-cns-and-genotypephenotype-features" class="section level2">
-<h2>Association between CNS and genotype/phenotype features</h2>
-</div>
-<div id="association-between-cns-and-patients-prognosis" class="section level2">
-<h2>Association between CNS and patients’ prognosis</h2>
-</div>
-<div id="data-summary-and-inference-of-signature-etiologies" class="section level2">
-<h2>Data summary and inference of signature etiologies</h2>
-</div>
-</div>
-<div id="supplementary-analyses" class="section level1">
-<h1>Supplementary Analyses</h1>
-<p>In this part, we will add some supplementary analyses.</p>
 <div id="tcga-cns-analysis" class="section level2">
 <h2>TCGA CNS analysis</h2>
+<blockquote>
+<p>Think and check in future</p>
+</blockquote>
 <div id="copy-number-signatures" class="section level3">
 <h3>Copy number signatures</h3>
 </div>
@@ -1767,9 +2241,6 @@ hc &lt;- hclust(dist(expo_mat_rel))</code></pre>
 <div id="prognosis" class="section level3">
 <h3>Prognosis</h3>
 </div>
-</div>
-<div id="contribution-of-cns-to-ampdel-events" class="section level2">
-<h2>Contribution of CNS to AMP/DEL events</h2>
 </div>
 <div id="exploration-of-differnt-signature-extraction-methods" class="section level2">
 <h2>Exploration of differnt signature extraction methods</h2>
@@ -1792,7 +2263,7 @@ hc &lt;- hclust(dist(expo_mat_rel))</code></pre>
  collate  zh_CN.UTF-8                 
  ctype    zh_CN.UTF-8                 
  tz       Asia/Shanghai               
- date     2020-12-28                  
+ date     2020-12-31                  
 
 ─ Packages ───────────────────────────────────────────────────────────────────
  package        * version    date       lib
@@ -1828,6 +2299,7 @@ hc &lt;- hclust(dist(expo_mat_rel))</code></pre>
  ComplexHeatmap * 2.7.2.1000 2020-12-22 [1]
  cowplot        * 1.1.0      2020-09-08 [1]
  crayon           1.3.4      2017-09-16 [1]
+ crosstalk        1.1.0.1    2020-03-13 [1]
  curl             4.3        2019-12-02 [1]
  data.table       1.13.4     2020-12-08 [1]
  DBI              1.1.0      2019-12-15 [1]
@@ -1838,6 +2310,7 @@ hc &lt;- hclust(dist(expo_mat_rel))</code></pre>
  digest           0.6.27     2020-10-24 [1]
  doParallel       1.0.16     2020-10-16 [1]
  dplyr          * 1.0.2      2020-08-18 [1]
+ DT               0.16       2020-10-13 [1]
  ellipsis         0.3.1      2020-05-15 [1]
  eulerr           6.1.0      2020-03-09 [1]
  evaluate         0.14       2019-05-28 [1]
@@ -1860,7 +2333,9 @@ hc &lt;- hclust(dist(expo_mat_rel))</code></pre>
  ggplotify        0.0.5      2020-03-12 [1]
  ggpubr         * 0.4.0      2020-06-27 [1]
  ggrepel          0.9.0      2020-12-16 [1]
+ ggsci            2.9        2018-05-14 [1]
  ggsignif         0.6.0      2019-08-08 [1]
+ ggwordcloud    * 0.5.0      2019-06-02 [1]
  GlobalOptions    0.1.2      2020-06-10 [1]
  globals          0.14.0     2020-11-22 [1]
  glue             1.4.2      2020-08-27 [1]
@@ -1871,6 +2346,7 @@ hc &lt;- hclust(dist(expo_mat_rel))</code></pre>
  haven            2.3.1      2020-06-01 [1]
  hms              0.5.3      2020-01-08 [1]
  htmltools        0.5.0      2020-06-16 [1]
+ htmlwidgets      1.5.3      2020-12-10 [1]
  httr             1.4.2      2020-07-20 [1]
  impute           1.62.0     2020-04-27 [1]
  IRanges          2.22.2     2020-05-21 [1]
@@ -1899,6 +2375,7 @@ hc &lt;- hclust(dist(expo_mat_rel))</code></pre>
  openxlsx         4.2.3      2020-10-27 [1]
  pacman         * 0.5.1      2019-03-11 [1]
  parallelly       1.22.0     2020-12-13 [1]
+ patchwork        1.1.1      2020-12-17 [1]
  pheatmap         1.0.12     2019-01-04 [1]
  pillar           1.4.7      2020-11-20 [1]
  pkgbuild         1.2.0      2020-12-15 [1]
@@ -1960,6 +2437,7 @@ hc &lt;- hclust(dist(expo_mat_rel))</code></pre>
  tidyselect       1.1.0      2020-05-11 [1]
  tidyverse      * 1.3.0      2019-11-21 [1]
  usethis          2.0.0      2020-12-10 [1]
+ utf8             1.1.4      2018-05-24 [1]
  uuid             0.1-4      2020-02-26 [1]
  vctrs            0.3.6      2020-12-17 [1]
  viridis          0.5.1      2018-03-29 [1]
@@ -2006,11 +2484,13 @@ hc &lt;- hclust(dist(expo_mat_rel))</code></pre>
  CRAN (R 4.0.2)                          
  CRAN (R 4.0.0)                          
  CRAN (R 4.0.0)                          
- CRAN (R 4.0.2)                          
  CRAN (R 4.0.0)                          
  CRAN (R 4.0.2)                          
  CRAN (R 4.0.0)                          
+ CRAN (R 4.0.2)                          
  CRAN (R 4.0.0)                          
+ CRAN (R 4.0.0)                          
+ CRAN (R 4.0.2)                          
  CRAN (R 4.0.2)                          
  CRAN (R 4.0.2)                          
  CRAN (R 4.0.2)                          
@@ -2040,6 +2520,8 @@ hc &lt;- hclust(dist(expo_mat_rel))</code></pre>
  CRAN (R 4.0.0)                          
  CRAN (R 4.0.0)                          
  CRAN (R 4.0.2)                          
+ CRAN (R 4.0.0)                          
+ CRAN (R 4.0.2)                          
  CRAN (R 4.0.2)                          
  CRAN (R 4.0.0)                          
  CRAN (R 4.0.0)                          
@@ -2047,6 +2529,7 @@ hc &lt;- hclust(dist(expo_mat_rel))</code></pre>
  CRAN (R 4.0.0)                          
  CRAN (R 4.0.0)                          
  CRAN (R 4.0.0)                          
+ CRAN (R 4.0.2)                          
  CRAN (R 4.0.2)                          
  CRAN (R 4.0.2)                          
  Bioconductor                            
@@ -2075,6 +2558,7 @@ hc &lt;- hclust(dist(expo_mat_rel))</code></pre>
  CRAN (R 4.0.2)                          
  CRAN (R 4.0.2)                          
  CRAN (R 4.0.0)                          
+ CRAN (R 4.0.2)                          
  CRAN (R 4.0.2)                          
  CRAN (R 4.0.0)                          
  CRAN (R 4.0.2)                          
@@ -2137,6 +2621,7 @@ hc &lt;- hclust(dist(expo_mat_rel))</code></pre>
  CRAN (R 4.0.0)                          
  CRAN (R 4.0.0)                          
  CRAN (R 4.0.2)                          
+ CRAN (R 4.0.0)                          
  CRAN (R 4.0.0)                          
  CRAN (R 4.0.2)                          
  CRAN (R 4.0.0)                          
@@ -2164,6 +2649,9 @@ Huang, Xiaoqing, Damian Wojtowicz, and Teresa M Przytycka. 2018. <span>“Detect
 </div>
 <div id="ref-kimExtrachromosomalDNAAssociated2020" class="csl-entry">
 Kim, Hoon, Nam-Phuong Nguyen, Kristen Turner, Sihan Wu, Amit D. Gujar, Jens Luebeck, Jihe Liu, et al. 2020. <span>“Extrachromosomal <span>DNA</span> Is Associated with Oncogene Amplification and Poor Outcome Across Multiple Cancers.”</span> <em>Nature Genetics</em> 52 (9): 891–97. <a href="https://doi.org/10.1038/s41588-020-0678-2">https://doi.org/10.1038/s41588-020-0678-2</a>.
+</div>
+<div id="ref-martinez-jimenezCompendiumMutationalCancer2020" class="csl-entry">
+Martínez-Jiménez, Francisco, Ferran Muiños, Inés Sentís, Jordi Deu-Pons, Iker Reyes-Salazar, Claudia Arnedo-Pac, Loris Mularoni, et al. 2020. <span>“A Compendium of Mutational Cancer Driver Genes.”</span> <em>Nature Reviews Cancer</em> 20 (10): 555–72. <a href="https://doi.org/10.1038/s41568-020-0290-x">https://doi.org/10.1038/s41568-020-0290-x</a>.
 </div>
 <div id="ref-mauraPracticalGuideMutational2019" class="csl-entry">
 Maura, Francesco, Andrea Degasperi, Ferran Nadeu, Daniel Leongamornlert, Helen Davies, Luiza Moore, Romina Royo, et al. 2019. <span>“A Practical Guide for Mutational Signature Analysis in Hematological Malignancies.”</span> <em>Nature Communications</em> 10 (1): 2969. <a href="https://doi.org/10.1038/s41467-019-11037-8">https://doi.org/10.1038/s41467-019-11037-8</a>.

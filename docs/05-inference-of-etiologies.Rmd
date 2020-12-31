@@ -243,6 +243,8 @@ library(ggpubr)
 ```
 
 
+For WGD.
+
 ```{r}
 ggboxplot(
   df_ds, 
@@ -253,6 +255,8 @@ ggboxplot(
   outlier.size = 0.05) +
   stat_compare_means(aes(group = WGD_Status), label = "p.signif")
 ```
+For HRD.
+
 ```{r}
 ggboxplot(
   df_ds %>% 
@@ -264,6 +268,8 @@ ggboxplot(
   outlier.size = 0.05) +
   stat_compare_means(aes(group = HRD_Status), label = "p.signif")
 ```
+
+For tumor stage.
 
 ```{r}
 ggboxplot(
@@ -279,16 +285,170 @@ ggboxplot(
 
 #### Association between CNS and driver gene mutation
 
-- <https://shixiangwang.github.io/sigminer/reference/get_sig_feature_association.html>
+```{r}
+asso_res <- get_sig_feature_association(
+  df_merged,
+  cols_to_sigs = paste0("Sig", 1:11),
+  cols_to_features = colnames(df_merged)[122:205],
+  method_ca = wilcox.test,
+  min_n = 0
+)
+
+asso_res_tidy = get_tidy_association(asso_res)
+```
+
+Plotting.
+
+```{r fig.width=9, fig.height=12}
+show_sig_feature_corrplot(
+  asso_res_tidy,
+  sig_orders = paste0("Sig", 1:11),
+  p_val = 0.05, 
+  breaks_count = NA, 
+  ylab = NULL,
+  xlab = NULL) + ggpubr::rotate_x_text(0, hjust = 0.5) +
+  labs(color = "Difference\nin means of\nactivity")
+```
+
 
 ### Association between CNS and patients' prognosis
 
+Get tidy data fro survival analysis.
+
+```{r}
+library(ezcox)
+
+cluster_df <- readRDS("../data/pcawg_clusters.rds") %>%
+  as.data.frame() %>%
+  tibble::rownames_to_column("sample")
+
+df_surv <- tidy_info %>% 
+  dplyr::filter(keep) %>% 
+  dplyr::select(
+    sample, cancer_type, donor_survival_time, donor_vital_status, 
+    dplyr::starts_with("Abs_")
+  ) %>% dplyr::left_join(
+    cluster_df, by = "sample"
+  ) %>% 
+  na.omit() %>% 
+  dplyr::rename(
+    time = donor_survival_time,
+    status = donor_vital_status,
+    cluster = `k=6`
+  ) %>% 
+  dplyr::mutate(
+    status = ifelse(status == "deceased", 1, 0)
+  ) %>% 
+  dplyr::rename_at(vars(starts_with("Abs_")), ~sub("Abs_", "", .)) %>% 
+  dplyr::mutate_at(vars(starts_with("Sig")), ~ . / 10)
+```
+
+We divide all signature activity by 10 to explore the HR change per 10 records contributed by a signature.
+
+#### Unicox analysis for CNS
+
+Here we focus on the association between each CNS and patients' overall survival time.
+
+```{r}
+p1 <- show_forest(df_surv,
+  covariates = paste0("Sig", 1:11),
+  merge_models = TRUE, add_caption = FALSE, point_size = 2
+)
+p1
+```
+
+
+#### Multivariate cox analysis for CNS
+
+We also build a multivariate cox model to explore if all CNSs are included, which is more important?
+
+```{r}
+p2 <- show_forest(df_surv,
+  covariates = "Sig1", controls = paste0("Sig", 2:11),
+  merge_models = TRUE, add_caption = FALSE, point_size = 2
+)
+p2
+```
+
+
 ## Signature similarity comparison between different types of signatures
 
-> 比较不同 signature type 的平均相似性
+The similarity between signatures is a key parameter, it determines how hard it is to distinguish between signatures and the precision to assign the contribution to a signature. If you have read the paper @mauraPracticalGuideMutational2019, you may know that 2 of 3 main issues proposed by the authors are actually because of high similarity between mutational signatures:
 
-## Signature association network construction and visualization
+- **the ambiguous signature assignment** that occurs when different combinations of signatures can
+explain equally well the same mutational catalog.
+- **bleeding of signatures** that signatures present in only part of the set are also
+erroneously assigned to the entire set.
 
-> Try to learn from NC paper
+In this section, we explore the similarity of CNSs discovered in this study and known COSMIC signatures.
+
+Load data.
+
+```{r}
+CNS <- readRDS("../data/pcawg_cn_sigs_CN176_signature.rds")
+SBSv2 <- get_sig_db()
+SBS <- get_sig_db("SBS")
+DBS <- get_sig_db("DBS")
+ID <- get_sig_db("ID")
+```
+
+Get signature similarity in each signature type.
+
+```{r, message=FALSE}
+sim_CNS <- get_sig_similarity(CNS, CNS)$similarity
+sim_SBSv2 <- get_sig_similarity(SBSv2$db, SBSv2$db)$similarity
+sim_SBS <- get_sig_similarity(SBS$db, SBS$db)$similarity
+sim_DBS <- get_sig_similarity(DBS$db, DBS$db)$similarity
+sim_ID <- get_sig_similarity(ID$db, ID$db)$similarity
+```
+
+Only use upper matrix to get similarity between one signature and non-self signatures.
+
+```{r}
+a = sim_CNS[upper.tri(sim_CNS)]
+b = sim_SBSv2[upper.tri(sim_SBSv2)]
+c = sim_SBS[upper.tri(sim_SBS)]
+d = sim_DBS[upper.tri(sim_DBS)]
+e = sim_ID[upper.tri(sim_ID)]
+
+
+df_sim <- dplyr::tibble(
+  sig_type = rep(c("CNS", "SBSv2", "SBS", "DBS", "ID"),
+                 c(length(a), length(b), length(c), length(d), length(e))),
+  similarity = c(a, b, c, d, e)
+)
+```
+
+See header rows:
+
+```{r}
+head(df_sim)
+```
+
+Let's visualize it and use 'CNS' as reference group to run statistical test ('wilcox.test' method).
+
+```{r fig.width=4, fig.height=3}
+library(ggpubr)
+
+ggboxplot(df_sim, 
+          x = "sig_type", y = "similarity",
+          color = "sig_type",
+          xlab = FALSE,
+          ylab = "Similarity between signatures",
+          legend = "none",
+          palette = "jco",
+          width = 0.3,
+          outlier.size = 0.05)+
+  #stat_compare_means(method = "anova") +
+  stat_compare_means(label = "p.signif", method = "wilcox.test",
+                     ref.group = "CNS")   
+```
+We can see that signature type CNS has lowest similarity level and CNS signatures are not likely similar to others. CNS has much lower similarity level than all other signature types except DBS.
 
 ## Data summary and inference of signature etiologies
+
+This is a summary section, we utilize all data we got from analyses in this study and infer how should we explore each copy number signature.
+
+We will list all CNSs, and their features, associations and our inferences here.
+
+> TODO
