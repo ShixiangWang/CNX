@@ -218,7 +218,7 @@ Here we directly compare the CNS activity between different discrete variable gr
 Here 3 variables including `WGD_Status`, `HRD_Status` and `Tumor_Stage` are included.
 
 ```{r}
-df_ds <- tidy_info %>% 
+df_ds2 <- tidy_info %>% 
   dplyr::filter(keep) %>% 
   dplyr::select(sample, starts_with("Abs")) %>% 
   dplyr::mutate_if(is.numeric, ~log2(.+1)) %>% 
@@ -229,12 +229,19 @@ df_ds <- tidy_info %>%
       dplyr::select(sample, WGD_Status, HRD_Status, Tumor_Stage),
     by = "sample"
   ) %>% 
-  dplyr::mutate(Tumor_Stage = ifelse(Tumor_Stage == "Unknown", NA, Tumor_Stage)) %>% 
+  dplyr::mutate(Tumor_Stage = ifelse(Tumor_Stage == "Unknown", NA, Tumor_Stage))
+
+df_ds <- df_ds2 %>% 
   tidyr::pivot_longer(
     starts_with("Sig"),
     names_to = "sig_name",
     values_to = "activity"
   )
+```
+
+
+```{r include=FALSE}
+saveRDS(df_ds2, file = "../data/pcawg_sigs_and_wgd_hrd.rds")
 ```
 
 
