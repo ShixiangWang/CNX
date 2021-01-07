@@ -14,6 +14,7 @@ link-citations: yes
 ```{r setup-01, include=FALSE}
 library(knitr)
 library(rmdformats)
+library(sigminer)
 ## Global options
 options(max.print = "75")
 opts_chunk$set(
@@ -39,243 +40,310 @@ In this part, how the copy number signatures are identified and how the correspo
 
 ```sh
 .
-├── 04-call-tcga-signatures-with-BP-types.R
-├── 05-call-pcawg-signatures-with-BP-types.R
-├── bp_pcawg.pbs
-├── bp_pcawg_types.pbs
-├── bp_tcga.pbs
-├── bp_tcga_types.pbs
-├── call_pcawg_bp.R
 ├── call_pcawg_sp.R
-├── call_tcga_bp.R
-├── call_tcga.R
 ├── pcawg_cn_tally_X.rds
 ├── pcawg.pbs
-├── tcga_cn_tally_X.rds
-├── tcga.pbs
 ```
 
 ## Copy number signature identification
 
-The signature identification pipeline is adopted from @degasperiPracticalFrameworkOnline2020, we implemented the procedure in our package sigminer by following the method description. [A benchmark](https://github.com/ShixiangWang/sigminer#key-interfaces-and-their-performances) has been done to make sure our implementation works properly.
-
-### Identification pipeline
-
-To make the signature identification procedure more clear, we drew a flowchart. We name this pipeline "Best Practice" and use its short name *BP* (or *bp*).
-
-> TODO: add flowchart
+We use the gold-standard tool [SigProfiler v1.0.17](https://github.com/AlexandrovLab/SigProfilerExtractor) to identify Pan-Cancer copy number signatures and their activities in each sample. The SigProfiler has been successfully applied to many studies, especially in @pcawgmutationalsignaturesworkinggroupRepertoireMutationalSignatures2020 for multiple types of signatures.
 
 ### Apply to PCAWG catalog matrix
 
-PBS file `bp_pcawg.pbs` content:
+PBS file `pcawg.pbs` content:
 
 ```sh
-#PBS -l walltime=500:00:00
-#PBS -l nodes=1:ppn=50
+#PBS -l walltime=1000:00:00
+#PBS -l nodes=1:ppn=36
 #PBS -S /bin/bash
-#PBS -l mem=300gb
+#PBS -l mem=20gb
 #PBS -j oe
 #PBS -M w_shixiang@163.com
-#PBS -q slst_pub
+#PBS -q pub_fast
 
 # Please set PBS arguments above
 cd /public/home/wangshx/wangshx/PCAWG-TCGA
 module load apps/R/3.6.1
 
 # Following are commands/scripts you want to run
-Rscript call_pcawg_bp.R
+# If you do not know how to set this, please check README.md file 
+Rscript call_pcawg_sp.R
 ```
 
-R script `call_pcawg_bp.R` content:
+We developed a SigProfiler caller in our R package [sigminer] and run SigProfiler with default settings for most of parameters.
+
+R script `call_pcawg_sp.R` content:
 
 ```{r, eval=FALSE}
 library(sigminer)
 
 tally_X <- readRDS("pcawg_cn_tally_X.rds")
-tally_X_noLOH <- readRDS("pcawg_cn_tally_X_noLOH.rds")
 
-sigs <- bp_extract_signatures(
-  tally_X$nmf_matrix,
-  range = 2:30,
-  n_bootstrap = 10,
-  n_nmf_run = 10,
-  cores = 50,
-  cache_dir = "pcawg_bp_pynmf",
-  keep_cache = TRUE,
-  cores_solution = 30,
-  pynmf = TRUE,
-  use_conda = TRUE
-)
+sigprofiler_extract(tally_X$nmf_matrix, 
+                    output = "PCAWG_CN176X", 
+                    range = 2:30, 
+                    nrun = 100,
+                    init_method = "random",
+                    is_exome = FALSE,
+                    use_conda = TRUE)
+```
 
-saveRDS(sigs, file = "pcawg_cn_sigs_CN176_BP.rds")
+All metadata info and detail settings reported by SigProfiler are copied below:
+
+```
+THIS FILE CONTAINS THE METADATA ABOUT SYSTEM AND RUNTIME
+
+
+-------System Info-------
+Operating System Name: Linux
+Nodename: node34
+Release: 3.10.0-693.el7.x86_64
+Version: #1 SMP Tue Aug 22 21:09:27 UTC 2017
+
+-------Python and Package Versions------- 
+Python Version: 3.8.5
+Sigproextractor Version: 1.0.17
+SigprofilerPlotting Version: 1.1.8
+SigprofilerMatrixGenerator Version: 1.1.20
+Pandas version: 1.1.2
+Numpy version: 1.19.2
+Scipy version: 1.5.2
+Scikit-learn version: 0.23.2
+
+--------------EXECUTION PARAMETERS--------------
+INPUT DATA
+	input_type: matrix
+	output: TCGA_CN176X
+	input_data: /tmp/RtmphYcBmk/dir852158ab0364/sigprofiler_input.txt
+	reference_genome: GRCh37
+	context_types: SBS176
+	exome: False
+NMF REPLICATES
+	minimum_signatures: 2
+	maximum_signatures: 30
+	NMF_replicates: 100
+NMF ENGINE
+	NMF_init: random
+	precision: single
+	matrix_normalization: gmm
+	resample: True
+	seeds: random
+	min_NMF_iterations: 10,000
+	max_NMF_iterations: 1,000,000
+	NMF_test_conv: 10,000
+	NMF_tolerance: 1e-15
+CLUSTERING
+	clustering_distance: cosine
+EXECUTION
+	cpu: 36; Maximum number of CPU is 36
+	gpu: False
+Solution Estimation
+	stability: 0.8
+	min_stability: 0.2
+	combined_stability: 1.0
+COSMIC MATCH
+	opportunity_genome: GRCh37
+	nnls_add_penalty: 0.05
+	nnls_remove_penalty: 0.01
+	initial_remove_penalty: 0.05
+	de_novo_fit_penalty: 0.02
+	refit_denovo_signatures: False
+
+-------Analysis Progress------- 
+[2020-11-29 17:39:12] Analysis started: 
+
+##################################
+
+[2020-11-29 17:39:18] Analysis started for SBS176. Matrix size [176 rows x 10851 columns]
+
+[2020-11-29 17:39:18] Normalization GMM with cutoff value set at 17600
+
+[2020-11-29 19:12:03] SBS176 de novo extraction completed for a total of 2 signatures! 
+Execution time:1:32:45
+
+[2020-11-29 23:58:10] SBS176 de novo extraction completed for a total of 3 signatures! 
+Execution time:4:46:06
+
+[2020-11-30 08:32:21] SBS176 de novo extraction completed for a total of 4 signatures! 
+Execution time:8:34:11
+
+[2020-11-30 19:51:18] SBS176 de novo extraction completed for a total of 5 signatures! 
+Execution time:11:18:56
+
+[2020-12-01 07:10:18] SBS176 de novo extraction completed for a total of 6 signatures! 
+Execution time:11:18:59
+
+[2020-12-01 21:14:24] SBS176 de novo extraction completed for a total of 7 signatures! 
+Execution time:14:04:06
+
+[2020-12-02 15:48:43] SBS176 de novo extraction completed for a total of 8 signatures! 
+Execution time:18:34:19
+
+[2020-12-03 12:53:25] SBS176 de novo extraction completed for a total of 9 signatures! 
+Execution time:21:04:41
+
+[2020-12-04 11:25:25] SBS176 de novo extraction completed for a total of 10 signatures! 
+Execution time:22:31:59
+
+[2020-12-05 10:20:15] SBS176 de novo extraction completed for a total of 11 signatures! 
+Execution time:22:54:50
+
+[2020-12-06 11:36:03] SBS176 de novo extraction completed for a total of 12 signatures! 
+Execution time:1 day, 1:15:48
+
+[2020-12-07 14:43:31] SBS176 de novo extraction completed for a total of 13 signatures! 
+Execution time:1 day, 3:07:28
+
+[2020-12-09 01:15:22] SBS176 de novo extraction completed for a total of 14 signatures! 
+Execution time:1 day, 10:31:50
+
+[2020-12-10 08:02:39] SBS176 de novo extraction completed for a total of 15 signatures! 
+Execution time:1 day, 6:47:17
+
+[2020-12-11 16:05:31] SBS176 de novo extraction completed for a total of 16 signatures! 
+Execution time:1 day, 8:02:51
+
+[2020-12-13 02:19:40] SBS176 de novo extraction completed for a total of 17 signatures! 
+Execution time:1 day, 10:14:09
+
+[2020-12-14 14:56:13] SBS176 de novo extraction completed for a total of 18 signatures! 
+Execution time:1 day, 12:36:32
+
+[2020-12-16 02:39:41] SBS176 de novo extraction completed for a total of 19 signatures! 
+Execution time:1 day, 11:43:27
+
+[2020-12-18 02:54:09] SBS176 de novo extraction completed for a total of 20 signatures! 
+Execution time:2 days, 0:14:28
+
+[2020-12-19 20:20:57] SBS176 de novo extraction completed for a total of 21 signatures! 
+Execution time:1 day, 17:26:47
+
+[2020-12-21 19:30:07] SBS176 de novo extraction completed for a total of 22 signatures! 
+Execution time:1 day, 23:09:10
+
+[2020-12-24 00:44:41] SBS176 de novo extraction completed for a total of 23 signatures! 
+Execution time:2 days, 5:14:34
+
+[2020-12-25 19:03:07] SBS176 de novo extraction completed for a total of 24 signatures! 
+Execution time:1 day, 18:18:25
+
+[2020-12-27 07:50:06] SBS176 de novo extraction completed for a total of 25 signatures! 
+Execution time:1 day, 12:46:58
+
+[2020-12-29 04:40:22] SBS176 de novo extraction completed for a total of 26 signatures! 
+Execution time:1 day, 20:50:16
+
+[2020-12-30 12:35:04] SBS176 de novo extraction completed for a total of 27 signatures! 
+Execution time:1 day, 7:54:41
+
+[2020-12-31 19:04:04] SBS176 de novo extraction completed for a total of 28 signatures! 
+Execution time:1 day, 6:29:00
+
+[2021-01-02 04:50:07] SBS176 de novo extraction completed for a total of 29 signatures! 
+Execution time:1 day, 9:46:02
+
+[2021-01-03 14:15:32] SBS176 de novo extraction completed for a total of 30 signatures! 
+Execution time:1 day, 9:25:25
+
+[2021-01-03 14:48:21] Analysis ended: 
+
+-------Job Status------- 
+Analysis of mutational signatures completed successfully! 
+Total execution time: 34 days, 21:09:09 
+Results can be found in:  TCGA_CN176X  folder
 ```
 
 ### Signature number determination
 
-The code above call 100 NMF runs (10 bootstrap catalogs and 10 NMF runs for each bootstrap catalog) for each signature number. Only 1000 NMF runs (20 bootstrap catalogs and 50 NMF runs for each bootstrap catalog) was applied for 176-component classification approach, which has the same arguments proposed by @degasperiPracticalFrameworkOnline2020. 
-
 First, load the results.
 
-```{r}
+```{r eval=FALSE}
 library(sigminer)
-solution1000 <- readRDS("../BP/BP_PCAWG_1000_Extraction_Result.rds")
-solution100 <- readRDS("../data/pcawg_cn_sigs_CN176_BP.rds")
+SP_PCAWG <- sigprofiler_import("../SP/PCAWG_CN176X/", order_by_expo = TRUE, type = "all")
+saveRDS(SP_PCAWG, file = "../data/pcawg_cn_solutions_sp.rds")
 ```
 
-Next we compare some important measures for signature number determination. We can see 100 NMF runs and 1000 NMF runs can achieve very similar results.
-
-```{r, fig.height=5, fig.width=10}
-bp_show_survey(solution1000, add_score = F, fixed_ratio = F)
-bp_show_survey(solution100, add_score = F, fixed_ratio = F)
-```
-Basically, the 5 measures can be classified into 3 categories:
-
-1. `silhouette` and `similarity`: these two scores indicate the result stability. *The signature number with value decreases sharply is preferred.*
-2. `distance` and `error`: these two scores indicate the difference between raw matrix and reconstructed matrix for signatures. *The signature number with lower value is better*.
-3. `pos cor`: this is constructed by Prof. Liu and Shixiang to see the average positive correlation between signatures. A signature number should be considered if it has lower value. In practice, we find this measure has referential value sometimes.
-
-*More see `?bp_show_survey` in R console for how they are calculated*.
-
-In previous study, @degasperiPracticalFrameworkOnline2020 used `silhouette` and `error` for signature number determination, @pcawgmutationalsignaturesworkinggroupRepertoireMutationalSignatures2020 used `similarity` and `distance` for signature number determination. For plots above we can see that they very close.
-
-**From plots above, we observe that the stability drops sharply after `11`, so here `11` signatures is selected for this PCAWG dataset**.
-
-### Similarity between two results with different parameter setting
-
-We have two results above, so we can compare the signatures from two different parameter setting by calculating their pairwise cosine similarity.
+Then we visualize the signature number survey.
 
 ```{r}
-sim <- get_sig_similarity(solution1000$object$K11, solution100$object$K11)
-pheatmap::pheatmap(sim$similarity, cluster_rows = FALSE, cluster_cols = FALSE, display_numbers = TRUE)
+SP_PCAWG <- readRDS("../data/pcawg_cn_solutions_sp.rds")
 ```
 
-*We can know that the results contain same signature profile! This practice indicates that 100 NMF runs for each signature number is enough.*
+```{r fig.width=9, fig.height=5}
+show_sig_number_survey(
+  SP_PCAWG$all_stats %>% 
+    dplyr::rename(
+      s = `Stability (Avg Silhouette)`,
+      e = `Mean Cosine Distance`
+    ) %>% 
+    dplyr::mutate(
+      SignatureNumber = as.integer(gsub("[^0-9]", "", SignatureNumber))
+    ),
+  x = "SignatureNumber",
+  left_y = "s", right_y = "e",
+  left_name = "Stability (Avg Silhouette)",
+  right_name = "Mean Cosine Distance")
+```
 
-The `Signature` object with 11 signature profiles are stored for further analysis.
+We pick up `14` signatures for PCAWG data due to its relatively high stability and low distance.
 
-```{r, eval=FALSE}
-# Use root directory as work directory
-saveRDS(solution1000$object$K11, file = "data/pcawg_cn_sigs_CN176_signature.rds")
+The `Signature` object with 14 signature profiles are stored for further analysis.
+
+To better describe the signatures, we will rename them. The names are ordered by mean activity in samples.
+
+```{r}
+pcawg_sigs <- SP_PCAWG$solution_list$S14
+apply(pcawg_sigs$Exposure, 1, mean)
+```
+
+```{r}
+sig_names(pcawg_sigs)
+
+colnames(pcawg_sigs$Signature) <- colnames(pcawg_sigs$Signature.norm) <- rownames(pcawg_sigs$Exposure) <- rownames(pcawg_sigs$Exposure.norm) <- pcawg_sigs$Stats$signatures$Signatures <- paste0("CNS", 1:14)
+
+sig_names(pcawg_sigs)
 ```
 
 
-## Reliable signature activity attribution
-
-After signature determination, the reliable activities (a.k.a. exposures) of signatures are attributed to each sample for downstream analysis.
-
-### Attribution pipeline
-
-There are 3 core steps in this pipeline:
-
-1. Step1: We run `n = 100` optimizations on bootstrapped data and obtain a distribution of activities for each sample.
-2. Step2: We consider the median activities as point estimates.
-3. step3: In each sample, we reset a signature activity to `0` if its activity distribution below the threshold of `1%` of total mutations in the sample with one-side T test p value `>0.05`.
-
-This pipeline is similar to previously reported [@degasperiPracticalFrameworkOnline2020, @huangDetectingPresenceMutational2018]. However, there are some different settings:
-
-1. We use `1%` of total mutations as a threshold here instead `5%` in @degasperiPracticalFrameworkOnline2020, because we observed some copy number segment contributions are removed from results with `5%` but they can be used for better explanation of sample copy number profile reconstruction.
-2. We use T test for P value calculation here instead of empirical P value calculation based on proportion in @degasperiPracticalFrameworkOnline2020 for keeping more positive events.
-
-> TODO: add flowchart
-
-### Apply to PCAWG catalog matrix and signatures
-
-We apply the attribution pipeline above.
-
 ```{r, eval=FALSE}
-# Use root directory as work directory
-library(sigminer)
-tally_X <- readRDS("data/pcawg_cn_tally_X.rds")
-pcawg_types <- readRDS("data/pcawg_type_info.rds")
+saveRDS(pcawg_sigs, file = "../data/pcawg_cn_sigs_CN176_signature.rds")
+```
 
-sc <- pcawg_types$cancer_type
-names(sc) <- pcawg_types$sample
+## Sample copy number catalog reconstruction
 
-pcawg_expo <- bp_attribute_activity(
-  solution1000$object$K11,
-  sample_class = sc,
-  nmf_matrix = tally_X$nmf_matrix,
-  return_class = "data.table"
+Here we try know how well each sample catalog profile can be constructed from the signature combination.
+
+Firstly we get the activity data.
+
+```{r}
+pcawg_sigs <- readRDS("../data/pcawg_cn_sigs_CN176_signature.rds")
+pcawg_act <- list(
+  absolute = get_sig_exposure(SP_PCAWG$solution_list$S14, type = "absolute"),
+  relative = get_sig_exposure(SP_PCAWG$solution_list$S14, type = "relative", rel_threshold = 0),
+  similarity = pcawg_sigs$Stats$samples[, .(Samples, `Cosine Similarity`)]
 )
 
-saveRDS(pcawg_expo, file = "data/pcawg_cn_sigs_CN176_activity.rds")
+colnames(pcawg_act$absolute)[-1] <- colnames(pcawg_act$relative)[-1] <- paste0("CNS", 1:14) 
+colnames(pcawg_act$similarity) <- c("sample", "similarity")
+
+saveRDS(pcawg_act, file = "../data/pcawg_cn_sigs_CN176_activity.rds")
 ```
 
-Now we can know how well each sample catalog profile can be constructed from the signature combination.
-
-```{r}
-pcawg_expo <- readRDS("../data/pcawg_cn_sigs_CN176_activity.rds")
-summary(pcawg_expo$similarity)
-```
+Check the stat summary of reconstructed Cosine similarity.
 
 ```{r}
-hist(pcawg_expo$similarity, breaks = 100, xlab = "Reconstructed similarity", main = NA)
+summary(pcawg_act$similarity$similarity)
 ```
+
+Visualize with plot
+
+```{r}
+hist(pcawg_act$similarity$similarity, breaks = 100, xlab = "Reconstructed similarity", main = NA)
+```
+
 Most of samples are well constructed. Next we will use a similarity threshold `0.75` to filter out some samples for removing their effects on the following analysis.
 
-## TCGA copy number signatures
-
-To validate the copy number signatures discovered in PCAWG database, we need another database for validation.
-TCGA is the best resource we got and similar processing and signature identification are applied.
-
-```{r, eval=FALSE}
-library(sigminer)
-
-tally_X <- readRDS("tcga_cn_tally_X.rds")
-tally_X_noLOH <- readRDS("tcga_cn_tally_X_noLOH.rds")
-
-sigs <- bp_extract_signatures(
- tally_X$nmf_matrix,
- range = 2:30,
- cores = 50,
- n_bootstrap = 10,
- n_nmf_run = 10,
- cache_dir = "tcga_bp_pynmf",
- keep_cache = TRUE,
- cores_solution = 30,
- pynmf = TRUE,
- use_conda = TRUE
-)
-
-saveRDS(sigs, file = "tcga_cn_sigs_CN176_BP.rds")
-```
-
-Load the solution list:
-
-```{r}
-tcga_solutions <- readRDS("../data/TCGA/tcga_cn_sigs_CN176_BP.rds")
-```
-
-```{r, fig.height=5, fig.width=10}
-bp_show_survey(tcga_solutions, add_score = FALSE, fixed_ratio = FALSE,)
-```
-Also `11` signatures are determined based on survey plot.
-
-Similarly, we apply the attribution pipeline to TCGA.
-
-```{r, eval=FALSE}
-library(sigminer)
-
-tcga_solutions <- readRDS("data/TCGA/tcga_cn_sigs_CN176_BP.rds")
-
-tcga_expo <- bp_attribute_activity(
-  tcga_solutions$object$K11,
-  sample_class = sc,
-  nmf_matrix = tally_X$nmf_matrix,
-  return_class = "data.table"
-)
-
-saveRDS(tcga_expo, file = "data/TCGA/tcga_cn_sigs_CN176_activity.rds")
-```
-
-```{r}
-tcga_expo <- readRDS("../data/TCGA/tcga_cn_sigs_CN176_activity.rds")
-summary(tcga_expo$similarity)
-```
-
-```{r}
-hist(tcga_expo$similarity, breaks = 100, xlab = "Reconstructed similarity", main = NA)
-```
 ```{r include=FALSE}
 rm(list = ls())
 ```

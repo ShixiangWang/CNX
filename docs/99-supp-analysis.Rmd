@@ -33,6 +33,12 @@ Sys.setenv("LANGUAGE" = "EN")
 
 In this part, we will add some supplementary analyses.
 
+## CNS validation
+
+The signature identification pipeline is adopted from @degasperiPracticalFrameworkOnline2020, we implemented the procedure in our package sigminer by following the method description. [A benchmark](https://github.com/ShixiangWang/sigminer#key-interfaces-and-their-performances) has been done to make sure our implementation works properly.
+
+The code above call 100 NMF runs (10 bootstrap catalogs and 10 NMF runs for each bootstrap catalog) for each signature number. Only 1000 NMF runs (20 bootstrap catalogs and 50 NMF runs for each bootstrap catalog) was applied for 176-component classification approach, which has the same arguments proposed by @degasperiPracticalFrameworkOnline2020. 
+
 ## Signature association network construction and visualization
 
 > Try to learn from NC paper
