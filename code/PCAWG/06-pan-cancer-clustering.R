@@ -1,28 +1,30 @@
 library(cola)
 library(tidyverse)
 
-df <- readRDS("data/pcawg_sample_tidy_info.rds")
+act <- readRDS("data/pcawg_cn_sigs_CN176_activity.rds")
 
-mat_abs <- df %>%
-  filter(keep) %>%
-  select(sample, starts_with("Abs_Sig")) %>%
+df <- purrr::reduce(
+  list(
+    act$absolute,
+    act$similarity
+  ),
+  dplyr::left_join,
+  by = "sample"
+)
+
+mat <- df %>%
+  filter(similarity > 0.75) %>%
+  select(sample, starts_with("CNS")) %>%
   column_to_rownames("sample") %>%
   t()
-mat_abs <- adjust_matrix(mat_abs)
-rownames(mat_abs)
+mat_adj <- adjust_matrix(mat)
+#1 rows have been removed with too low variance (sd < 0.05 quantile)
 
-mat_rel <- df %>%
-  filter(keep) %>%
-  select(sample, starts_with("Rel_Sig")) %>%
-  column_to_rownames("sample") %>%
-  t()
-mat_rel <- adjust_matrix(mat_rel)
-rownames(mat_rel)
-
+rownames(mat_adj)
 
 # Select suitable parameters ----------------------------------------------
 
-ds <- colSums(mat_abs)
+ds <- colSums(mat_adj)
 boxplot(ds)
 
 set.seed(123)
@@ -30,49 +32,23 @@ select_samps <- sample(names(sort(ds)), 500)
 
 boxplot(ds[select_samps])
 
-rl_abs <- run_all_consensus_partition_methods(mat_abs[, select_samps], top_n = 10, mc.cores = 8, max_k = 10)
-cola_report(rl_abs, output_dir = "output/cola_report/pcawg_abs_sigs_500_sampls", mc.cores = 8)
+rl_samp <- run_all_consensus_partition_methods(mat_adj[, select_samps], top_n = 13, mc.cores = 12, max_k = 10)
+cola_report(rl_samp, output_dir = "output/cola_report/pcawg_sigs_500_sampls", mc.cores = 12)
 
-rl_rel <- run_all_consensus_partition_methods(mat_rel[, select_samps], top_n = 10, mc.cores = 8, max_k = 10)
-cola_report(rl_rel, output_dir = "output/cola_report/pcawg_rel_sigs_500_sampls", mc.cores = 8)
-
-rl_cmb <- run_all_consensus_partition_methods(
-  rbind(mat_abs[, select_samps],
-        mat_rel[, select_samps]), top_n = 20, mc.cores = 8, max_k = 10)
-cola_report(rl_cmb, output_dir = "output/cola_report/pcawg_cmb_sigs_500_sampls", mc.cores = 8)
-
-rm(rl_abs, rl_rel, rl_cmb)
+rm(rl_samp)
 
 # Run clustering ----------------------------------------------------------
 
-final_abs <- run_all_consensus_partition_methods(
-  mat_abs,
+final <- run_all_consensus_partition_methods(
+  mat_adj,
   top_value_method = "ATC",
   partition_method = "skmeans",
-  top_n = 10, mc.cores = 8, max_k = 10
+  top_n = 13, mc.cores = 12, max_k = 10
 )
-cola_report(final_abs, output_dir = "output/cola_report/pcawg_abs_sigs_all_sampls_final", mc.cores = 8)
+cola_report(final, output_dir = "output/cola_report/pcawg_sigs_all_sampls", mc.cores = 8)
 
-final_rel <- run_all_consensus_partition_methods(
-  mat_rel,
-  top_value_method = "ATC",
-  partition_method = "skmeans",
-  top_n = 10, mc.cores = 8, max_k = 10
-)
-cola_report(final_rel, output_dir = "output/cola_report/pcawg_rel_sigs_all_sampls_final", mc.cores = 8)
+saveRDS(final, file = "data/pcawg_cola_result.rds")
 
-final_cmb <- run_all_consensus_partition_methods(
-  rbind(mat_abs, mat_rel),
-  top_value_method = "ATC",
-  partition_method = "skmeans",
-  top_n = 20, mc.cores = 8, max_k = 10
-)
-cola_report(final_cmb, output_dir = "output/cola_report/pcawg_cmb_sigs_all_sampls_final", mc.cores = 8)
-
-save(final_abs, final_rel, final_cmb, file = "output/cola_report/final_result.RData")
-# Check all cola reports and find ABS features is the best option
-saveRDS(final_abs, file = "data/pcawg_cola_result.rds")
-
-res = final_abs["ATC", "skmeans"]
-select_partition_number(res)
-collect_classes(res)
+# res = final["ATC", "skmeans"]
+# select_partition_number(res)
+# collect_classes(res)
