@@ -156,6 +156,41 @@ p
 ggsave("../output/CNS_PCAWG_landscape.pdf", plot = p,
        height = 6, width = 12)
 ```
+### Signature number distribution
+
+For most of cancer types, they have similar signature constitution (most of copy number signatures available in them). However, we need to further check that if many tumors have so many signatures activated.
+
+
+```{r}
+library(ggridges)
+
+df_detc <- df %>% 
+  dplyr::group_by(cancer_type, sample) %>% 
+  dplyr::summarise(
+    signumber = sum(detectable),
+    .groups = "drop"
+  )
+```
+
+Pan-Cancer signature number distribution.
+
+```{r fig.width=2, fig.height=3}
+boxplot(df_detc$signumber, ylab = "Signature number")
+
+summary(df_detc$signumber)
+```
+
+Most tumors have 3-6 signatures.
+
+```{r fig.width=8, fig.height=7}
+ggplot(data = df_detc, aes(x = cancer_type, y = signumber, fill = cancer_type)) +
+    geom_boxplot() + coord_flip() +
+  labs(x = NULL, y = "Signature number") +
+  theme_cowplot() +
+  theme(legend.position = "none")
+```
+
+From the landscape and distribution data, we know that many signatures activate in most of cancer types, but for a specified tumor, in general there are 3-6 signatures are detectable.
 
 ## Cancer type associated enrichment
 
