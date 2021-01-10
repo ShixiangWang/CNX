@@ -162,8 +162,6 @@ For most of cancer types, they have similar signature constitution (most of copy
 
 
 ```{r}
-library(ggridges)
-
 df_detc <- df %>% 
   dplyr::group_by(cancer_type, sample) %>% 
   dplyr::summarise(
