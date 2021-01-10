@@ -283,7 +283,8 @@ show_sig_number_survey(
   x = "SignatureNumber",
   left_y = "s", right_y = "e",
   left_name = "Stability (Avg Silhouette)",
-  right_name = "Mean Cosine Distance")
+  right_name = "Mean Cosine Distance",
+  highlight = 14)
 ```
 
 We pick up `14` signatures for PCAWG data due to its relatively high stability and low distance.
