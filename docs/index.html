@@ -7,7 +7,7 @@
 
         <meta name="author" content="Shixiang Wang, Ziyu Tao, Tao Wu, Huimin Li, Xue-Song Liu (Corresponding author)" />
     
-        <meta name="date" content="2020-12-31" />
+        <meta name="date" content="2021-01-11" />
     
     <title>Pan-Cancer Copy Number Signature Identification and Analysis</title>
 
@@ -26,7 +26,7 @@
         <script src="index_files/prism-1.22/prism.js"></script>
         <script src="index_files/htmlwidgets-1.5.3/htmlwidgets.js"></script>
         <link href="index_files/datatables-css-0.0.0/datatables-crosstalk.css" rel="stylesheet" />
-        <script src="index_files/datatables-binding-0.16/datatables.js"></script>
+        <script src="index_files/datatables-binding-0.17/datatables.js"></script>
         <link href="index_files/dt-core-1.10.20/css/jquery.dataTables.min.css" rel="stylesheet" />
         <link href="index_files/dt-core-1.10.20/css/jquery.dataTables.extra.css" rel="stylesheet" />
         <script src="index_files/dt-core-1.10.20/js/jquery.dataTables.min.js"></script>
@@ -139,17 +139,10 @@
             <ul>
             <li><a href="#copy-number-signature-identification">Copy number signature identification</a>
             <ul>
-            <li><a href="#identification-pipeline">Identification pipeline</a></li>
             <li><a href="#apply-to-pcawg-catalog-matrix">Apply to PCAWG catalog matrix</a></li>
             <li><a href="#signature-number-determination">Signature number determination</a></li>
-            <li><a href="#similarity-between-two-results-with-different-parameter-setting">Similarity between two results with different parameter setting</a></li>
             </ul></li>
-            <li><a href="#reliable-signature-activity-attribution">Reliable signature activity attribution</a>
-            <ul>
-            <li><a href="#attribution-pipeline">Attribution pipeline</a></li>
-            <li><a href="#apply-to-pcawg-catalog-matrix-and-signatures">Apply to PCAWG catalog matrix and signatures</a></li>
-            </ul></li>
-            <li><a href="#tcga-copy-number-signatures">TCGA copy number signatures</a></li>
+            <li><a href="#sample-copy-number-catalog-reconstruction">Sample copy number catalog reconstruction</a></li>
             </ul></li>
             <li><a href="#part-2-signature-profile-visualization-and-analysis">PART 2: Signature profile visualization and analysis</a>
             <ul>
@@ -171,6 +164,7 @@
             <ul>
             <li><a href="#signature-activity-in-each-cancer-type">Signature activity in each cancer type</a></li>
             <li><a href="#signature-landscape">Signature landscape</a></li>
+            <li><a href="#signature-number-distribution">Signature number distribution</a></li>
             </ul></li>
             <li><a href="#cancer-type-associated-enrichment">Cancer type associated enrichment</a></li>
             </ul></li>
@@ -211,6 +205,7 @@
             </ul></li>
             <li><a href="#supplementary-analyses">Supplementary Analyses</a>
             <ul>
+            <li><a href="#cns-validation">CNS validation</a></li>
             <li><a href="#signature-association-network-construction-and-visualization">Signature association network construction and visualization</a></li>
             <li><a href="#tcga-cns-analysis">TCGA CNS analysis</a>
             <ul>
@@ -236,7 +231,7 @@
       <p class="authors">
            <span class="glyphicon glyphicon-user"></span> Shixiang Wang, Ziyu Tao, Tao Wu, Huimin Li, Xue-Song Liu (Corresponding author)
       </p>
-         <p class="date"><span class="glyphicon glyphicon-calendar"></span> 2020-12-31</p>
+         <p class="date"><span class="glyphicon glyphicon-calendar"></span> 2021-01-11</p>
            
 
    
@@ -507,194 +502,273 @@ ggplot2::ggsave(&quot;output/tcga_catalogs_tally_X_noLOH.pdf&quot;, plot = p, wi
 <p><em>The work of this part has been done by either setting root path of the project repository as work directory or moving data and code to the same path (see below). Therefore, keep in mind the work directory/data path should be properly set if you are interested in reproducing the analysis procedure.</em></p>
 <p><em>The signature identification work cannot be done in local machine because high intensity calculations are required, we used HPC of ShanghaiTech University to submit computation jobs to HPC clusters. Input data files, R scripts and PBS job scripts are stored in a same path, the structure can be viewed as:</em></p>
 <pre class="sh"><code>.
-├── 04-call-tcga-signatures-with-BP-types.R
-├── 05-call-pcawg-signatures-with-BP-types.R
-├── bp_pcawg.pbs
-├── bp_pcawg_types.pbs
-├── bp_tcga.pbs
-├── bp_tcga_types.pbs
-├── call_pcawg_bp.R
 ├── call_pcawg_sp.R
-├── call_tcga_bp.R
-├── call_tcga.R
 ├── pcawg_cn_tally_X.rds
-├── pcawg.pbs
-├── tcga_cn_tally_X.rds
-├── tcga.pbs</code></pre>
+├── pcawg.pbs</code></pre>
 <div id="copy-number-signature-identification" class="section level2">
 <h2>Copy number signature identification</h2>
-<p>The signature identification pipeline is adopted from <span class="citation"><a href="#ref-degasperiPracticalFrameworkOnline2020" role="doc-biblioref">Degasperi et al.</a> (<a href="#ref-degasperiPracticalFrameworkOnline2020" role="doc-biblioref">2020</a>)</span>, we implemented the procedure in our package sigminer by following the method description. <a href="https://github.com/ShixiangWang/sigminer#key-interfaces-and-their-performances">A benchmark</a> has been done to make sure our implementation works properly.</p>
-<div id="identification-pipeline" class="section level3">
-<h3>Identification pipeline</h3>
-<p>To make the signature identification procedure more clear, we drew a flowchart. We name this pipeline “Best Practice” and use its short name <em>BP</em> (or <em>bp</em>).</p>
-<blockquote>
-<p>TODO: add flowchart</p>
-</blockquote>
-</div>
+<p>We use the gold-standard tool <a href="https://github.com/AlexandrovLab/SigProfilerExtractor">SigProfiler v1.0.17</a> to identify Pan-Cancer copy number signatures and their activities in each sample. The SigProfiler has been successfully applied to many studies, especially in <span class="citation"><a href="#ref-pcawgmutationalsignaturesworkinggroupRepertoireMutationalSignatures2020" role="doc-biblioref">PCAWG Mutational Signatures Working Group et al.</a> (<a href="#ref-pcawgmutationalsignaturesworkinggroupRepertoireMutationalSignatures2020" role="doc-biblioref">2020</a>)</span> for multiple types of signatures.</p>
 <div id="apply-to-pcawg-catalog-matrix" class="section level3">
 <h3>Apply to PCAWG catalog matrix</h3>
-<p>PBS file <code>bp_pcawg.pbs</code> content:</p>
-<pre class="sh"><code>#PBS -l walltime=500:00:00
-#PBS -l nodes=1:ppn=50
+<p>PBS file <code>pcawg.pbs</code> content:</p>
+<pre class="sh"><code>#PBS -l walltime=1000:00:00
+#PBS -l nodes=1:ppn=36
 #PBS -S /bin/bash
-#PBS -l mem=300gb
+#PBS -l mem=20gb
 #PBS -j oe
 #PBS -M w_shixiang@163.com
-#PBS -q slst_pub
+#PBS -q pub_fast
 
 # Please set PBS arguments above
 cd /public/home/wangshx/wangshx/PCAWG-TCGA
 module load apps/R/3.6.1
 
 # Following are commands/scripts you want to run
-Rscript call_pcawg_bp.R</code></pre>
-<p>R script <code>call_pcawg_bp.R</code> content:</p>
+# If you do not know how to set this, please check README.md file 
+Rscript call_pcawg_sp.R</code></pre>
+<p>We developed a SigProfiler caller in our R package [sigminer] and run SigProfiler with default settings for most of parameters.</p>
+<p>R script <code>call_pcawg_sp.R</code> content:</p>
 <pre class="r"><code>library(sigminer)
 
 tally_X &lt;- readRDS(&quot;pcawg_cn_tally_X.rds&quot;)
-tally_X_noLOH &lt;- readRDS(&quot;pcawg_cn_tally_X_noLOH.rds&quot;)
 
-sigs &lt;- bp_extract_signatures(
-  tally_X$nmf_matrix,
+sigprofiler_extract(tally_X$nmf_matrix,
+  output = &quot;PCAWG_CN176X&quot;,
   range = 2:30,
-  n_bootstrap = 10,
-  n_nmf_run = 10,
-  cores = 50,
-  cache_dir = &quot;pcawg_bp_pynmf&quot;,
-  keep_cache = TRUE,
-  cores_solution = 30,
-  pynmf = TRUE,
+  nrun = 100,
+  init_method = &quot;random&quot;,
+  is_exome = FALSE,
   use_conda = TRUE
-)
+)</code></pre>
+<p>All metadata info and detail settings reported by SigProfiler are copied below:</p>
+<pre><code>THIS FILE CONTAINS THE METADATA ABOUT SYSTEM AND RUNTIME
 
-saveRDS(sigs, file = &quot;pcawg_cn_sigs_CN176_BP.rds&quot;)</code></pre>
+
+-------System Info-------
+Operating System Name: Linux
+Nodename: node34
+Release: 3.10.0-693.el7.x86_64
+Version: #1 SMP Tue Aug 22 21:09:27 UTC 2017
+
+-------Python and Package Versions------- 
+Python Version: 3.8.5
+Sigproextractor Version: 1.0.17
+SigprofilerPlotting Version: 1.1.8
+SigprofilerMatrixGenerator Version: 1.1.20
+Pandas version: 1.1.2
+Numpy version: 1.19.2
+Scipy version: 1.5.2
+Scikit-learn version: 0.23.2
+
+--------------EXECUTION PARAMETERS--------------
+INPUT DATA
+    input_type: matrix
+    output: TCGA_CN176X
+    input_data: /tmp/RtmphYcBmk/dir852158ab0364/sigprofiler_input.txt
+    reference_genome: GRCh37
+    context_types: SBS176
+    exome: False
+NMF REPLICATES
+    minimum_signatures: 2
+    maximum_signatures: 30
+    NMF_replicates: 100
+NMF ENGINE
+    NMF_init: random
+    precision: single
+    matrix_normalization: gmm
+    resample: True
+    seeds: random
+    min_NMF_iterations: 10,000
+    max_NMF_iterations: 1,000,000
+    NMF_test_conv: 10,000
+    NMF_tolerance: 1e-15
+CLUSTERING
+    clustering_distance: cosine
+EXECUTION
+    cpu: 36; Maximum number of CPU is 36
+    gpu: False
+Solution Estimation
+    stability: 0.8
+    min_stability: 0.2
+    combined_stability: 1.0
+COSMIC MATCH
+    opportunity_genome: GRCh37
+    nnls_add_penalty: 0.05
+    nnls_remove_penalty: 0.01
+    initial_remove_penalty: 0.05
+    de_novo_fit_penalty: 0.02
+    refit_denovo_signatures: False
+
+-------Analysis Progress------- 
+[2020-11-29 17:39:12] Analysis started: 
+
+##################################
+
+[2020-11-29 17:39:18] Analysis started for SBS176. Matrix size [176 rows x 10851 columns]
+
+[2020-11-29 17:39:18] Normalization GMM with cutoff value set at 17600
+
+[2020-11-29 19:12:03] SBS176 de novo extraction completed for a total of 2 signatures! 
+Execution time:1:32:45
+
+[2020-11-29 23:58:10] SBS176 de novo extraction completed for a total of 3 signatures! 
+Execution time:4:46:06
+
+[2020-11-30 08:32:21] SBS176 de novo extraction completed for a total of 4 signatures! 
+Execution time:8:34:11
+
+[2020-11-30 19:51:18] SBS176 de novo extraction completed for a total of 5 signatures! 
+Execution time:11:18:56
+
+[2020-12-01 07:10:18] SBS176 de novo extraction completed for a total of 6 signatures! 
+Execution time:11:18:59
+
+[2020-12-01 21:14:24] SBS176 de novo extraction completed for a total of 7 signatures! 
+Execution time:14:04:06
+
+[2020-12-02 15:48:43] SBS176 de novo extraction completed for a total of 8 signatures! 
+Execution time:18:34:19
+
+[2020-12-03 12:53:25] SBS176 de novo extraction completed for a total of 9 signatures! 
+Execution time:21:04:41
+
+[2020-12-04 11:25:25] SBS176 de novo extraction completed for a total of 10 signatures! 
+Execution time:22:31:59
+
+[2020-12-05 10:20:15] SBS176 de novo extraction completed for a total of 11 signatures! 
+Execution time:22:54:50
+
+[2020-12-06 11:36:03] SBS176 de novo extraction completed for a total of 12 signatures! 
+Execution time:1 day, 1:15:48
+
+[2020-12-07 14:43:31] SBS176 de novo extraction completed for a total of 13 signatures! 
+Execution time:1 day, 3:07:28
+
+[2020-12-09 01:15:22] SBS176 de novo extraction completed for a total of 14 signatures! 
+Execution time:1 day, 10:31:50
+
+[2020-12-10 08:02:39] SBS176 de novo extraction completed for a total of 15 signatures! 
+Execution time:1 day, 6:47:17
+
+[2020-12-11 16:05:31] SBS176 de novo extraction completed for a total of 16 signatures! 
+Execution time:1 day, 8:02:51
+
+[2020-12-13 02:19:40] SBS176 de novo extraction completed for a total of 17 signatures! 
+Execution time:1 day, 10:14:09
+
+[2020-12-14 14:56:13] SBS176 de novo extraction completed for a total of 18 signatures! 
+Execution time:1 day, 12:36:32
+
+[2020-12-16 02:39:41] SBS176 de novo extraction completed for a total of 19 signatures! 
+Execution time:1 day, 11:43:27
+
+[2020-12-18 02:54:09] SBS176 de novo extraction completed for a total of 20 signatures! 
+Execution time:2 days, 0:14:28
+
+[2020-12-19 20:20:57] SBS176 de novo extraction completed for a total of 21 signatures! 
+Execution time:1 day, 17:26:47
+
+[2020-12-21 19:30:07] SBS176 de novo extraction completed for a total of 22 signatures! 
+Execution time:1 day, 23:09:10
+
+[2020-12-24 00:44:41] SBS176 de novo extraction completed for a total of 23 signatures! 
+Execution time:2 days, 5:14:34
+
+[2020-12-25 19:03:07] SBS176 de novo extraction completed for a total of 24 signatures! 
+Execution time:1 day, 18:18:25
+
+[2020-12-27 07:50:06] SBS176 de novo extraction completed for a total of 25 signatures! 
+Execution time:1 day, 12:46:58
+
+[2020-12-29 04:40:22] SBS176 de novo extraction completed for a total of 26 signatures! 
+Execution time:1 day, 20:50:16
+
+[2020-12-30 12:35:04] SBS176 de novo extraction completed for a total of 27 signatures! 
+Execution time:1 day, 7:54:41
+
+[2020-12-31 19:04:04] SBS176 de novo extraction completed for a total of 28 signatures! 
+Execution time:1 day, 6:29:00
+
+[2021-01-02 04:50:07] SBS176 de novo extraction completed for a total of 29 signatures! 
+Execution time:1 day, 9:46:02
+
+[2021-01-03 14:15:32] SBS176 de novo extraction completed for a total of 30 signatures! 
+Execution time:1 day, 9:25:25
+
+[2021-01-03 14:48:21] Analysis ended: 
+
+-------Job Status------- 
+Analysis of mutational signatures completed successfully! 
+Total execution time: 34 days, 21:09:09 
+Results can be found in:  TCGA_CN176X  folder</code></pre>
 </div>
 <div id="signature-number-determination" class="section level3">
 <h3>Signature number determination</h3>
-<p>The code above call 100 NMF runs (10 bootstrap catalogs and 10 NMF runs for each bootstrap catalog) for each signature number. Only 1000 NMF runs (20 bootstrap catalogs and 50 NMF runs for each bootstrap catalog) was applied for 176-component classification approach, which has the same arguments proposed by <span class="citation"><a href="#ref-degasperiPracticalFrameworkOnline2020" role="doc-biblioref">Degasperi et al.</a> (<a href="#ref-degasperiPracticalFrameworkOnline2020" role="doc-biblioref">2020</a>)</span>.</p>
 <p>First, load the results.</p>
 <pre class="r"><code>library(sigminer)
-solution1000 &lt;- readRDS(&quot;../BP/BP_PCAWG_1000_Extraction_Result.rds&quot;)
-solution100 &lt;- readRDS(&quot;../data/pcawg_cn_sigs_CN176_BP.rds&quot;)</code></pre>
-<p>Next we compare some important measures for signature number determination. We can see 100 NMF runs and 1000 NMF runs can achieve very similar results.</p>
-<pre class="r"><code>bp_show_survey(solution1000, add_score = F, fixed_ratio = F)</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-16-1.png" width="3000" /></p>
-<pre class="r"><code>bp_show_survey(solution100, add_score = F, fixed_ratio = F)</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-16-2.png" width="3000" /> Basically, the 5 measures can be classified into 3 categories:</p>
-<ol style="list-style-type: decimal">
-<li><code>silhouette</code> and <code>similarity</code>: these two scores indicate the result stability. <em>The signature number with value decreases sharply is preferred.</em></li>
-<li><code>distance</code> and <code>error</code>: these two scores indicate the difference between raw matrix and reconstructed matrix for signatures. <em>The signature number with lower value is better</em>.</li>
-<li><code>pos cor</code>: this is constructed by Prof. Liu and Shixiang to see the average positive correlation between signatures. A signature number should be considered if it has lower value. In practice, we find this measure has referential value sometimes.</li>
-</ol>
-<p><em>More see <code>?bp_show_survey</code> in R console for how they are calculated</em>.</p>
-<p>In previous study, <span class="citation"><a href="#ref-degasperiPracticalFrameworkOnline2020" role="doc-biblioref">Degasperi et al.</a> (<a href="#ref-degasperiPracticalFrameworkOnline2020" role="doc-biblioref">2020</a>)</span> used <code>silhouette</code> and <code>error</code> for signature number determination, <span class="citation"><a href="#ref-pcawgmutationalsignaturesworkinggroupRepertoireMutationalSignatures2020" role="doc-biblioref">PCAWG Mutational Signatures Working Group et al.</a> (<a href="#ref-pcawgmutationalsignaturesworkinggroupRepertoireMutationalSignatures2020" role="doc-biblioref">2020</a>)</span> used <code>similarity</code> and <code>distance</code> for signature number determination. For plots above we can see that they very close.</p>
-<p><strong>From plots above, we observe that the stability drops sharply after <code>11</code>, so here <code>11</code> signatures is selected for this PCAWG dataset</strong>.</p>
-</div>
-<div id="similarity-between-two-results-with-different-parameter-setting" class="section level3">
-<h3>Similarity between two results with different parameter setting</h3>
-<p>We have two results above, so we can compare the signatures from two different parameter setting by calculating their pairwise cosine similarity.</p>
-<pre class="r"><code>sim &lt;- get_sig_similarity(solution1000$object$K11, solution100$object$K11)
-pheatmap::pheatmap(sim$similarity, cluster_rows = FALSE, cluster_cols = FALSE, display_numbers = TRUE)</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-17-1.png" width="2400" /></p>
-<p><em>We can know that the results contain same signature profile! This practice indicates that 100 NMF runs for each signature number is enough.</em></p>
-<p>The <code>Signature</code> object with 11 signature profiles are stored for further analysis.</p>
-<pre class="r"><code># Use root directory as work directory
-saveRDS(solution1000$object$K11, file = &quot;data/pcawg_cn_sigs_CN176_signature.rds&quot;)</code></pre>
-</div>
-</div>
-<div id="reliable-signature-activity-attribution" class="section level2">
-<h2>Reliable signature activity attribution</h2>
-<p>After signature determination, the reliable activities (a.k.a. exposures) of signatures are attributed to each sample for downstream analysis.</p>
-<div id="attribution-pipeline" class="section level3">
-<h3>Attribution pipeline</h3>
-<p>There are 3 core steps in this pipeline:</p>
-<ol style="list-style-type: decimal">
-<li>Step1: We run <code>n = 100</code> optimizations on bootstrapped data and obtain a distribution of activities for each sample.</li>
-<li>Step2: We consider the median activities as point estimates.</li>
-<li>step3: In each sample, we reset a signature activity to <code>0</code> if its activity distribution below the threshold of <code>1%</code> of total mutations in the sample with one-side T test p value <code>&gt;0.05</code>.</li>
-</ol>
-<p>This pipeline is similar to previously reported <span class="citation"><a href="#ref-huangDetectingPresenceMutational2018" role="doc-biblioref">Huang, Wojtowicz, and Przytycka</a> (<a href="#ref-huangDetectingPresenceMutational2018" role="doc-biblioref">2018</a>)</span>. However, there are some different settings:</p>
-<ol style="list-style-type: decimal">
-<li>We use <code>1%</code> of total mutations as a threshold here instead <code>5%</code> in <span class="citation"><a href="#ref-degasperiPracticalFrameworkOnline2020" role="doc-biblioref">Degasperi et al.</a> (<a href="#ref-degasperiPracticalFrameworkOnline2020" role="doc-biblioref">2020</a>)</span>, because we observed some copy number segment contributions are removed from results with <code>5%</code> but they can be used for better explanation of sample copy number profile reconstruction.</li>
-<li>We use T test for P value calculation here instead of empirical P value calculation based on proportion in <span class="citation"><a href="#ref-degasperiPracticalFrameworkOnline2020" role="doc-biblioref">Degasperi et al.</a> (<a href="#ref-degasperiPracticalFrameworkOnline2020" role="doc-biblioref">2020</a>)</span> for keeping more positive events.</li>
-</ol>
-<blockquote>
-<p>TODO: add flowchart</p>
-</blockquote>
-</div>
-<div id="apply-to-pcawg-catalog-matrix-and-signatures" class="section level3">
-<h3>Apply to PCAWG catalog matrix and signatures</h3>
-<p>We apply the attribution pipeline above.</p>
-<pre class="r"><code># Use root directory as work directory
-library(sigminer)
-tally_X &lt;- readRDS(&quot;data/pcawg_cn_tally_X.rds&quot;)
-pcawg_types &lt;- readRDS(&quot;data/pcawg_type_info.rds&quot;)
+SP_PCAWG &lt;- sigprofiler_import(&quot;../SP/PCAWG_CN176X/&quot;, order_by_expo = TRUE, type = &quot;all&quot;)
+saveRDS(SP_PCAWG, file = &quot;../data/pcawg_cn_solutions_sp.rds&quot;)</code></pre>
+<p>Then we visualize the signature number survey.</p>
+<pre class="r"><code>SP_PCAWG &lt;- readRDS(&quot;../data/pcawg_cn_solutions_sp.rds&quot;)</code></pre>
+<pre class="r"><code>show_sig_number_survey(
+  SP_PCAWG$all_stats %&gt;%
+    dplyr::rename(
+      s = `Stability (Avg Silhouette)`,
+      e = `Mean Cosine Distance`
+    ) %&gt;%
+    dplyr::mutate(
+      SignatureNumber = as.integer(gsub(&quot;[^0-9]&quot;, &quot;&quot;, SignatureNumber))
+    ),
+  x = &quot;SignatureNumber&quot;,
+  left_y = &quot;s&quot;, right_y = &quot;e&quot;,
+  left_name = &quot;Stability (Avg Silhouette)&quot;,
+  right_name = &quot;Mean Cosine Distance&quot;,
+  highlight = 14
+)</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-17-1.png" width="2700" style="display: block; margin: auto;" /></p>
+<p>We pick up <code>14</code> signatures for PCAWG data due to its relatively high stability and low distance.</p>
+<p>The <code>Signature</code> object with 14 signature profiles are stored for further analysis.</p>
+<p>To better describe the signatures, we will rename them. The names are ordered by mean activity in samples.</p>
+<pre class="r"><code>pcawg_sigs &lt;- SP_PCAWG$solution_list$S14
+apply(pcawg_sigs$Exposure, 1, mean)</code></pre>
+<pre><code>     Sig1      Sig2      Sig3      Sig4      Sig5      Sig6      Sig7      Sig8 
+15.830094 13.944564 12.504680 11.570554 10.709143 10.506479 10.429086  9.727142 
+     Sig9     Sig10     Sig11     Sig12     Sig13     Sig14 
+ 9.621310  9.116271  7.989201  7.122750  6.835853  6.232541 </code></pre>
+<pre class="r"><code>sig_names(pcawg_sigs)</code></pre>
+<pre><code> [1] &quot;Sig1&quot;  &quot;Sig2&quot;  &quot;Sig3&quot;  &quot;Sig4&quot;  &quot;Sig5&quot;  &quot;Sig6&quot;  &quot;Sig7&quot;  &quot;Sig8&quot;  &quot;Sig9&quot; 
+[10] &quot;Sig10&quot; &quot;Sig11&quot; &quot;Sig12&quot; &quot;Sig13&quot; &quot;Sig14&quot;</code></pre>
+<pre class="r"><code>colnames(pcawg_sigs$Signature) &lt;- colnames(pcawg_sigs$Signature.norm) &lt;- rownames(pcawg_sigs$Exposure) &lt;- rownames(pcawg_sigs$Exposure.norm) &lt;- pcawg_sigs$Stats$signatures$Signatures &lt;- paste0(&quot;CNS&quot;, 1:14)
 
-sc &lt;- pcawg_types$cancer_type
-names(sc) &lt;- pcawg_types$sample
-
-pcawg_expo &lt;- bp_attribute_activity(
-  solution1000$object$K11,
-  sample_class = sc,
-  nmf_matrix = tally_X$nmf_matrix,
-  return_class = &quot;data.table&quot;
+sig_names(pcawg_sigs)</code></pre>
+<pre><code> [1] &quot;CNS1&quot;  &quot;CNS2&quot;  &quot;CNS3&quot;  &quot;CNS4&quot;  &quot;CNS5&quot;  &quot;CNS6&quot;  &quot;CNS7&quot;  &quot;CNS8&quot;  &quot;CNS9&quot; 
+[10] &quot;CNS10&quot; &quot;CNS11&quot; &quot;CNS12&quot; &quot;CNS13&quot; &quot;CNS14&quot;</code></pre>
+<pre class="r"><code>saveRDS(pcawg_sigs, file = &quot;../data/pcawg_cn_sigs_CN176_signature.rds&quot;)</code></pre>
+</div>
+</div>
+<div id="sample-copy-number-catalog-reconstruction" class="section level2">
+<h2>Sample copy number catalog reconstruction</h2>
+<p>Here we try know how well each sample catalog profile can be constructed from the signature combination.</p>
+<p>Firstly we get the activity data.</p>
+<pre class="r"><code>pcawg_sigs &lt;- readRDS(&quot;../data/pcawg_cn_sigs_CN176_signature.rds&quot;)
+pcawg_act &lt;- list(
+  absolute = get_sig_exposure(SP_PCAWG$solution_list$S14, type = &quot;absolute&quot;),
+  relative = get_sig_exposure(SP_PCAWG$solution_list$S14, type = &quot;relative&quot;, rel_threshold = 0),
+  similarity = pcawg_sigs$Stats$samples[, .(Samples, `Cosine Similarity`)]
 )
 
-saveRDS(pcawg_expo, file = &quot;data/pcawg_cn_sigs_CN176_activity.rds&quot;)</code></pre>
-<p>Now we can know how well each sample catalog profile can be constructed from the signature combination.</p>
-<pre class="r"><code>pcawg_expo &lt;- readRDS(&quot;../data/pcawg_cn_sigs_CN176_activity.rds&quot;)
-summary(pcawg_expo$similarity)</code></pre>
+colnames(pcawg_act$absolute)[-1] &lt;- colnames(pcawg_act$relative)[-1] &lt;- paste0(&quot;CNS&quot;, 1:14)
+colnames(pcawg_act$similarity) &lt;- c(&quot;sample&quot;, &quot;similarity&quot;)
+
+saveRDS(pcawg_act, file = &quot;../data/pcawg_cn_sigs_CN176_activity.rds&quot;)</code></pre>
+<p>Check the stat summary of reconstructed Cosine similarity.</p>
+<pre class="r"><code>summary(pcawg_act$similarity$similarity)</code></pre>
 <pre><code>   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
- 0.4446  0.8431  0.9043  0.8950  0.9649  0.9999 </code></pre>
-<pre class="r"><code>hist(pcawg_expo$similarity, breaks = 100, xlab = &quot;Reconstructed similarity&quot;, main = NA)</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-21-1.png" width="2400" /> Most of samples are well constructed. Next we will use a similarity threshold <code>0.75</code> to filter out some samples for removing their effects on the following analysis.</p>
-</div>
-</div>
-<div id="tcga-copy-number-signatures" class="section level2">
-<h2>TCGA copy number signatures</h2>
-<p>To validate the copy number signatures discovered in PCAWG database, we need another database for validation. TCGA is the best resource we got and similar processing and signature identification are applied.</p>
-<pre class="r"><code>library(sigminer)
-
-tally_X &lt;- readRDS(&quot;tcga_cn_tally_X.rds&quot;)
-tally_X_noLOH &lt;- readRDS(&quot;tcga_cn_tally_X_noLOH.rds&quot;)
-
-sigs &lt;- bp_extract_signatures(
-  tally_X$nmf_matrix,
-  range = 2:30,
-  cores = 50,
-  n_bootstrap = 10,
-  n_nmf_run = 10,
-  cache_dir = &quot;tcga_bp_pynmf&quot;,
-  keep_cache = TRUE,
-  cores_solution = 30,
-  pynmf = TRUE,
-  use_conda = TRUE
-)
-
-saveRDS(sigs, file = &quot;tcga_cn_sigs_CN176_BP.rds&quot;)</code></pre>
-<p>Load the solution list:</p>
-<pre class="r"><code>tcga_solutions &lt;- readRDS(&quot;../data/TCGA/tcga_cn_sigs_CN176_BP.rds&quot;)</code></pre>
-<pre class="r"><code>bp_show_survey(tcga_solutions, add_score = FALSE, fixed_ratio = FALSE, )</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-24-1.png" width="3000" /> Also <code>11</code> signatures are determined based on survey plot.</p>
-<p>Similarly, we apply the attribution pipeline to TCGA.</p>
-<pre class="r"><code>library(sigminer)
-
-tcga_solutions &lt;- readRDS(&quot;data/TCGA/tcga_cn_sigs_CN176_BP.rds&quot;)
-
-tcga_expo &lt;- bp_attribute_activity(
-  tcga_solutions$object$K11,
-  sample_class = sc,
-  nmf_matrix = tally_X$nmf_matrix,
-  return_class = &quot;data.table&quot;
-)
-
-saveRDS(tcga_expo, file = &quot;data/TCGA/tcga_cn_sigs_CN176_activity.rds&quot;)</code></pre>
-<pre class="r"><code>tcga_expo &lt;- readRDS(&quot;../data/TCGA/tcga_cn_sigs_CN176_activity.rds&quot;)
-summary(tcga_expo$similarity)</code></pre>
-<pre><code>   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
- 0.2794  0.8092  0.8765  0.8623  0.9239  0.9788 </code></pre>
-<pre class="r"><code>hist(tcga_expo$similarity, breaks = 100, xlab = &quot;Reconstructed similarity&quot;, main = NA)</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-27-1.png" width="2400" /></p>
+ 0.5130  0.8980  0.9490  0.9326  0.9850  1.0000 </code></pre>
+<p>Visualize with plot</p>
+<pre class="r"><code>hist(pcawg_act$similarity$similarity, breaks = 100, xlab = &quot;Reconstructed similarity&quot;, main = NA)</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-23-1.png" width="2400" style="display: block; margin: auto;" /></p>
+<p>Most of samples are well constructed. Next we will use a similarity threshold <code>0.75</code> to filter out some samples for removing their effects on the following analysis.</p>
 </div>
 </div>
 <div id="part-2-signature-profile-visualization-and-analysis" class="section level1">
@@ -713,7 +787,7 @@ pcawg_sigs &lt;- readRDS(file = &quot;../data/pcawg_cn_sigs_CN176_signature.rds&
   method = &quot;X&quot;,
   style = &quot;cosmic&quot;
 )</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-30-1.png" width="4200" /></p>
+<p><img src="index_files/figure-html/unnamed-chunk-26-1.png" width="4200" style="display: block; margin: auto;" /></p>
 <p>Show signature profile with absolute contribution value (estimated segment count) for each component.</p>
 <pre class="r"><code>show_sig_profile(
   pcawg_sigs,
@@ -722,7 +796,7 @@ pcawg_sigs &lt;- readRDS(file = &quot;../data/pcawg_cn_sigs_CN176_signature.rds&
   style = &quot;cosmic&quot;,
   normalize = &quot;raw&quot;
 )</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-31-1.png" width="4200" /></p>
+<p><img src="index_files/figure-html/unnamed-chunk-27-1.png" width="4200" style="display: block; margin: auto;" /></p>
 <p>Show signature activity profile.</p>
 <pre class="r"><code>show_sig_exposure(
   pcawg_sigs,
@@ -730,7 +804,7 @@ pcawg_sigs &lt;- readRDS(file = &quot;../data/pcawg_cn_sigs_CN176_signature.rds&
   rm_space = TRUE,
   palette = sigminer:::letter_colors
 )</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-32-1.png" width="4200" /></p>
+<p><img src="index_files/figure-html/unnamed-chunk-28-1.png" width="4200" style="display: block; margin: auto;" /></p>
 </div>
 <div id="signature-analysis" class="section level2">
 <h2>Signature analysis</h2>
@@ -739,23 +813,23 @@ pcawg_sigs &lt;- readRDS(file = &quot;../data/pcawg_cn_sigs_CN176_signature.rds&
 <p>Here we explore the similarity between copy number signatures identified in PCAWG data. High cosine similarity will cause some issues in signature assignment and activity attribution <span class="citation">(<a href="#ref-mauraPracticalGuideMutational2019" role="doc-biblioref">Maura et al. 2019</a>)</span>.</p>
 <pre class="r"><code>sim &lt;- get_sig_similarity(pcawg_sigs, pcawg_sigs)</code></pre>
 <pre class="r"><code>pheatmap::pheatmap(sim$similarity, cluster_cols = F, cluster_rows = F, display_numbers = TRUE)</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-34-1.png" width="1650" /></p>
+<p><img src="index_files/figure-html/unnamed-chunk-30-1.png" width="1650" style="display: block; margin: auto;" /></p>
 <p>Most of signature-pairs have similarity around <code>0.1</code>.</p>
 </div>
 <div id="signature-activity-distribution" class="section level3">
 <h3>Signature activity distribution</h3>
 <p>Transform data to long format.</p>
 <pre class="r"><code>df_abs &lt;- get_sig_exposure(pcawg_sigs) %&gt;%
-  tidyr::pivot_longer(cols = starts_with(&quot;Sig&quot;), names_to = &quot;sig&quot;, values_to = &quot;activity&quot;) %&gt;%
+  tidyr::pivot_longer(cols = starts_with(&quot;CNS&quot;), names_to = &quot;sig&quot;, values_to = &quot;activity&quot;) %&gt;%
   dplyr::mutate(
     activity = log10(activity + 1),
-    sig = factor(sig, levels = paste0(&quot;Sig&quot;, 1:11))
+    sig = factor(sig, levels = paste0(&quot;CNS&quot;, 1:14))
   )
 
 df_rel &lt;- get_sig_exposure(pcawg_sigs, type = &quot;relative&quot;, rel_threshold = 0) %&gt;%
-  tidyr::pivot_longer(cols = starts_with(&quot;Sig&quot;), names_to = &quot;sig&quot;, values_to = &quot;activity&quot;) %&gt;%
+  tidyr::pivot_longer(cols = starts_with(&quot;CNS&quot;), names_to = &quot;sig&quot;, values_to = &quot;activity&quot;) %&gt;%
   dplyr::mutate(
-    sig = factor(sig, levels = paste0(&quot;Sig&quot;, 1:11))
+    sig = factor(sig, levels = paste0(&quot;CNS&quot;, 1:14))
   )</code></pre>
 <p>Plot with function in <code>sigminer</code>.</p>
 <pre class="r"><code>show_group_distribution(
@@ -766,7 +840,7 @@ df_rel &lt;- get_sig_exposure(pcawg_sigs, type = &quot;relative&quot;, rel_thres
   g_angle = 90,
   ylab = &quot;log10(activity+1)&quot;
 )</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-36-1.png" width="2400" /></p>
+<p><img src="index_files/figure-html/unnamed-chunk-32-1.png" width="2400" style="display: block; margin: auto;" /></p>
 <pre class="r"><code>show_group_distribution(
   df_rel,
   gvar = &quot;sig&quot;,
@@ -775,7 +849,7 @@ df_rel &lt;- get_sig_exposure(pcawg_sigs, type = &quot;relative&quot;, rel_thres
   g_angle = 90,
   ylab = &quot;relative activity&quot;
 )</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-37-1.png" width="2400" /></p>
+<p><img src="index_files/figure-html/unnamed-chunk-33-1.png" width="2400" style="display: block; margin: auto;" /></p>
 </div>
 </div>
 <div id="copy-number-profile-and-signature-activity" class="section level2">
@@ -795,7 +869,7 @@ rel_activity &lt;- rel_activity[, lapply(.SD, function(x) {
   if (is.numeric(x)) round(x, 3) else x
 })]</code></pre>
 <pre class="r"><code>dir.create(&quot;../output/enrich_samples/&quot;, showWarnings = FALSE)
-for (i in paste0(&quot;Sig&quot;, 1:11)) {
+for (i in paste0(&quot;CNS&quot;, 1:14)) {
   cat(paste0(&quot;Most enriched in &quot;, i, &quot;\n&quot;))
   s &lt;- get_sample_from_sig(rel_activity, i)
   print(s)
@@ -823,61 +897,118 @@ for (i in paste0(&quot;Sig&quot;, 1:11)) {
     plot = p, width = 12, height = 6
   )
 }</code></pre>
-<pre><code>Most enriched in Sig1
-     sample  Sig1  Sig2  Sig3  Sig4 Sig5 Sig6  Sig7  Sig8  Sig9 Sig10 Sig11
-1: SP105253 0.717 0.045 0.000 0.001    0 0.03 0.183 0.000 0.003 0.003 0.018
-2:  SP98941 0.682 0.200 0.002 0.000    0 0.00 0.002 0.099 0.000 0.009 0.005</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-40-1.png" width="3600" /></p>
-<pre><code>Most enriched in Sig2
-    sample  Sig1  Sig2  Sig3  Sig4  Sig5  Sig6  Sig7  Sig8  Sig9 Sig10 Sig11
-1: SP55235 0.056 0.796 0.000 0.006 0.007 0.031 0.010 0.066 0.000     0 0.027
-2: SP56303 0.019 0.779 0.004 0.000 0.000 0.102 0.064 0.026 0.005     0 0.001</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-40-2.png" width="3600" /></p>
-<pre><code>Most enriched in Sig3
-     sample Sig1 Sig2  Sig3  Sig4  Sig5 Sig6  Sig7 Sig8  Sig9 Sig10 Sig11
-1: SP112911    0    0 0.988 0.002 0.006    0 0.000    0 0.004     0     0
-2: SP112817    0    0 0.959 0.006 0.013    0 0.005    0 0.016     0     0</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-40-3.png" width="3600" /></p>
-<pre><code>Most enriched in Sig4
-     sample  Sig1  Sig2  Sig3  Sig4  Sig5 Sig6  Sig7  Sig8  Sig9 Sig10 Sig11
-1: SP114903 0.144 0.000 0.005 0.615 0.187    0 0.008 0.003 0.030 0.008 0.000
-2: SP114898 0.166 0.001 0.005 0.594 0.194    0 0.006 0.002 0.022 0.006 0.002</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-40-4.png" width="3600" /></p>
-<pre><code>Most enriched in Sig5
-     sample Sig1 Sig2 Sig3 Sig4 Sig5 Sig6 Sig7 Sig8 Sig9 Sig10 Sig11
-1: SP105708    0    0    0    0    1    0    0    0    0     0     0
-2: SP107359    0    0    0    0    1    0    0    0    0     0     0</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-40-5.png" width="3600" /></p>
-<pre><code>Most enriched in Sig6
-     sample  Sig1  Sig2  Sig3  Sig4  Sig5  Sig6  Sig7  Sig8 Sig9 Sig10 Sig11
-1: SP116525 0.033 0.021 0.001 0.002 0.000 0.905 0.004 0.028    0 0.003 0.004
-2: SP121824 0.000 0.000 0.000 0.013 0.028 0.800 0.001 0.000    0 0.002 0.156</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-40-6.png" width="3600" /></p>
-<pre><code>Most enriched in Sig7
-     sample  Sig1  Sig2 Sig3 Sig4 Sig5  Sig6  Sig7  Sig8  Sig9 Sig10 Sig11
-1: SP116345 0.006 0.349    0    0    0 0.003 0.591 0.051 0.000 0.000     0
-2: SP124197 0.069 0.104    0    0    0 0.000 0.591 0.156 0.028 0.053     0</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-40-7.png" width="3600" /></p>
-<pre><code>Most enriched in Sig8
-    sample  Sig1 Sig2 Sig3 Sig4 Sig5 Sig6 Sig7  Sig8 Sig9 Sig10 Sig11
-1:  SP5381 0.000    0    0    0    0    0    0 1.000    0     0     0
-2: SP78664 0.014    0    0    0    0    0    0 0.986    0     0     0</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-40-8.png" width="3600" /></p>
-<pre><code>Most enriched in Sig9
-     sample Sig1 Sig2  Sig3  Sig4  Sig5 Sig6 Sig7 Sig8  Sig9 Sig10 Sig11
-1: SP106797    0    0 0.073 0.029 0.136    0    0    0 0.762     0     0
-2: SP135354    0    0 0.043 0.000 0.251    0    0    0 0.705     0     0</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-40-9.png" width="3600" /></p>
-<pre><code>Most enriched in Sig10
-     sample  Sig1 Sig2 Sig3  Sig4  Sig5 Sig6  Sig7  Sig8  Sig9 Sig10 Sig11
-1: SP117086 0.000    0    0 0.000 0.038    0 0.065 0.094 0.043 0.760     0
-2: SP117223 0.071    0    0 0.007 0.197    0 0.000 0.015 0.022 0.688     0</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-40-10.png" width="3600" /></p>
-<pre><code>Most enriched in Sig11
-     sample  Sig1  Sig2  Sig3  Sig4  Sig5  Sig6  Sig7  Sig8  Sig9 Sig10 Sig11
-1:  SP11235 0.047 0.030 0.051 0.140 0.046 0.002 0.051 0.028 0.056 0.065 0.485
-2: SP112194 0.073 0.128 0.003 0.032 0.031 0.054 0.032 0.091 0.012 0.060 0.484</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-40-11.png" width="3600" /></p>
+<pre><code>Most enriched in CNS1
+     sample  CNS1 CNS2  CNS3 CNS4  CNS5  CNS6  CNS7 CNS8  CNS9 CNS10 CNS11
+1: SP117655 0.859    0 0.015    0 0.000 0.019 0.036    0 0.021 0.013 0.013
+2: SP112248 0.792    0 0.004    0 0.065 0.048 0.009    0 0.069 0.000 0.000
+   CNS12 CNS13 CNS14
+1: 0.023     0     0
+2: 0.013     0     0</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-36-1.png" width="3600" style="display: block; margin: auto;" /></p>
+<pre><code>Most enriched in CNS2
+     sample  CNS1  CNS2 CNS3 CNS4 CNS5  CNS6  CNS7 CNS8  CNS9 CNS10 CNS11 CNS12
+1:   SP8564 0.033 0.704 0.01 0.09 0.14 0.000 0.023    0 0.000     0     0     0
+2: SP123894 0.000 0.547 0.00 0.00 0.00 0.114 0.208    0 0.087     0     0     0
+   CNS13 CNS14
+1:     0 0.000
+2:     0 0.044</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-36-2.png" width="3600" style="display: block; margin: auto;" /></p>
+<pre><code>Most enriched in CNS3
+     sample CNS1 CNS2 CNS3 CNS4 CNS5 CNS6 CNS7 CNS8 CNS9 CNS10 CNS11 CNS12
+1: SP105708    0    0    1    0    0    0    0    0    0     0     0     0
+2: SP107381    0    0    1    0    0    0    0    0    0     0     0     0
+   CNS13 CNS14
+1:     0     0
+2:     0     0</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-36-3.png" width="3600" style="display: block; margin: auto;" /></p>
+<pre><code>Most enriched in CNS4
+     sample  CNS1  CNS2  CNS3  CNS4 CNS5 CNS6  CNS7 CNS8  CNS9 CNS10 CNS11
+1: SP116525 0.068 0.014 0.000 0.794    0 0.08 0.000    0 0.038     0     0
+2: SP121824 0.000 0.000 0.025 0.785    0 0.00 0.005    0 0.000     0     0
+   CNS12 CNS13 CNS14
+1:     0 0.004 0.002
+2:     0 0.176 0.009</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-36-4.png" width="3600" style="display: block; margin: auto;" /></p>
+<pre><code>Most enriched in CNS5
+     sample  CNS1 CNS2 CNS3  CNS4  CNS5  CNS6 CNS7 CNS8  CNS9 CNS10 CNS11 CNS12
+1:  SP56303 0.000    0    0 0.068 0.903 0.019    0    0 0.000     0 0.003     0
+2: SP117309 0.028    0    0 0.000 0.861 0.000    0    0 0.111     0 0.000     0
+   CNS13 CNS14
+1: 0.006     0
+2: 0.000     0</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-36-5.png" width="3600" style="display: block; margin: auto;" /></p>
+<pre><code>Most enriched in CNS6
+     sample CNS1  CNS2  CNS3 CNS4  CNS5  CNS6  CNS7 CNS8  CNS9 CNS10 CNS11
+1:  SP77443 0.00 0.000 0.019    0 0.000 0.577 0.019    0 0.269     0 0.019
+2: SP124197 0.15 0.023 0.000    0 0.056 0.575 0.000    0 0.107     0 0.023
+   CNS12 CNS13 CNS14
+1: 0.096     0 0.000
+2: 0.047     0 0.019</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-36-6.png" width="3600" style="display: block; margin: auto;" /></p>
+<pre><code>Most enriched in CNS7
+     sample  CNS1  CNS2  CNS3 CNS4 CNS5  CNS6  CNS7 CNS8  CNS9 CNS10 CNS11
+1:  SP49114 0.044 0.000 0.231    0    0 0.012 0.627    0 0.006 0.053 0.027
+2: SP114903 0.041 0.145 0.172    0    0 0.000 0.600    0 0.000 0.010 0.025
+   CNS12 CNS13 CNS14
+1: 0.000     0     0
+2: 0.007     0     0</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-36-7.png" width="3600" style="display: block; margin: auto;" /></p>
+<pre><code>Most enriched in CNS8
+     sample CNS1 CNS2  CNS3 CNS4  CNS5  CNS6 CNS7  CNS8  CNS9 CNS10 CNS11 CNS12
+1: SP116539    0    0 0.084    0 0.000 0.000    0 0.859 0.000 0.000  0.00     0
+2: SP116706    0    0 0.057    0 0.006 0.006    0 0.776 0.006 0.109  0.04     0
+   CNS13 CNS14
+1:     0 0.058
+2:     0 0.000</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-36-8.png" width="3600" style="display: block; margin: auto;" /></p>
+<pre><code>Most enriched in CNS9
+     sample CNS1 CNS2 CNS3 CNS4 CNS5 CNS6 CNS7 CNS8 CNS9 CNS10 CNS11 CNS12
+1: SP107436    0    0    0    0    0    0    0    0    1     0     0     0
+2: SP118048    0    0    0    0    0    0    0    0    1     0     0     0
+   CNS13 CNS14
+1:     0     0
+2:     0     0</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-36-9.png" width="3600" style="display: block; margin: auto;" /></p>
+<pre><code>Most enriched in CNS10
+     sample CNS1 CNS2  CNS3 CNS4 CNS5 CNS6 CNS7  CNS8 CNS9 CNS10 CNS11 CNS12
+1: SP112887    0    0 0.095    0    0    0    0 0.000    0 0.889 0.016     0
+2: SP112917    0    0 0.065    0    0    0    0 0.039    0 0.818 0.078     0
+   CNS13 CNS14
+1:     0     0
+2:     0     0</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-36-10.png" width="3600" style="display: block; margin: auto;" /></p>
+<pre><code>Most enriched in CNS11
+     sample CNS1 CNS2  CNS3 CNS4 CNS5 CNS6  CNS7  CNS8 CNS9 CNS10 CNS11 CNS12
+1: SP106797    0    0 0.125    0    0    0 0.031 0.031    0     0 0.812     0
+2: SP135354    0    0 0.222    0    0    0 0.000 0.000    0     0 0.778     0
+   CNS13 CNS14
+1:     0     0
+2:     0     0</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-36-11.png" width="3600" style="display: block; margin: auto;" /></p>
+<pre><code>Most enriched in CNS12
+     sample CNS1 CNS2  CNS3 CNS4 CNS5 CNS6 CNS7 CNS8  CNS9 CNS10 CNS11 CNS12
+1: SP106734    0    0 0.091    0    0 0.00    0    0 0.182     0  0.00 0.727
+2: SP117086    0    0 0.040    0    0 0.08    0    0 0.120     0  0.04 0.720
+   CNS13 CNS14
+1:     0     0
+2:     0     0</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-36-12.png" width="3600" style="display: block; margin: auto;" /></p>
+<pre><code>Most enriched in CNS13
+    sample  CNS1  CNS2  CNS3  CNS4  CNS5 CNS6  CNS7 CNS8 CNS9 CNS10 CNS11 CNS12
+1: SP90269 0.000 0.171 0.067 0.007 0.044    0 0.158 0.02    0 0.034 0.084     0
+2: SP43664 0.106 0.000 0.106 0.114 0.179    0 0.000 0.00    0 0.008 0.081     0
+   CNS13 CNS14
+1: 0.416     0
+2: 0.407     0</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-36-13.png" width="3600" style="display: block; margin: auto;" /></p>
+<pre><code>Most enriched in CNS14
+     sample CNS1  CNS2  CNS3 CNS4 CNS5 CNS6  CNS7  CNS8  CNS9 CNS10 CNS11 CNS12
+1:  SP96163    0 0.079 0.087    0    0    0 0.090 0.032 0.007 0.022 0.116 0.009
+2: SP116365    0 0.014 0.095    0    0    0 0.111 0.011 0.000 0.000 0.212 0.005
+   CNS13 CNS14
+1:     0 0.558
+2:     0 0.552</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-36-14.png" width="3600" style="display: block; margin: auto;" /></p>
 </div>
 <div id="ideograph-for-copy-number-profile-reconstruction" class="section level3">
 <h3>Ideograph for copy number profile reconstruction</h3>
@@ -897,28 +1028,28 @@ for (i in paste0(&quot;Sig&quot;, 1:11)) {
 library(tidyverse)
 
 pcawg_types &lt;- readRDS(&quot;../data/pcawg_type_info.rds&quot;)</code></pre>
-<p>To better describe the copy number signature landscape, here we use refitting activity data obtained from bootstrap procedure (see section “Reliable signature activity attribution” in PART 1).</p>
+<p>Load signature activity data.</p>
 <pre class="r"><code>pcawg_activity &lt;- readRDS(&quot;../data/pcawg_cn_sigs_CN176_activity.rds&quot;)</code></pre>
 <p>Combine the cancer type annotation and activity data and only keep samples with good reconstruction (<code>&gt;0.75</code> cosine similarity).</p>
-<pre class="r"><code>keep_samps &lt;- pcawg_activity$similarity &gt;= 0.75
+<pre class="r"><code>keep_samps &lt;- pcawg_activity$similarity[similarity &gt; 0.75]$sample
 
-df_abs &lt;- merge(pcawg_activity$abs_activity[keep_samps], pcawg_types, by = &quot;sample&quot;)
-df_rel &lt;- merge(pcawg_activity$rel_activity[keep_samps], pcawg_types, by = &quot;sample&quot;)</code></pre>
+df_abs &lt;- merge(pcawg_activity$absolute[sample %in% keep_samps], pcawg_types, by = &quot;sample&quot;)
+df_rel &lt;- merge(pcawg_activity$relative[sample %in% keep_samps], pcawg_types, by = &quot;sample&quot;)</code></pre>
 <div id="signature-activity-in-each-cancer-type" class="section level3">
 <h3>Signature activity in each cancer type</h3>
 <p>Here we draw distribution of a signature across cancer types.</p>
 <pre class="r"><code>show_group_distribution(
   df_abs,
   gvar = &quot;cancer_type&quot;,
-  dvar = &quot;Sig1&quot;,
+  dvar = &quot;CNS1&quot;,
   order_by_fun = FALSE,
   g_angle = 90,
   point_size = 0.3
 )</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-45-1.png" width="3600" /></p>
+<p><img src="index_files/figure-html/unnamed-chunk-41-1.png" width="3600" style="display: block; margin: auto;" /></p>
 <p>We have many signatures here, so we output them to PDF files.</p>
 <pre class="r"><code>dir.create(&quot;../output/cancer-type-dist&quot;, showWarnings = F)
-signames &lt;- paste0(&quot;Sig&quot;, 1:11)
+signames &lt;- paste0(&quot;CNS&quot;, 1:14)
 for (i in signames) {
   pxx &lt;- show_group_distribution(df_abs,
     gvar = &quot;cancer_type&quot;,
@@ -945,15 +1076,15 @@ rm(pxx)</code></pre>
 <h3>Signature landscape</h3>
 <p>Define a signature which is detectable if this signature contribute <code>&gt;5%</code> exposures in a sample.</p>
 <pre class="r"><code>df &lt;- df_rel %&gt;%
-  dplyr::mutate_at(dplyr::vars(dplyr::starts_with(&quot;Sig&quot;)), ~ ifelse(. &gt; 0.05, 1L, 0L)) %&gt;%
+  dplyr::mutate_at(dplyr::vars(dplyr::starts_with(&quot;CNS&quot;)), ~ ifelse(. &gt; 0.05, 1L, 0L)) %&gt;%
   tidyr::pivot_longer(
-    cols = dplyr::starts_with(&quot;Sig&quot;),
+    cols = dplyr::starts_with(&quot;CNS&quot;),
     names_to = &quot;sig&quot;, values_to = &quot;detectable&quot;
   )
 
 df2 &lt;- df_rel %&gt;%
   tidyr::pivot_longer(
-    cols = dplyr::starts_with(&quot;Sig&quot;),
+    cols = dplyr::starts_with(&quot;CNS&quot;),
     names_to = &quot;sig&quot;, values_to = &quot;expo&quot;
   )
 df &lt;- dplyr::left_join(df, df2,
@@ -975,13 +1106,13 @@ mpss &lt;- mps$label
 names(mpss) &lt;- mps$cancer_type</code></pre>
 <pre class="r"><code>summary(df_type$freq)</code></pre>
 <pre><code>   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
-   0.00    6.00   15.00   30.42   36.00  247.00 </code></pre>
+   0.00    6.00   15.00   28.37   35.00  246.00 </code></pre>
 <p>Show copy number signature landscape.</p>
 <pre class="r"><code>library(cowplot)
 
 p &lt;- ggplot(
   df_type,
-  aes(x = cancer_type, y = factor(sig, levels = paste0(&quot;Sig&quot;, 1:11)))
+  aes(x = cancer_type, y = factor(sig, levels = paste0(&quot;CNS&quot;, 1:14)))
 ) +
   geom_point(aes(size = freq, color = expo)) +
   theme_cowplot() +
@@ -1001,11 +1132,36 @@ p &lt;- ggplot(
     size = &quot;Tumors with\nthe signature&quot;
   )
 p</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-49-1.png" width="3600" /></p>
+<p><img src="index_files/figure-html/unnamed-chunk-45-1.png" width="3600" style="display: block; margin: auto;" /></p>
 <pre class="r"><code>ggsave(&quot;../output/CNS_PCAWG_landscape.pdf&quot;,
   plot = p,
   height = 6, width = 12
 )</code></pre>
+</div>
+<div id="signature-number-distribution" class="section level3">
+<h3>Signature number distribution</h3>
+<p>For most of cancer types, they have similar signature constitution (most of copy number signatures available in them). However, we need to further check that if many tumors have so many signatures activated.</p>
+<pre class="r"><code>df_detc &lt;- df %&gt;%
+  dplyr::group_by(cancer_type, sample) %&gt;%
+  dplyr::summarise(
+    signumber = sum(detectable),
+    .groups = &quot;drop&quot;
+  )</code></pre>
+<p>Pan-Cancer signature number distribution.</p>
+<pre class="r"><code>boxplot(df_detc$signumber, ylab = &quot;Signature number&quot;)</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-47-1.png" width="600" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>summary(df_detc$signumber)</code></pre>
+<pre><code>   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+  1.000   3.000   5.000   4.643   6.000  11.000 </code></pre>
+<p>Most tumors have 3-6 signatures.</p>
+<pre class="r"><code>ggplot(data = df_detc, aes(x = cancer_type, y = signumber, fill = cancer_type)) +
+  geom_boxplot() +
+  coord_flip() +
+  labs(x = NULL, y = &quot;Signature number&quot;) +
+  theme_cowplot() +
+  theme(legend.position = &quot;none&quot;)</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-48-1.png" width="2400" style="display: block; margin: auto;" /></p>
+<p>From the landscape and distribution data, we know that many signatures activate in most of cancer types, but for a specified tumor, in general there are 3-6 signatures are detectable.</p>
 </div>
 </div>
 <div id="cancer-type-associated-enrichment" class="section level2">
@@ -1014,18 +1170,18 @@ p</code></pre>
 <pre class="r"><code>enrich_result &lt;- group_enrichment(
   df_abs,
   grp_vars = &quot;cancer_type&quot;,
-  enrich_vars = paste0(&quot;Sig&quot;, 1:11),
+  enrich_vars = paste0(&quot;CNS&quot;, 1:14),
   co_method = &quot;wilcox.test&quot;
 )</code></pre>
 <p>Show enrichment landscape.</p>
-<pre class="r"><code>enrich_result$enrich_var &lt;- factor(enrich_result$enrich_var, paste0(&quot;Sig&quot;, 1:11))
+<pre class="r"><code>enrich_result$enrich_var &lt;- factor(enrich_result$enrich_var, paste0(&quot;CNS&quot;, 1:14))
 p &lt;- show_group_enrichment(enrich_result, fill_by_p_value = TRUE, return_list = T)
 p &lt;- p$cancer_type + labs(x = NULL, y = NULL)
 p</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-51-1.png" width="2400" /></p>
+<p><img src="index_files/figure-html/unnamed-chunk-50-1.png" width="2550" style="display: block; margin: auto;" /></p>
 <pre class="r"><code>ggsave(&quot;../output/CNS_PCAWG_enrichment_landscape.pdf&quot;,
   plot = p,
-  height = 8, width = 6
+  height = 8, width = 8.5
 )</code></pre>
 <p>To better visualize the enrichment results, we use binned color regions.</p>
 <pre class="r"><code>p &lt;- show_group_enrichment(
@@ -1036,64 +1192,63 @@ p</code></pre>
 )
 p &lt;- p$cancer_type + labs(x = NULL, y = NULL)
 p</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-52-1.png" width="2400" /></p>
+<p><img src="index_files/figure-html/unnamed-chunk-51-1.png" width="2550" style="display: block; margin: auto;" /></p>
 <pre class="r"><code>ggsave(&quot;../output/CNS_PCAWG_enrichment_landscape2.pdf&quot;,
   plot = p,
-  height = 8, width = 6
+  height = 8, width = 8.5
 )</code></pre>
-<p>We see cancer type <code>SoftTissue-Liposarc</code> has pretty high enrichment on <code>Sig6</code>. Let’s check the enrichment result.</p>
+<p>We see cancer type <code>SoftTissue-Liposarc</code> has pretty high enrichment on <code>CNS4</code>. Let’s check the enrichment result.</p>
 <pre class="r"><code>enrich_result[grp1 == &quot;SoftTissue-Liposarc&quot;]</code></pre>
 <pre><code>        grp_var enrich_var                grp1 grp2 grp1_size grp1_pos_measure
- 1: cancer_type       Sig1 SoftTissue-Liposarc Rest        19       107.747229
- 2: cancer_type       Sig2 SoftTissue-Liposarc Rest        19        45.210722
- 3: cancer_type       Sig3 SoftTissue-Liposarc Rest        19        17.841799
- 4: cancer_type       Sig4 SoftTissue-Liposarc Rest        19        53.524895
- 5: cancer_type       Sig5 SoftTissue-Liposarc Rest        19         9.332606
+ 1: cancer_type       CNS1 SoftTissue-Liposarc Rest        19        96.315789
+ 2: cancer_type       CNS2 SoftTissue-Liposarc Rest        19        68.736842
+ 3: cancer_type       CNS3 SoftTissue-Liposarc Rest        19        11.947368
+ 4: cancer_type       CNS4 SoftTissue-Liposarc Rest        19       435.526316
+ 5: cancer_type       CNS5 SoftTissue-Liposarc Rest        19        17.684211
     grp2_size grp2_pos_measure measure_observed measure_tested      p_value
- 1:      2621        17.690767        6.0905910             NA 2.618595e-02
- 2:      2621        14.791334        3.0565682             NA 5.269566e-01
- 3:      2621        15.222509        1.1720669             NA 7.519819e-02
- 4:      2621        13.483545        3.9696455             NA 1.051345e-03
- 5:      2621        14.027543        0.6653058             NA 2.968415e-02
+ 1:      2718        15.318985        6.2873482             NA 7.503689e-07
+ 2:      2718        13.663355        5.0307439             NA 1.832154e-02
+ 3:      2718        12.660412        0.9436793             NA 8.258332e-01
+ 4:      2718         8.231052       52.9125928             NA 1.535689e-22
+ 5:      2718        10.408389        1.6990344             NA 6.439534e-02
           type      method
  1: continuous wilcox.test
  2: continuous wilcox.test
  3: continuous wilcox.test
  4: continuous wilcox.test
  5: continuous wilcox.test
- [ reached getOption(&quot;max.print&quot;) -- omitted 6 rows ]</code></pre>
-<p>We can see mean activity <code>486</code> (<code>n=19</code>) vs <code>9</code> (<code>n=2621</code>).</p>
+ [ reached getOption(&quot;max.print&quot;) -- omitted 9 rows ]</code></pre>
 <p>Let’s go further plot the distribution for the two groups.</p>
-<pre class="r"><code>df_check &lt;- df_abs[, c(&quot;Sig6&quot;, &quot;cancer_type&quot;)][
+<pre class="r"><code>df_check &lt;- df_abs[, c(&quot;CNS4&quot;, &quot;cancer_type&quot;)][
   , .(
     cancer_type = ifelse(cancer_type == &quot;SoftTissue-Liposarc&quot;,
       &quot;SoftTissue-Liposarc&quot;,
       &quot;Others&quot;
     ),
-    Sig6 = Sig6
+    CNS4 = CNS4
   )
 ]</code></pre>
 <pre class="r"><code>ggpubr::ggboxplot(
   df_check,
-  x = &quot;cancer_type&quot;, y = &quot;Sig6&quot;,
+  x = &quot;cancer_type&quot;, y = &quot;CNS4&quot;,
   fill = &quot;cancer_type&quot;,
-  xlab = FALSE, width = 0.3
+  xlab = FALSE, width = 0.3, legend = &quot;none&quot;
 )</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-55-1.png" width="2400" /> Check copy number distribution for the <code>"SoftTissue-Liposarc"</code> samples.</p>
+<p><img src="index_files/figure-html/unnamed-chunk-54-1.png" width="1200" style="display: block; margin: auto;" /> Check copy number distribution for the <code>"SoftTissue-Liposarc"</code> samples.</p>
 <pre class="r"><code>samples &lt;- df_abs[cancer_type == &quot;SoftTissue-Liposarc&quot;]$sample
 
 pcawg_cn_obj &lt;- readRDS(&quot;../data/pcawg_cn_obj.rds&quot;)
 cn_dt &lt;- subset(pcawg_cn_obj@data, sample %in% samples)
 cn_dt$segLen &lt;- cn_dt$end - cn_dt$start + 1</code></pre>
 <p>Copy number value:</p>
-<pre class="r"><code>boxplot(cn_dt$segVal)</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-57-1.png" width="2400" /></p>
+<pre class="r"><code>boxplot(cn_dt$segVal, ylab = &quot;Copy number value&quot;)</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-56-1.png" width="900" style="display: block; margin: auto;" /></p>
 <p>Segment length:</p>
-<pre class="r"><code>boxplot(cn_dt$segLen)</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-58-1.png" width="2400" /></p>
+<pre class="r"><code>boxplot(cn_dt$segLen, ylab = &quot;Segment length&quot;)</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-57-1.png" width="900" style="display: block; margin: auto;" /></p>
 <pre class="r"><code>cn_dt_samp &lt;- cn_dt[, .(nAMP = sum(segVal &gt; 2)), by = sample]</code></pre>
-<pre class="r"><code>boxplot(cn_dt_samp$nAMP)</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-60-1.png" width="2400" /></p>
+<pre class="r"><code>boxplot(cn_dt_samp$nAMP, ylab = &quot;Number of amplifications&quot;)</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-59-1.png" width="900" style="display: block; margin: auto;" /></p>
 </div>
 </div>
 <div id="part-4-cancer-subtyping-and-prognosis-analysis" class="section level1">
@@ -1159,17 +1314,18 @@ pcawg_samp_info &lt;- pcawg_samp_info[!duplicated(pcawg_samp_info$sample), ]</co
 <p>Get signature activities.</p>
 <pre class="r"><code>pcawg_activity &lt;- readRDS(&quot;../data/pcawg_cn_sigs_CN176_activity.rds&quot;)
 
-expo_abs &lt;- pcawg_activity$abs_activity[, lapply(.SD, function(x) if (is.numeric(x)) round(x, digits = 3) else x)]
+expo_abs &lt;- pcawg_activity$absolute[, lapply(.SD, function(x) if (is.numeric(x)) round(x, digits = 3) else x)]
 colnames(expo_abs) &lt;- c(&quot;sample&quot;, paste0(&quot;Abs_&quot;, colnames(expo_abs)[-1]))
 
 
-expo_rel &lt;- pcawg_activity$rel_activity[, lapply(.SD, function(x) if (is.numeric(x)) round(x, digits = 3) else x)]
+expo_rel &lt;- pcawg_activity$relative[, lapply(.SD, function(x) if (is.numeric(x)) round(x, digits = 3) else x)]
 colnames(expo_rel) &lt;- c(&quot;sample&quot;, paste0(&quot;Rel_&quot;, colnames(expo_rel)[-1]))
 
 pcawg_activity2 &lt;- dplyr::left_join(expo_abs, expo_rel, by = &quot;sample&quot;)
-pcawg_activity2$similarity &lt;- pcawg_activity$similarity
+pcawg_activity2 &lt;- dplyr::left_join(pcawg_activity2, pcawg_activity$similarity, by = &quot;sample&quot;)
+
+pcawg_activity2$keep &lt;- pcawg_activity2$similarity &gt; 0.75
 pcawg_activity &lt;- pcawg_activity2
-pcawg_activity$keep &lt;- pcawg_activity$similarity &gt;= 0.75
 
 rm(pcawg_activity2, expo_abs, expo_rel)</code></pre>
 <p>Read tumor purity &amp; ploidy &amp; WGD status.</p>
@@ -1304,20 +1460,30 @@ rm(list = ls())</code></pre>
 <pre class="r"><code>library(cola)
 library(tidyverse)
 
-df &lt;- readRDS(&quot;../data/pcawg_sample_tidy_info.rds&quot;)
+act &lt;- readRDS(&quot;../data/pcawg_cn_sigs_CN176_activity.rds&quot;)
 
-mat_abs &lt;- df %&gt;%
-  filter(keep) %&gt;%
-  select(sample, starts_with(&quot;Abs_Sig&quot;)) %&gt;%
+df &lt;- purrr::reduce(
+  list(
+    act$absolute,
+    act$similarity
+  ),
+  dplyr::left_join,
+  by = &quot;sample&quot;
+)
+
+mat &lt;- df %&gt;%
+  filter(similarity &gt; 0.75) %&gt;%
+  select(sample, starts_with(&quot;CNS&quot;)) %&gt;%
   column_to_rownames(&quot;sample&quot;) %&gt;%
   t()
-mat_abs &lt;- adjust_matrix(mat_abs)
-rownames(mat_abs)
+mat_adj &lt;- adjust_matrix(mat)
+# 1 rows have been removed with too low variance (sd &lt; 0.05 quantile)
 
+rownames(mat_adj)
 
 # Select suitable parameters ----------------------------------------------
 
-ds &lt;- colSums(mat_abs)
+ds &lt;- colSums(mat_adj)
 boxplot(ds)
 
 set.seed(123)
@@ -1325,48 +1491,52 @@ select_samps &lt;- sample(names(sort(ds)), 500)
 
 boxplot(ds[select_samps])
 
-rl_abs &lt;- run_all_consensus_partition_methods(mat_abs[, select_samps], top_n = 10, mc.cores = 8, max_k = 10)
-cola_report(rl_abs, output_dir = &quot;../output/cola_report/pcawg_abs_sigs_500_sampls&quot;, mc.cores = 8)</code></pre>
+rl_samp &lt;- run_all_consensus_partition_methods(mat_adj[, select_samps], top_n = 13, mc.cores = 8, max_k = 10)
+cola_report(rl_samp, output_dir = &quot;../output/cola_report/pcawg_sigs_500_sampls&quot;, mc.cores = 8)
+
+rm(rl_samp)</code></pre>
 <p>The <code>cola</code> output report is very big and isn’t suitable to show, here I only include key figures to determine the parameter setting.</p>
 <pre class="r"><code># Cluster number 2
 knitr::include_graphics(&quot;cola-test-figs/tab-collect-stats-from-consensus-partition-list-1-1.png&quot;)</code></pre>
-<p><img src="cola-test-figs/tab-collect-stats-from-consensus-partition-list-1-1.png" width="100%" /></p>
+<p><img src="cola-test-figs/tab-collect-stats-from-consensus-partition-list-1-1.png" width="100%" style="display: block; margin: auto;" /></p>
 <pre class="r"><code># Cluster number 3
 knitr::include_graphics(&quot;cola-test-figs/tab-collect-stats-from-consensus-partition-list-2-1.png&quot;)</code></pre>
-<p><img src="cola-test-figs/tab-collect-stats-from-consensus-partition-list-2-1.png" width="100%" /></p>
+<p><img src="cola-test-figs/tab-collect-stats-from-consensus-partition-list-2-1.png" width="100%" style="display: block; margin: auto;" /></p>
 <pre class="r"><code># Cluster number 4
 knitr::include_graphics(&quot;cola-test-figs/tab-collect-stats-from-consensus-partition-list-3-1.png&quot;)</code></pre>
-<p><img src="cola-test-figs/tab-collect-stats-from-consensus-partition-list-3-1.png" width="100%" /></p>
+<p><img src="cola-test-figs/tab-collect-stats-from-consensus-partition-list-3-1.png" width="100%" style="display: block; margin: auto;" /></p>
 <pre class="r"><code># Cluster number 5
 knitr::include_graphics(&quot;cola-test-figs/tab-collect-stats-from-consensus-partition-list-4-1.png&quot;)</code></pre>
-<p><img src="cola-test-figs/tab-collect-stats-from-consensus-partition-list-4-1.png" width="100%" /></p>
+<p><img src="cola-test-figs/tab-collect-stats-from-consensus-partition-list-4-1.png" width="100%" style="display: block; margin: auto;" /></p>
 <pre class="r"><code># Cluster number 6
 knitr::include_graphics(&quot;cola-test-figs/tab-collect-stats-from-consensus-partition-list-5-1.png&quot;)</code></pre>
-<p><img src="cola-test-figs/tab-collect-stats-from-consensus-partition-list-5-1.png" width="100%" /></p>
+<p><img src="cola-test-figs/tab-collect-stats-from-consensus-partition-list-5-1.png" width="100%" style="display: block; margin: auto;" /></p>
 <pre class="r"><code># Cluster number 7
 knitr::include_graphics(&quot;cola-test-figs/tab-collect-stats-from-consensus-partition-list-6-1.png&quot;)</code></pre>
-<p><img src="cola-test-figs/tab-collect-stats-from-consensus-partition-list-6-1.png" width="100%" /></p>
+<p><img src="cola-test-figs/tab-collect-stats-from-consensus-partition-list-6-1.png" width="100%" style="display: block; margin: auto;" /></p>
 <pre class="r"><code># Cluster number 8
 knitr::include_graphics(&quot;cola-test-figs/tab-collect-stats-from-consensus-partition-list-7-1.png&quot;)</code></pre>
-<p><img src="cola-test-figs/tab-collect-stats-from-consensus-partition-list-7-1.png" width="100%" /></p>
+<p><img src="cola-test-figs/tab-collect-stats-from-consensus-partition-list-7-1.png" width="100%" style="display: block; margin: auto;" /></p>
 <pre class="r"><code># Cluster number 9
 knitr::include_graphics(&quot;cola-test-figs/tab-collect-stats-from-consensus-partition-list-8-1.png&quot;)</code></pre>
-<p><img src="cola-test-figs/tab-collect-stats-from-consensus-partition-list-8-1.png" width="100%" /></p>
+<p><img src="cola-test-figs/tab-collect-stats-from-consensus-partition-list-8-1.png" width="100%" style="display: block; margin: auto;" /></p>
 <pre class="r"><code># Cluster number 10
 knitr::include_graphics(&quot;cola-test-figs/tab-collect-stats-from-consensus-partition-list-9-1.png&quot;)</code></pre>
-<p><img src="cola-test-figs/tab-collect-stats-from-consensus-partition-list-9-1.png" width="100%" /></p>
+<p><img src="cola-test-figs/tab-collect-stats-from-consensus-partition-list-9-1.png" width="100%" style="display: block; margin: auto;" /></p>
 </div>
 <div id="step-2-select-suitable-cluster-number" class="section level3">
 <h3>Step 2: select suitable cluster number</h3>
-<p>From figures above we do clearly see that the <code>skmeans</code> partition method fits our data and any <code>top_value_method</code> is okay. Finally, we choose combine <code>skmeans</code> (partition method) and <code>ATC</code> (top value method introduced firstly by <code>cola</code>) to run clustering for all samples.</p>
-<pre class="r"><code>final_abs &lt;- run_all_consensus_partition_methods(
-  mat_abs,
+<p>From figures above we do clearly see that the <code>skmeans</code> partition method fits our data and any <code>top_value_method</code> is okay (because all signatures are used). Finally, we choose combine <code>skmeans</code> (partition method) and <code>ATC</code> (top value method introduced firstly by <code>cola</code>) to run clustering for all samples.</p>
+<pre class="r"><code>final &lt;- run_all_consensus_partition_methods(
+  mat_adj,
   top_value_method = &quot;ATC&quot;,
   partition_method = &quot;skmeans&quot;,
-  top_n = 10, mc.cores = 8, max_k = 10
+  top_n = 13, mc.cores = 8, max_k = 10
 )
-cola_report(final_abs, output_dir = &quot;../output/cola_report/pcawg_abs_sigs_all_sampls_final&quot;, mc.cores = 8)</code></pre>
-<p>The report can be viewed at <a href="./pcawg_abs_sigs_all_sampls_final/cola_report.html">here</a>.</p>
+cola_report(final, output_dir = &quot;../output/cola_report/pcawg_sigs_all_sampls&quot;, mc.cores = 8)
+
+saveRDS(final, file = &quot;../data/pcawg_cola_result.rds&quot;)</code></pre>
+<p>The report can be viewed at <a href="./pcawg_sigs_all_sampls/cola_report.html">here</a>.</p>
 <p>Next, we will load the data and visualize to select suitable cluster number.</p>
 <pre class="r"><code>library(cola)
 library(ComplexHeatmap)
@@ -1376,8 +1546,8 @@ cluster_res &lt;- readRDS(&quot;../data/pcawg_cola_result.rds&quot;)
 cluster_res &lt;- cluster_res[&quot;ATC&quot;, &quot;skmeans&quot;]
 cluster_res</code></pre>
 <pre><code>A &#39;ConsensusPartition&#39; object with k = 2, 3, 4, 5, 6, 7, 8, 9, 10.
-  On a matrix with 10 rows and 2640 columns.
-  Top rows (10) are extracted by &#39;ATC&#39; method.
+  On a matrix with 13 rows and 2737 columns.
+  Top rows (13) are extracted by &#39;ATC&#39; method.
   Subgroups are detected by &#39;skmeans&#39; method.
   Performed in total 450 partitions by row resampling.
   Best k for subgroups seems to be 2.
@@ -1400,28 +1570,24 @@ Following methods can be applied to this &#39;ConsensusPartition&#39; object:
 [29] &quot;suggest_best_k&quot;          &quot;test_to_known_factors&quot;  </code></pre>
 <p>Show different statistics along with different cluster number <code>k</code>, which helps to determine the “best k.”</p>
 <pre class="r"><code>select_partition_number(cluster_res)</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-84-1.png" width="2400" /> There are many details about all statistical measures shown above at <a href="http://bioconductor.org/packages/devel/bioc/vignettes/cola/inst/doc/cola.html#toc_13">cola vignette</a>. The best k <code>2</code> is suggested by <code>cola</code> package due to its better statistical measures. However, in this practice, I think <code>3</code> or <code>6</code> is more suitable. I have the following strong reasons.</p>
-<p>The reasons for <code>k = 3</code>:</p>
+<p><img src="index_files/figure-html/unnamed-chunk-83-1.png" width="2400" style="display: block; margin: auto;" /></p>
+<p>There are many details about all statistical measures shown above at <a href="http://bioconductor.org/packages/devel/bioc/vignettes/cola/inst/doc/cola.html#toc_13">cola vignette</a>. The best k <code>2</code> is suggested by <code>cola</code> package due to its better statistical measures. However, in this practice, I think <code>5</code> is more suitable.</p>
+<p>I have the following reasons:</p>
 <ol style="list-style-type: decimal">
-<li>Measure <code>1 - PAC</code> reaches a local maximal at <code>k = 3</code> which indicates the subgroups are less due to ambiguously assigned.</li>
-<li>Measure <code>area_increased</code> drops sharply at <code>k = 3</code> which indicates increasing <code>k</code> won’t change the consensus matrix too much.</li>
-<li>Measure <code>Jaccard</code> increases significantly at <code>k = 3</code> which indicate the subgroups at <code>k = 4</code> are highly similar as <code>k = 3</code>.</li>
-</ol>
-<p>The reasons for <code>k = 6</code>:</p>
-<ol style="list-style-type: decimal">
-<li>Measure <code>1 - PAC</code> reaches top value at <code>k = 6</code>.</li>
-<li>Measure <code>Jaccard</code> increases significantly at <code>k = 6</code> which indicate the subgroups at <code>k = 7</code> are highly similar as <code>k = 6</code>.</li>
-<li>Measure <code>Silhouette</code> start dropping at <code>k = 6</code>.</li>
+<li>Measure <code>1 - PAC</code> reaches convergence at <code>k = 5</code>.</li>
+<li>Measure <code>Silhouette</code> reaches local optimum at <code>k = 5</code>.</li>
+<li>Measure <code>Concordance</code> reaches local optimum at <code>k = 5</code>.</li>
 </ol>
 <p>I will draw another plot to show why the two <code>k</code>s are suitable.</p>
 <pre class="r"><code>collect_classes(cluster_res)</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-85-1.png" width="3900" /> We can see that subgroups for <code>k = 3, 4, 5</code> are similar and subgroups for <code>k = 6, 7, 8, 9, 10</code> are similar.</p>
+<p><img src="index_files/figure-html/unnamed-chunk-84-1.png" width="3900" style="display: block; margin: auto;" /></p>
+<p>We can see that the probability constitution of class assignment for subgroups for <code>k = 6, 7, 8</code> are similar to <code>k = 5</code>.</p>
 <p>Draw all plots into one single page.</p>
 <pre class="r"><code>pdf(file = &quot;../output/cola_all_plots.pdf&quot;, width = 16, height = 10)
 collect_plots(cluster_res)
 dev.off()</code></pre>
 <p>Now we get the cluster labels of samples for downstream analysis.</p>
-<pre class="r"><code>pcawg_clusters &lt;- get_classes(cluster_res, k = c(3, 6))
+<pre class="r"><code>pcawg_clusters &lt;- get_classes(cluster_res, k = 5)
 saveRDS(pcawg_clusters, file = &quot;../data/pcawg_clusters.rds&quot;)</code></pre>
 </div>
 </div>
@@ -1502,23 +1668,23 @@ tidy_info &lt;- tidy_info %&gt;%
 
 saveRDS(anno_df, file = &quot;../data/pcawg_tidy_anno_df.rds&quot;)
 
-left_annotation &lt;- rowAnnotation(foo = anno_text(paste0(&quot;Sig&quot;, c(1:4, 6:11))))</code></pre>
+left_annotation &lt;- rowAnnotation(foo = anno_text(paste0(&quot;CNS&quot;, 1:13)))</code></pre>
 <p>Show heatmap for clusters based on signature activities.</p>
 <pre class="r"><code>get_signatures(cluster_res,
-  k = 6, silhouette_cutoff = 0.2, anno = anno_df,
+  k = 5, silhouette_cutoff = 0.2, anno = anno_df,
   left_annotation = left_annotation
 )</code></pre>
-<pre><code>* 2522/2640 samples (in 6 classes) remain after filtering by silhouette (&gt;= 0.2).
-* cache hash: adc95c3acc3e95ec20e2157e35327ca3 (seed 888).
+<pre><code>* 2674/2737 samples (in 5 classes) remain after filtering by silhouette (&gt;= 0.2).
+* cache hash: 7114ace1f849ae9cfc08017afb5e1a81 (seed 888).
 * calculating row difference between subgroups by Ftest.
-* 10 signatures (100.0%) under fdr &lt; 0.05, group_diff &gt; 0.
+* split rows into 4 groups by k-means clustering.
+* 13 signatures (100.0%) under fdr &lt; 0.05, group_diff &gt; 0.
 * making heatmaps for signatures.</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-91-1.png" width="6600" /></p>
+<p><img src="index_files/figure-html/unnamed-chunk-90-1.png" width="6600" style="display: block; margin: auto;" /></p>
 <p>Save to file.</p>
 <pre class="r"><code>pdf(file = &quot;../output/pcawg_cluster_heatmap.pdf&quot;, width = 22, height = 10, onefile = FALSE)
-get_signatures(cluster_res, k = 6, silhouette_cutoff = 0.2, anno = anno_df, left_annotation = left_annotation)
+get_signatures(cluster_res, k = 5, silhouette_cutoff = 0.2, anno = anno_df, left_annotation = left_annotation)
 dev.off()</code></pre>
-<p>Considering the results of <code>6</code> clusters gives confident labels for <code>&gt;90%</code> samples and thus there is no need to use <code>3</code> clusters in this study.</p>
 </div>
 <div id="exploration-of-patients-prognosis-difference-across-clusters" class="section level2">
 <h2>Exploration of patients’ prognosis difference across clusters</h2>
@@ -1538,22 +1704,24 @@ df_os &lt;- tidy_info %&gt;%
   dplyr::select(sample, donor_vital_status, donor_survival_time) %&gt;%
   purrr::set_names(c(&quot;sample&quot;, &quot;os&quot;, &quot;time&quot;)) %&gt;%
   na.omit() %&gt;%
-  mutate(os = ifelse(os == &quot;deceased&quot;, 1, 0)) %&gt;%
+  mutate(
+    os = ifelse(os == &quot;deceased&quot;, 1, 0),
+    time = time / 365
+  ) %&gt;%
   left_join(cluster_df, by = &quot;sample&quot;)
 
-colnames(df_os)[5] &lt;- &quot;cluster&quot;
+colnames(df_os)[4] &lt;- &quot;cluster&quot;
 # Use the group with minimal CNV level as reference group
-df_os$cluster &lt;- paste0(&quot;subgroup&quot;, df_os$cluster)
-df_os$cluster &lt;- factor(df_os$cluster, levels = paste0(&quot;subgroup&quot;, c(2, 1, 3:6)))</code></pre>
+df_os$cluster &lt;- paste0(&quot;subgroup&quot;, df_os$cluster)</code></pre>
 <p>Available sample number with OS data:</p>
 <pre class="r"><code>nrow(df_os)</code></pre>
-<pre><code>[1] 1669</code></pre>
+<pre><code>[1] 1729</code></pre>
 </div>
 <div id="forest-plot" class="section level3">
 <h3>Forest plot</h3>
 <p>It’s pretty easy to visualize the relationship between subgroups and patient’s prognosis with forest plot by R package <code>ezcox</code> developed by me before.</p>
 <pre class="r"><code>show_forest(df_os, covariates = &quot;cluster&quot;, status = &quot;os&quot;, add_caption = FALSE, merge_models = TRUE)</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-95-1.png" width="2400" /></p>
+<p><img src="index_files/figure-html/unnamed-chunk-94-1.png" width="2400" style="display: block; margin: auto;" /></p>
 </div>
 <div id="k-m-plot" class="section level3">
 <h3>K-M plot</h3>
@@ -1561,8 +1729,18 @@ df_os$cluster &lt;- factor(df_os$cluster, levels = paste0(&quot;subgroup&quot;, 
 <pre class="r"><code>library(survival)
 library(survminer)</code></pre>
 <pre class="r"><code>sfit &lt;- survfit(Surv(time, os) ~ cluster, data = df_os)
-ggsurvplot(sfit, pval = TRUE)</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-97-1.png" width="2400" /></p>
+ggsurvplot(sfit,
+  pval = TRUE,
+  fun = &quot;pct&quot;,
+  xlab = &quot;Time (in years)&quot;,
+  # palette = &quot;jco&quot;,
+  legend.title = ggplot2::element_blank(),
+  legend.labs = paste0(&quot;subgroup&quot;, 1:5),
+  break.time.by = 5,
+  risk.table = TRUE,
+  tables.height = 0.4
+)</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-96-1.png" width="2400" style="display: block; margin: auto;" /></p>
 <p>The result has similar meaning as forest plot.</p>
 </div>
 </div>
@@ -1583,7 +1761,7 @@ pcawg_id &lt;- read_csv(&quot;../data/PCAWG/PCAWG_SigProfiler_ID_signatures_in_s
       dplyr::select(-SBS43, -c(SBS45:SBS60)),
     pcawg_dbs[, -c(1, 3)] %&gt;% dplyr::rename(sample = `Sample Names`),
     pcawg_id[, -c(1, 3)] %&gt;% dplyr::rename(sample = `Sample Names`),
-    cluster_df[, -2] %&gt;% purrr::set_names(c(&quot;sample&quot;, &quot;cluster&quot;))
+    cluster_df[, 1:2] %&gt;% purrr::set_names(c(&quot;sample&quot;, &quot;cluster&quot;))
   ),
   dplyr::left_join,
   by = &quot;sample&quot;
@@ -1598,10 +1776,10 @@ colnames(df_merged) &lt;- gsub(&quot;Abs_&quot;, &quot;&quot;, colnames(df_merge
 enrich_result_cn &lt;- group_enrichment(
   df_merged,
   grp_vars = &quot;cluster&quot;,
-  enrich_vars = paste0(&quot;Sig&quot;, 1:11),
+  enrich_vars = paste0(&quot;CNS&quot;, 1:14),
   co_method = &quot;wilcox.test&quot;
 )</code></pre>
-<pre class="r"><code>enrich_result_cn$enrich_var &lt;- factor(enrich_result_cn$enrich_var, paste0(&quot;Sig&quot;, 1:11))
+<pre class="r"><code>enrich_result_cn$enrich_var &lt;- factor(enrich_result_cn$enrich_var, paste0(&quot;CNS&quot;, 1:14))
 
 p &lt;- show_group_enrichment(
   enrich_result_cn,
@@ -1611,7 +1789,7 @@ p &lt;- show_group_enrichment(
 )
 p &lt;- p$cluster + labs(x = NULL, y = NULL)
 p + coord_flip()</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-101-1.png" width="1950" /></p>
+<p><img src="index_files/figure-html/unnamed-chunk-100-1.png" width="1950" style="display: block; margin: auto;" /></p>
 </div>
 <div id="enrichment-analysis-for-sbs-signatures" class="section level4">
 <h4>Enrichment analysis for SBS signatures</h4>
@@ -1633,7 +1811,7 @@ p &lt;- show_group_enrichment(
 )
 p &lt;- p$cluster + labs(x = NULL, y = NULL)
 p + coord_flip()</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-103-1.png" width="1950" /></p>
+<p><img src="index_files/figure-html/unnamed-chunk-102-1.png" width="1950" style="display: block; margin: auto;" /></p>
 </div>
 <div id="enrichment-analysis-for-dbs-signatures" class="section level4">
 <h4>Enrichment analysis for DBS signatures</h4>
@@ -1655,7 +1833,7 @@ p &lt;- show_group_enrichment(
 )
 p &lt;- p$cluster + labs(x = NULL, y = NULL)
 p + coord_flip()</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-105-1.png" width="1950" /></p>
+<p><img src="index_files/figure-html/unnamed-chunk-104-1.png" width="1950" style="display: block; margin: auto;" /></p>
 </div>
 <div id="enrichment-analysis-for-id-signatures" class="section level4">
 <h4>Enrichment analysis for ID signatures</h4>
@@ -1677,7 +1855,7 @@ p &lt;- show_group_enrichment(
 )
 p &lt;- p$cluster + labs(x = NULL, y = NULL)
 p + coord_flip()</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-107-1.png" width="1950" /></p>
+<p><img src="index_files/figure-html/unnamed-chunk-106-1.png" width="1950" style="display: block; margin: auto;" /></p>
 </div>
 <div id="combined-cosmic-signature-result" class="section level4">
 <h4>Combined COSMIC signature result</h4>
@@ -1738,7 +1916,7 @@ ggplot(df_ets, aes(label = aetiology, size = n)) +
   scale_size_area(max_size = 14) +
   facet_wrap(~grp1) +
   theme_bw()</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-112-1.png" width="3000" /></p>
+<p><img src="index_files/figure-html/unnamed-chunk-111-1.png" width="3000" style="display: block; margin: auto;" /></p>
 </div>
 </div>
 <div id="other-integrated-variables" class="section level3">
@@ -1746,7 +1924,7 @@ ggplot(df_ets, aes(label = aetiology, size = n)) +
 <pre class="r"><code>df_others &lt;- readRDS(&quot;../data/pcawg_tidy_anno_df.rds&quot;) %&gt;%
   tibble::rownames_to_column(&quot;sample&quot;) %&gt;%
   dplyr::left_join(
-    cluster_df[, -2] %&gt;% purrr::set_names(c(&quot;sample&quot;, &quot;cluster&quot;)),
+    cluster_df[, 1:2] %&gt;% purrr::set_names(c(&quot;sample&quot;, &quot;cluster&quot;)),
     by = &quot;sample&quot;
   ) %&gt;%
   dplyr::mutate(
@@ -1780,7 +1958,7 @@ p &lt;- show_group_enrichment(
 )
 p &lt;- p$cluster + labs(x = NULL, y = NULL)
 p + coord_flip()</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-115-1.png" width="1950" /></p>
+<p><img src="index_files/figure-html/unnamed-chunk-114-1.png" width="1950" style="display: block; margin: auto;" /></p>
 <blockquote>
 <p>The <code>HR</code> here represents <code>Heavily rearrangement</code>, don’t mix it with <code>HRD</code> which means <code>Defective homologous recombination DNA damage repair</code>.</p>
 </blockquote>
@@ -1851,7 +2029,7 @@ p &lt;- show_group_enrichment(
 )
 p &lt;- p$cluster + labs(x = NULL, y = NULL)
 p + coord_flip() + scale_x_discrete(labels = labels)</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-122-1.png" width="1950" /></p>
+<p><img src="index_files/figure-html/unnamed-chunk-121-1.png" width="1950" style="display: block; margin: auto;" /></p>
 <pre class="r"><code>rm(list = ls())</code></pre>
 </div>
 </div>
@@ -1912,18 +2090,18 @@ saveRDS(df_merged, file = &quot;../data/pcawg_merged_df.rds&quot;)</code></pre>
 <div id="copy-number-signature-activity-self-association" class="section level3">
 <h3>Copy number signature activity self-association</h3>
 <p>For absolute signature activity.</p>
-<pre class="r"><code>show_cor(dplyr::select(df_merged, starts_with(&quot;Sig&quot;)))</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-129-1.png" width="2400" /></p>
+<pre class="r"><code>show_cor(dplyr::select(df_merged, starts_with(&quot;CNS&quot;)))</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-128-1.png" width="2400" style="display: block; margin: auto;" /></p>
 <p>For relative signature activity.</p>
-<pre class="r"><code>show_cor(dplyr::select(df_merged, starts_with(&quot;Rel_Sig&quot;)) %&gt;%
+<pre class="r"><code>show_cor(dplyr::select(df_merged, starts_with(&quot;Rel_CNS&quot;)) %&gt;%
   dplyr::rename_all(~ sub(&quot;Rel_&quot;, &quot;&quot;, .)))</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-130-1.png" width="2400" /> We can find that most the signatures are correlated. Therefore, it will add difficulty in understanding etiologies by association analysis.</p>
+<p><img src="index_files/figure-html/unnamed-chunk-129-1.png" width="2400" style="display: block; margin: auto;" /> We can find that most the signatures are correlated. Therefore, it will add difficulty in understanding etiologies by association analysis.</p>
 </div>
 <div id="copy-number-signatures-and-cosmic-signatures" class="section level3">
 <h3>Copy number signatures and COSMIC signatures</h3>
 <pre class="r"><code>p_cosmic &lt;- show_cor(
   data = df_merged,
-  x_vars = colnames(df_merged)[grepl(&quot;^Sig&quot;, colnames(df_merged))],
+  x_vars = colnames(df_merged)[grepl(&quot;^CNS&quot;, colnames(df_merged))],
   y_vars = colnames(df_merged)[grepl(&quot;^SBS|^DBS|^ID[0-9]+&quot;, colnames(df_merged))],
   hc_order = FALSE,
   test = FALSE,
@@ -1931,7 +2109,7 @@ saveRDS(df_merged, file = &quot;../data/pcawg_merged_df.rds&quot;)</code></pre>
 )
 
 p_cosmic</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-131-1.png" width="1800" /></p>
+<p><img src="index_files/figure-html/unnamed-chunk-130-1.png" width="2400" style="display: block; margin: auto;" /></p>
 </div>
 <div id="signature-clustering" class="section level3">
 <h3>Signature clustering</h3>
@@ -1939,8 +2117,8 @@ p_cosmic</code></pre>
 <p>First get the correlation data.</p>
 <pre class="r"><code>p_all &lt;- show_cor(
   data = df_merged,
-  x_vars = colnames(df_merged)[grepl(&quot;^Sig|^SBS|^DBS|^ID[0-9]+&quot;, colnames(df_merged))],
-  y_vars = colnames(df_merged)[grepl(&quot;^Sig|^SBS|^DBS|^ID[0-9]+&quot;, colnames(df_merged))],
+  x_vars = colnames(df_merged)[grepl(&quot;^CNS|^SBS|^DBS|^ID[0-9]+&quot;, colnames(df_merged))],
+  y_vars = colnames(df_merged)[grepl(&quot;^CNS|^SBS|^DBS|^ID[0-9]+&quot;, colnames(df_merged))],
   hc_order = FALSE,
   test = FALSE,
   lab_size = 3
@@ -1952,20 +2130,20 @@ all_dist &lt;- 1 - p_all_cor
 all_dist[is.na(all_dist)] &lt;- 2</code></pre>
 <div id="only-include-copy-number-signatures" class="section level4">
 <h4>Only include copy number signatures</h4>
-<pre class="r"><code>dist_cn &lt;- as.dist(all_dist[1:11, 1:11])
+<pre class="r"><code>dist_cn &lt;- as.dist(all_dist[1:14, 1:14])
 hc_cn &lt;- hclust(dist_cn)
 plot(hc_cn)</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-134-1.png" width="2400" /></p>
+<p><img src="index_files/figure-html/unnamed-chunk-133-1.png" width="2400" style="display: block; margin: auto;" /></p>
 <p>Roughly there is 3 clusters.</p>
 <pre class="r"><code>factoextra::fviz_dend(hc_cn, k = 3, rect = T)</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-135-1.png" width="2400" /></p>
+<p><img src="index_files/figure-html/unnamed-chunk-134-1.png" width="2400" style="display: block; margin: auto;" /></p>
 </div>
 <div id="all-signatures" class="section level4">
 <h4>All signatures</h4>
 <pre class="r"><code>dist_all &lt;- as.dist(all_dist)
 hc_all &lt;- hclust(dist_all)
 plot(hc_all)</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-136-1.png" width="3600" /> Here we manually set 10 clusters for better visualization.</p>
+<p><img src="index_files/figure-html/unnamed-chunk-135-1.png" width="3600" style="display: block; margin: auto;" /> Here we manually set 10 clusters for better visualization.</p>
 <pre class="r"><code>factoextra::fviz_dend(
   hc_all,
   k = 10,
@@ -1975,7 +2153,7 @@ plot(hc_all)</code></pre>
   theme(
     panel.border = element_blank()
   )</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-137-1.png" width="2400" /></p>
+<p><img src="index_files/figure-html/unnamed-chunk-136-1.png" width="2400" style="display: block; margin: auto;" /></p>
 <pre class="r"><code># theme(
 #   panel.background = element_rect(fill = &quot;transparent&quot;, colour = NA),
 #   plot.background = element_rect(fill = &quot;transparent&quot;, colour = NA),
@@ -2000,31 +2178,33 @@ plot(hc_all)</code></pre>
 <h4>Association between CNS and continuous variables</h4>
 <pre class="r"><code>p_cn_others &lt;- show_cor(
   data = df_merged,
-  x_vars = colnames(df_merged)[2:12],
-  y_vars = colnames(df_merged)[c(24:38, 119:121)],
+  x_vars = colnames(df_merged)[2:15],
+  y_vars = colnames(df_merged)[c(30:44, 125:127)],
   lab_size = 3
 )
 p_cn_others</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-138-1.png" width="2700" /></p>
+<p><img src="index_files/figure-html/unnamed-chunk-137-1.png" width="2700" style="display: block; margin: auto;" /></p>
 </div>
 <div id="association-between-cns-and-discrete-variables" class="section level4">
 <h4>Association between CNS and discrete variables</h4>
 <p>Here we directly compare the CNS activity between different discrete variable groups.</p>
 <p>Here 3 variables including <code>WGD_Status</code>, <code>HRD_Status</code> and <code>Tumor_Stage</code> are included.</p>
-<pre class="r"><code>df_ds &lt;- tidy_info %&gt;%
+<pre class="r"><code>df_ds2 &lt;- tidy_info %&gt;%
   dplyr::filter(keep) %&gt;%
   dplyr::select(sample, starts_with(&quot;Abs&quot;)) %&gt;%
   dplyr::mutate_if(is.numeric, ~ log2(. + 1)) %&gt;%
-  purrr::set_names(c(&quot;sample&quot;, paste0(&quot;Sig&quot;, 1:11))) %&gt;%
+  purrr::set_names(c(&quot;sample&quot;, paste0(&quot;CNS&quot;, 1:14))) %&gt;%
   dplyr::left_join(
     tidy_anno %&gt;%
       tibble::rownames_to_column(&quot;sample&quot;) %&gt;%
       dplyr::select(sample, WGD_Status, HRD_Status, Tumor_Stage),
     by = &quot;sample&quot;
   ) %&gt;%
-  dplyr::mutate(Tumor_Stage = ifelse(Tumor_Stage == &quot;Unknown&quot;, NA, Tumor_Stage)) %&gt;%
+  dplyr::mutate(Tumor_Stage = ifelse(Tumor_Stage == &quot;Unknown&quot;, NA, Tumor_Stage))
+
+df_ds &lt;- df_ds2 %&gt;%
   tidyr::pivot_longer(
-    starts_with(&quot;Sig&quot;),
+    starts_with(&quot;CNS&quot;),
     names_to = &quot;sig_name&quot;,
     values_to = &quot;activity&quot;
   )</code></pre>
@@ -2038,8 +2218,9 @@ p_cn_others</code></pre>
   xlab = FALSE, ylab = &quot;log2(Activity)&quot;,
   outlier.size = 0.05
 ) +
-  stat_compare_means(aes(group = WGD_Status), label = &quot;p.signif&quot;)</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-141-1.png" width="2400" /> For HRD.</p>
+  stat_compare_means(aes(group = WGD_Status), label = &quot;p.signif&quot;) +
+  rotate_x_text()</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-141-1.png" width="2400" style="display: block; margin: auto;" /> For HRD.</p>
 <pre class="r"><code>ggboxplot(
   df_ds %&gt;%
     dplyr::mutate(HRD_Status = factor(HRD_Status, c(&quot;no_hrd&quot;, &quot;hrd&quot;))),
@@ -2049,8 +2230,9 @@ p_cn_others</code></pre>
   xlab = FALSE, ylab = &quot;log2(Activity)&quot;,
   outlier.size = 0.05
 ) +
-  stat_compare_means(aes(group = HRD_Status), label = &quot;p.signif&quot;)</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-142-1.png" width="2400" /></p>
+  stat_compare_means(aes(group = HRD_Status), label = &quot;p.signif&quot;) +
+  rotate_x_text()</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-142-1.png" width="2400" style="display: block; margin: auto;" /></p>
 <p>For tumor stage.</p>
 <pre class="r"><code>ggboxplot(
   df_ds %&gt;% dplyr::filter(!is.na(Tumor_Stage)),
@@ -2063,15 +2245,16 @@ p_cn_others</code></pre>
   stat_compare_means(aes(group = Tumor_Stage),
     label = &quot;p.signif&quot;,
     method = &quot;anova&quot;
-  )</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-143-1.png" width="2400" /></p>
+  ) +
+  rotate_x_text()</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-143-1.png" width="2400" style="display: block; margin: auto;" /></p>
 </div>
 <div id="association-between-cns-and-driver-gene-mutation" class="section level4">
 <h4>Association between CNS and driver gene mutation</h4>
 <pre class="r"><code>asso_res &lt;- get_sig_feature_association(
   df_merged,
-  cols_to_sigs = paste0(&quot;Sig&quot;, 1:11),
-  cols_to_features = colnames(df_merged)[122:205],
+  cols_to_sigs = paste0(&quot;CNS&quot;, 1:14),
+  cols_to_features = colnames(df_merged)[128:291],
   method_ca = wilcox.test,
   min_n = 0
 )
@@ -2080,14 +2263,15 @@ asso_res_tidy &lt;- get_tidy_association(asso_res)</code></pre>
 <p>Plotting.</p>
 <pre class="r"><code>show_sig_feature_corrplot(
   asso_res_tidy,
-  sig_orders = paste0(&quot;Sig&quot;, 1:11),
+  sig_orders = paste0(&quot;CNS&quot;, 1:14),
   p_val = 0.05,
   breaks_count = NA,
   ylab = NULL,
   xlab = NULL
 ) + ggpubr::rotate_x_text(0, hjust = 0.5) +
-  labs(color = &quot;Difference\nin means of\nactivity&quot;)</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-145-1.png" width="2700" /></p>
+  labs(color = &quot;Difference\nin means of\nactivity&quot;) +
+  ggpubr::rotate_x_text()</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-145-1.png" width="2700" style="display: block; margin: auto;" /></p>
 </div>
 </div>
 <div id="association-between-cns-and-patients-prognosis" class="section level3">
@@ -2113,33 +2297,33 @@ df_surv &lt;- tidy_info %&gt;%
   dplyr::rename(
     time = donor_survival_time,
     status = donor_vital_status,
-    cluster = `k=6`
+    cluster = class
   ) %&gt;%
   dplyr::mutate(
     status = ifelse(status == &quot;deceased&quot;, 1, 0)
   ) %&gt;%
   dplyr::rename_at(vars(starts_with(&quot;Abs_&quot;)), ~ sub(&quot;Abs_&quot;, &quot;&quot;, .)) %&gt;%
-  dplyr::mutate_at(vars(starts_with(&quot;Sig&quot;)), ~ . / 10)</code></pre>
+  dplyr::mutate_at(vars(starts_with(&quot;CNS&quot;)), ~ . / 10)</code></pre>
 <p>We divide all signature activity by 10 to explore the HR change per 10 records contributed by a signature.</p>
 <div id="unicox-analysis-for-cns" class="section level4">
 <h4>Unicox analysis for CNS</h4>
 <p>Here we focus on the association between each CNS and patients’ overall survival time.</p>
 <pre class="r"><code>p1 &lt;- show_forest(df_surv,
-  covariates = paste0(&quot;Sig&quot;, 1:11),
+  covariates = paste0(&quot;CNS&quot;, 1:14),
   merge_models = TRUE, add_caption = FALSE, point_size = 2
 )
 p1</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-147-1.png" width="2400" /></p>
+<p><img src="index_files/figure-html/unnamed-chunk-147-1.png" width="2400" style="display: block; margin: auto;" /></p>
 </div>
 <div id="multivariate-cox-analysis-for-cns" class="section level4">
 <h4>Multivariate cox analysis for CNS</h4>
 <p>We also build a multivariate cox model to explore if all CNSs are included, which is more important?</p>
 <pre class="r"><code>p2 &lt;- show_forest(df_surv,
-  covariates = &quot;Sig1&quot;, controls = paste0(&quot;Sig&quot;, 2:11),
+  covariates = &quot;CNS1&quot;, controls = paste0(&quot;CNS&quot;, 2:14),
   merge_models = TRUE, add_caption = FALSE, point_size = 2
 )
 p2</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-148-1.png" width="2400" /></p>
+<p><img src="index_files/figure-html/unnamed-chunk-148-1.png" width="2400" style="display: block; margin: auto;" /></p>
 </div>
 </div>
 </div>
@@ -2183,12 +2367,12 @@ df_sim &lt;- dplyr::tibble(
 <pre><code># A tibble: 6 x 2
   sig_type similarity
   &lt;chr&gt;         &lt;dbl&gt;
-1 CNS           0.455
-2 CNS           0.015
+1 CNS           0.34 
+2 CNS           0    
 3 CNS           0    
-4 CNS           0.131
-5 CNS           0.001
-6 CNS           0.059</code></pre>
+4 CNS           0.112
+5 CNS           0.018
+6 CNS           0    </code></pre>
 <p>Let’s visualize it and use ‘CNS’ as reference group to run statistical test (‘wilcox.test’ method).</p>
 <pre class="r"><code>library(ggpubr)
 
@@ -2207,7 +2391,7 @@ ggboxplot(df_sim,
     label = &quot;p.signif&quot;, method = &quot;wilcox.test&quot;,
     ref.group = &quot;CNS&quot;
   )</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-153-1.png" width="1200" /> We can see that signature type CNS has lowest similarity level and CNS signatures are not likely similar to others. CNS has much lower similarity level than all other signature types except DBS.</p>
+<p><img src="index_files/figure-html/unnamed-chunk-153-1.png" width="1200" style="display: block; margin: auto;" /> We can see that signature type CNS has lowest similarity level and CNS signatures are not likely similar to others. CNS has much lower similarity level than all other signature types except DBS.</p>
 </div>
 <div id="data-summary-and-inference-of-signature-etiologies" class="section level2">
 <h2>Data summary and inference of signature etiologies</h2>
@@ -2221,6 +2405,11 @@ ggboxplot(df_sim,
 <div id="supplementary-analyses" class="section level1">
 <h1>Supplementary Analyses</h1>
 <p>In this part, we will add some supplementary analyses.</p>
+<div id="cns-validation" class="section level2">
+<h2>CNS validation</h2>
+<p>The signature identification pipeline is adopted from <span class="citation"><a href="#ref-degasperiPracticalFrameworkOnline2020" role="doc-biblioref">Degasperi et al.</a> (<a href="#ref-degasperiPracticalFrameworkOnline2020" role="doc-biblioref">2020</a>)</span>, we implemented the procedure in our package sigminer by following the method description. <a href="https://github.com/ShixiangWang/sigminer#key-interfaces-and-their-performances">A benchmark</a> has been done to make sure our implementation works properly.</p>
+<p>The code above call 100 NMF runs (10 bootstrap catalogs and 10 NMF runs for each bootstrap catalog) for each signature number. Only 1000 NMF runs (20 bootstrap catalogs and 50 NMF runs for each bootstrap catalog) was applied for 176-component classification approach, which has the same arguments proposed by <span class="citation"><a href="#ref-degasperiPracticalFrameworkOnline2020" role="doc-biblioref">Degasperi et al.</a> (<a href="#ref-degasperiPracticalFrameworkOnline2020" role="doc-biblioref">2020</a>)</span>.</p>
+</div>
 <div id="signature-association-network-construction-and-visualization" class="section level2">
 <h2>Signature association network construction and visualization</h2>
 <blockquote>
@@ -2263,7 +2452,7 @@ ggboxplot(df_sim,
  collate  zh_CN.UTF-8                 
  ctype    zh_CN.UTF-8                 
  tz       Asia/Shanghai               
- date     2020-12-31                  
+ date     2021-01-11                  
 
 ─ Packages ───────────────────────────────────────────────────────────────────
  package        * version    date       lib
@@ -2294,14 +2483,14 @@ ggboxplot(df_sim,
  clue             0.3-58     2020-12-03 [1]
  cluster          2.1.0      2019-06-19 [2]
  codetools        0.2-18     2020-11-04 [2]
- cola           * 1.9.0.1012 2020-12-22 [1]
+ cola           * 1.9.0.1013 2021-01-08 [1]
  colorspace       2.0-0      2020-11-11 [1]
  ComplexHeatmap * 2.7.2.1000 2020-12-22 [1]
- cowplot        * 1.1.0      2020-09-08 [1]
+ cowplot        * 1.1.1      2020-12-30 [1]
  crayon           1.3.4      2017-09-16 [1]
  crosstalk        1.1.0.1    2020-03-13 [1]
  curl             4.3        2019-12-02 [1]
- data.table       1.13.4     2020-12-08 [1]
+ data.table       1.13.6     2020-12-30 [1]
  DBI              1.1.0      2019-12-15 [1]
  dbplyr           2.0.0      2020-11-03 [1]
  dendextend       1.14.0     2020-08-26 [1]
@@ -2310,7 +2499,7 @@ ggboxplot(df_sim,
  digest           0.6.27     2020-10-24 [1]
  doParallel       1.0.16     2020-10-16 [1]
  dplyr          * 1.0.2      2020-08-18 [1]
- DT               0.16       2020-10-13 [1]
+ DT               0.17       2021-01-06 [1]
  ellipsis         0.3.1      2020-05-15 [1]
  eulerr           6.1.0      2020-03-09 [1]
  evaluate         0.14       2019-05-28 [1]
@@ -2320,7 +2509,7 @@ ggboxplot(df_sim,
  farver           2.0.3      2020-01-16 [1]
  forcats        * 0.5.0      2020-03-01 [1]
  foreach          1.5.1      2020-10-15 [1]
- foreign          0.8-80     2020-05-24 [2]
+ foreign          0.8-81     2020-12-22 [2]
  forestmodel      0.6.2      2020-07-19 [1]
  fs               1.5.0      2020-07-31 [1]
  furrr            0.2.1      2020-10-21 [1]
@@ -2329,7 +2518,7 @@ ggboxplot(df_sim,
  generics         0.1.0      2020-10-31 [1]
  GetoptLong       1.0.5      2020-12-15 [1]
  ggcorrplot       0.1.3      2019-05-19 [1]
- ggplot2        * 3.3.2      2020-06-19 [1]
+ ggplot2        * 3.3.3      2020-12-30 [1]
  ggplotify        0.0.5      2020-03-12 [1]
  ggpubr         * 0.4.0      2020-06-27 [1]
  ggrepel          0.9.0      2020-12-16 [1]
@@ -2364,7 +2553,7 @@ ggboxplot(df_sim,
  magick           2.5.2      2020-11-10 [1]
  magrittr         2.0.1      2020-11-17 [1]
  markdown         1.1        2019-08-07 [1]
- Matrix           1.2-18     2019-11-27 [2]
+ Matrix           1.3-2      2021-01-06 [2]
  matrixStats      0.57.0     2020-09-25 [1]
  mclust           5.4.7      2020-11-20 [1]
  memoise          1.1.0      2017-04-21 [1]
@@ -2374,7 +2563,7 @@ ggboxplot(df_sim,
  NMF              0.23.0     2020-08-01 [1]
  openxlsx         4.2.3      2020-10-27 [1]
  pacman         * 0.5.1      2019-03-11 [1]
- parallelly       1.22.0     2020-12-13 [1]
+ parallelly       1.23.0     2021-01-04 [1]
  patchwork        1.1.1      2020-12-17 [1]
  pheatmap         1.0.12     2019-01-04 [1]
  pillar           1.4.7      2020-11-20 [1]
@@ -2405,7 +2594,7 @@ ggboxplot(df_sim,
  reshape2         1.4.4      2020-04-09 [1]
  rio              0.5.16     2018-11-26 [1]
  rjson            0.2.20     2018-06-08 [1]
- rlang            0.4.9      2020-11-26 [1]
+ rlang            0.4.10     2020-12-30 [1]
  rmarkdown        2.6        2020-12-14 [1]
  rmdformats     * 1.0.0      2020-11-23 [1]
  rngtools         1.5        2020-01-23 [1]
@@ -2421,7 +2610,7 @@ ggboxplot(df_sim,
  scales           1.1.1      2020-05-11 [1]
  sessioninfo      1.1.1      2018-11-05 [1]
  shape            1.4.5      2020-09-13 [1]
- sigminer       * 1.1.0.99   2020-12-28 [1]
+ sigminer       * 1.2.1.999  2021-01-11 [1]
  skmeans          0.2-13     2020-12-03 [1]
  slam             0.1-48     2020-12-03 [1]
  stringi          1.5.3      2020-09-09 [1]
@@ -2478,7 +2667,7 @@ ggboxplot(df_sim,
  CRAN (R 4.0.2)                          
  CRAN (R 4.0.2)                          
  CRAN (R 4.0.2)                          
- Github (jokergoo/cola@a59f2aa)          
+ Github (jokergoo/cola@422f3fe)          
  CRAN (R 4.0.2)                          
  Github (jokergoo/ComplexHeatmap@46b5212)
  CRAN (R 4.0.2)                          
@@ -2643,9 +2832,6 @@ ggboxplot(df_sim,
 <div id="refs" class="references csl-bib-body hanging-indent">
 <div id="ref-degasperiPracticalFrameworkOnline2020" class="csl-entry">
 Degasperi, Andrea, Tauanne Dias Amarante, Jan Czarnecki, Scott Shooter, Xueqing Zou, Dominik Glodzik, Sandro Morganella, et al. 2020. <span>“A Practical Framework and Online Tool for Mutational Signature Analyses Show Intertissue Variation and Driver Dependencies.”</span> <em>Nature Cancer</em> 1 (2): 249–63. <a href="https://doi.org/10.1038/s43018-020-0027-5">https://doi.org/10.1038/s43018-020-0027-5</a>.
-</div>
-<div id="ref-huangDetectingPresenceMutational2018" class="csl-entry">
-Huang, Xiaoqing, Damian Wojtowicz, and Teresa M Przytycka. 2018. <span>“Detecting Presence of Mutational Signatures in Cancer with Confidence.”</span> Edited by Christina Curtis. <em>Bioinformatics</em> 34 (2): 330–37. <a href="https://doi.org/10.1093/bioinformatics/btx604">https://doi.org/10.1093/bioinformatics/btx604</a>.
 </div>
 <div id="ref-kimExtrachromosomalDNAAssociated2020" class="csl-entry">
 Kim, Hoon, Nam-Phuong Nguyen, Kristen Turner, Sihan Wu, Amit D. Gujar, Jens Luebeck, Jihe Liu, et al. 2020. <span>“Extrachromosomal <span>DNA</span> Is Associated with Oncogene Amplification and Poor Outcome Across Multiple Cancers.”</span> <em>Nature Genetics</em> 52 (9): 891–97. <a href="https://doi.org/10.1038/s41588-020-0678-2">https://doi.org/10.1038/s41588-020-0678-2</a>.
