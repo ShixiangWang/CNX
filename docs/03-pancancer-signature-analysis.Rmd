@@ -53,7 +53,7 @@ pcawg_activity <- readRDS("../data/pcawg_cn_sigs_CN176_activity.rds")
 Combine the cancer type annotation and activity data and only keep samples with good reconstruction (`>0.75` cosine similarity).
 
 ```{r}
-keep_samps <- pcawg_activity$similarity[similarity >= 0.75]$sample
+keep_samps <- pcawg_activity$similarity[similarity > 0.75]$sample
 
 df_abs <- merge(pcawg_activity$absolute[sample %in% keep_samps], pcawg_types, by = "sample")
 df_rel <- merge(pcawg_activity$relative[sample %in% keep_samps], pcawg_types, by = "sample")

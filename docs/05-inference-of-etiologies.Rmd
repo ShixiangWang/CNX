@@ -94,24 +94,24 @@ saveRDS(df_merged, file = "../data/pcawg_merged_df.rds")
 
 For absolute signature activity.
 
-```{r}
-show_cor(dplyr::select(df_merged, starts_with("Sig")))
+```{r fig.width=8, fig.height=7}
+show_cor(dplyr::select(df_merged, starts_with("CNS")))
 ```
 
 For relative signature activity.
 
-```{r}
-show_cor(dplyr::select(df_merged, starts_with("Rel_Sig")) %>% 
+```{r fig.width=8, fig.height=7}
+show_cor(dplyr::select(df_merged, starts_with("Rel_CNS")) %>% 
            dplyr::rename_all(~sub("Rel_", "", .)))
 ```
 We can find that most the signatures are correlated. Therefore, it will add difficulty in understanding etiologies by association analysis.
 
 ### Copy number signatures and COSMIC signatures
 
-```{r fig.height=20, fig.width=6}
+```{r fig.height=20, fig.width=8}
 p_cosmic <- show_cor(
   data = df_merged,
-  x_vars = colnames(df_merged)[grepl("^Sig", colnames(df_merged))],
+  x_vars = colnames(df_merged)[grepl("^CNS", colnames(df_merged))],
   y_vars = colnames(df_merged)[grepl("^SBS|^DBS|^ID[0-9]+", colnames(df_merged))],
   hc_order = FALSE,
   test = FALSE,
@@ -131,8 +131,8 @@ First get the correlation data.
 ```{r}
 p_all <- show_cor(
   data = df_merged,
-  x_vars = colnames(df_merged)[grepl("^Sig|^SBS|^DBS|^ID[0-9]+", colnames(df_merged))],
-  y_vars = colnames(df_merged)[grepl("^Sig|^SBS|^DBS|^ID[0-9]+", colnames(df_merged))],
+  x_vars = colnames(df_merged)[grepl("^CNS|^SBS|^DBS|^ID[0-9]+", colnames(df_merged))],
+  y_vars = colnames(df_merged)[grepl("^CNS|^SBS|^DBS|^ID[0-9]+", colnames(df_merged))],
   hc_order = FALSE,
   test = FALSE,
   lab_size = 3
@@ -151,7 +151,7 @@ all_dist[is.na(all_dist)] <- 2
 #### Only include copy number signatures
 
 ```{r}
-dist_cn <- as.dist(all_dist[1:11, 1:11])
+dist_cn <- as.dist(all_dist[1:14, 1:14])
 hc_cn <- hclust(dist_cn)
 plot(hc_cn)
 ```
@@ -201,11 +201,11 @@ factoextra::fviz_dend(
 
 #### Association between CNS and continuous variables
 
-```{r fig.width=9, fig.height=7}
+```{r fig.width=9, fig.height=8}
 p_cn_others <- show_cor(
   data = df_merged,
-  x_vars = colnames(df_merged)[2:12],
-  y_vars = colnames(df_merged)[c(24:38, 119:121)],
+  x_vars = colnames(df_merged)[2:15],
+  y_vars = colnames(df_merged)[c(30:44, 125:127)],
   lab_size = 3
 )
 p_cn_others
@@ -222,7 +222,7 @@ df_ds2 <- tidy_info %>%
   dplyr::filter(keep) %>% 
   dplyr::select(sample, starts_with("Abs")) %>% 
   dplyr::mutate_if(is.numeric, ~log2(.+1)) %>% 
-  purrr::set_names(c("sample", paste0("Sig", 1:11))) %>% 
+  purrr::set_names(c("sample", paste0("CNS", 1:14))) %>% 
   dplyr::left_join(
     tidy_anno %>%
       tibble::rownames_to_column("sample") %>% 
@@ -233,7 +233,7 @@ df_ds2 <- tidy_info %>%
 
 df_ds <- df_ds2 %>% 
   tidyr::pivot_longer(
-    starts_with("Sig"),
+    starts_with("CNS"),
     names_to = "sig_name",
     values_to = "activity"
   )
@@ -260,7 +260,8 @@ ggboxplot(
   palette = "jco", width = .3,
   xlab = FALSE, ylab = "log2(Activity)",
   outlier.size = 0.05) +
-  stat_compare_means(aes(group = WGD_Status), label = "p.signif")
+  stat_compare_means(aes(group = WGD_Status), label = "p.signif") +
+  rotate_x_text()
 ```
 For HRD.
 
@@ -273,7 +274,8 @@ ggboxplot(
   palette = "jco", width = .3,
   xlab = FALSE, ylab = "log2(Activity)",
   outlier.size = 0.05) +
-  stat_compare_means(aes(group = HRD_Status), label = "p.signif")
+  stat_compare_means(aes(group = HRD_Status), label = "p.signif") +
+  rotate_x_text()
 ```
 
 For tumor stage.
@@ -287,7 +289,8 @@ ggboxplot(
   xlab = FALSE, ylab = "log2(Activity)",
   outlier.size = 0.05) +
   stat_compare_means(aes(group = Tumor_Stage), label = "p.signif",
-                     method = "anova")
+                     method = "anova") +
+  rotate_x_text()
 ```
 
 #### Association between CNS and driver gene mutation
@@ -295,8 +298,8 @@ ggboxplot(
 ```{r}
 asso_res <- get_sig_feature_association(
   df_merged,
-  cols_to_sigs = paste0("Sig", 1:11),
-  cols_to_features = colnames(df_merged)[122:205],
+  cols_to_sigs = paste0("CNS", 1:14),
+  cols_to_features = colnames(df_merged)[128:291],
   method_ca = wilcox.test,
   min_n = 0
 )
@@ -306,17 +309,17 @@ asso_res_tidy = get_tidy_association(asso_res)
 
 Plotting.
 
-```{r fig.width=9, fig.height=12}
+```{r fig.width=9, fig.height=23}
 show_sig_feature_corrplot(
   asso_res_tidy,
-  sig_orders = paste0("Sig", 1:11),
+  sig_orders = paste0("CNS", 1:14),
   p_val = 0.05, 
   breaks_count = NA, 
   ylab = NULL,
   xlab = NULL) + ggpubr::rotate_x_text(0, hjust = 0.5) +
-  labs(color = "Difference\nin means of\nactivity")
+  labs(color = "Difference\nin means of\nactivity") +
+  ggpubr::rotate_x_text()
 ```
-
 
 ### Association between CNS and patients' prognosis
 
@@ -341,13 +344,13 @@ df_surv <- tidy_info %>%
   dplyr::rename(
     time = donor_survival_time,
     status = donor_vital_status,
-    cluster = `k=6`
+    cluster = class
   ) %>% 
   dplyr::mutate(
     status = ifelse(status == "deceased", 1, 0)
   ) %>% 
   dplyr::rename_at(vars(starts_with("Abs_")), ~sub("Abs_", "", .)) %>% 
-  dplyr::mutate_at(vars(starts_with("Sig")), ~ . / 10)
+  dplyr::mutate_at(vars(starts_with("CNS")), ~ . / 10)
 ```
 
 We divide all signature activity by 10 to explore the HR change per 10 records contributed by a signature.
@@ -358,7 +361,7 @@ Here we focus on the association between each CNS and patients' overall survival
 
 ```{r}
 p1 <- show_forest(df_surv,
-  covariates = paste0("Sig", 1:11),
+  covariates = paste0("CNS", 1:14),
   merge_models = TRUE, add_caption = FALSE, point_size = 2
 )
 p1
@@ -371,7 +374,7 @@ We also build a multivariate cox model to explore if all CNSs are included, whic
 
 ```{r}
 p2 <- show_forest(df_surv,
-  covariates = "Sig1", controls = paste0("Sig", 2:11),
+  covariates = "CNS1", controls = paste0("CNS", 2:14),
   merge_models = TRUE, add_caption = FALSE, point_size = 2
 )
 p2

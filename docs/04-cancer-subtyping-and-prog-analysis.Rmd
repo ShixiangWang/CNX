@@ -133,7 +133,7 @@ colnames(expo_rel) <- c("sample", paste0("Rel_", colnames(expo_rel)[-1]))
 pcawg_activity2 <- dplyr::left_join(expo_abs, expo_rel, by = "sample")
 pcawg_activity2 <- dplyr::left_join(pcawg_activity2, pcawg_activity$similarity, by = "sample")
 
-pcawg_activity2$keep <- pcawg_activity2$similarity >= 0.75
+pcawg_activity2$keep <- pcawg_activity2$similarity > 0.75
 pcawg_activity <- pcawg_activity2
 
 rm(pcawg_activity2, expo_abs, expo_rel)
@@ -410,15 +410,17 @@ There are many details about all statistical measures shown above at [cola vigne
 I have the following reasons:
 
 1. Measure `1 - PAC` reaches convergence at `k = 5`.
-2. Measure `Jaccard` increases significantly at `k = 6` which indicate the subgroups at `k = 7` are highly similar as `k = 6`.
-3. Measure `Silhouette` start dropping at `k = 6`.
+2. Measure `Silhouette` reaches local optimum at `k = 5`.
+3. Measure `Concordance` reaches local optimum at `k = 5`.
+
 
 I will draw another plot to show why the two `k`s are suitable.
 
 ```{r, fig.width=13}
 collect_classes(cluster_res)
 ```
-We can see that subgroups for `k = 3, 4, 5` are similar and subgroups for `k = 6, 7, 8, 9, 10` are similar.
+
+We can see that the probability constitution of class assignment for subgroups for `k = 6, 7, 8` are similar to `k = 5`.
 
 Draw all plots into one single page.
 
@@ -431,7 +433,7 @@ dev.off()
 Now we get the cluster labels of samples for downstream analysis.
 
 ```{r, eval=FALSE}
-pcawg_clusters <- get_classes(cluster_res, k = c(3, 6))
+pcawg_clusters <- get_classes(cluster_res, k = 5)
 saveRDS(pcawg_clusters, file = "../data/pcawg_clusters.rds")
 ```
 
@@ -519,13 +521,13 @@ anno_df = tidy_info %>%
 
 saveRDS(anno_df, file = "../data/pcawg_tidy_anno_df.rds")
 
-left_annotation = rowAnnotation(foo = anno_text(paste0("Sig", c(1:4, 6:11))))
+left_annotation = rowAnnotation(foo = anno_text(paste0("CNS", 1:13)))
 ```
 
 Show heatmap for clusters based on signature activities.
 
 ```{r error=TRUE, fig.width=22, fig.height=10}
-get_signatures(cluster_res, k = 6, silhouette_cutoff = 0.2, anno = anno_df,
+get_signatures(cluster_res, k = 5, silhouette_cutoff = 0.2, anno = anno_df,
                left_annotation = left_annotation)
 ```
 
@@ -533,11 +535,9 @@ Save to file.
 
 ```{r eval=FALSE}
 pdf(file = "../output/pcawg_cluster_heatmap.pdf", width = 22, height = 10, onefile = FALSE)
-get_signatures(cluster_res, k = 6, silhouette_cutoff = 0.2, anno = anno_df, left_annotation = left_annotation)
+get_signatures(cluster_res, k = 5, silhouette_cutoff = 0.2, anno = anno_df, left_annotation = left_annotation)
 dev.off()
 ```
-
-Considering the results of `6` clusters gives confident labels for `>90%` samples and thus there is no need to use `3` clusters in this study.
 
 ## Exploration of patients' prognosis difference across clusters
 
@@ -558,13 +558,13 @@ df_os <- tidy_info %>%
   dplyr::select(sample, donor_vital_status, donor_survival_time) %>% 
   purrr::set_names(c("sample", "os", "time")) %>% 
   na.omit() %>% 
-  mutate(os = ifelse(os == "deceased", 1, 0)) %>% 
+  mutate(os = ifelse(os == "deceased", 1, 0),
+         time = time / 365) %>% 
   left_join(cluster_df, by = "sample")
 
-colnames(df_os)[5] <- "cluster"
+colnames(df_os)[4] <- "cluster"
 # Use the group with minimal CNV level as reference group
 df_os$cluster <- paste0("subgroup", df_os$cluster)
-df_os$cluster <- factor(df_os$cluster, levels = paste0("subgroup", c(2, 1, 3:6)))
 ```
 
 Available sample number with OS data:
@@ -591,9 +591,18 @@ library(survival)
 library(survminer)
 ```
 
-```{r}
+```{r fig.height=6}
 sfit <- survfit(Surv(time, os) ~ cluster, data = df_os)
-ggsurvplot(sfit, pval = TRUE)
+ggsurvplot(sfit,
+           pval = TRUE,
+           fun = "pct",
+           xlab = "Time (in years)",
+           #palette = "jco",
+           legend.title = ggplot2::element_blank(),
+           legend.labs = paste0("subgroup", 1:5),
+           break.time.by = 5,
+           risk.table = TRUE,
+           tables.height = 0.4)
 ```
 
 The result has similar meaning as forest plot.
@@ -621,7 +630,7 @@ df_merged <- purrr::reduce(
       dplyr::select(-SBS43, -c(SBS45:SBS60)),
     pcawg_dbs[, -c(1, 3)] %>% dplyr::rename(sample = `Sample Names`),
     pcawg_id[, -c(1, 3)] %>% dplyr::rename(sample = `Sample Names`),
-    cluster_df[, -2] %>% purrr::set_names(c("sample", "cluster"))
+    cluster_df[, 1:2] %>% purrr::set_names(c("sample", "cluster"))
   ),
   dplyr::left_join,
   by = "sample"
@@ -639,13 +648,13 @@ library(sigminer)
 enrich_result_cn <- group_enrichment(
   df_merged,
   grp_vars = "cluster",
-  enrich_vars = paste0("Sig", 1:11),
+  enrich_vars = paste0("CNS", 1:14),
   co_method = "wilcox.test"
 )
 ```
 
 ```{r fig.height=5, fig.width=6.5}
-enrich_result_cn$enrich_var <- factor(enrich_result_cn$enrich_var, paste0("Sig", 1:11))
+enrich_result_cn$enrich_var <- factor(enrich_result_cn$enrich_var, paste0("CNS", 1:14))
 
 p <- show_group_enrichment(
   enrich_result_cn,
@@ -819,7 +828,7 @@ ggplot(df_ets, aes(label = aetiology, size = n)) +
 df_others <- readRDS("../data/pcawg_tidy_anno_df.rds") %>% 
   tibble::rownames_to_column("sample") %>% 
   dplyr::left_join(
-    cluster_df[, -2] %>% purrr::set_names(c("sample", "cluster")),
+    cluster_df[, 1:2] %>% purrr::set_names(c("sample", "cluster")),
     by = "sample"
   ) %>% 
   dplyr::mutate(
