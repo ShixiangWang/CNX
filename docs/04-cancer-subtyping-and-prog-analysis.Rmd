@@ -385,7 +385,7 @@ cola_report(final, output_dir = "../output/cola_report/pcawg_sigs_all_sampls", m
 saveRDS(final, file = "../data/pcawg_cola_result.rds")
 ```
 
-The report can be viewed at [here](./pcawg_abs_sigs_all_sampls_final/cola_report.html).
+The report can be viewed at [here](./pcawg_sigs_all_sampls/cola_report.html).
 
 Next, we will load the data and visualize to select suitable cluster number.
 
@@ -404,17 +404,12 @@ Show different statistics along with different cluster number `k`, which helps t
 ```{r}
 select_partition_number(cluster_res)
 ```
-There are many details about all statistical measures shown above at [cola vignette](http://bioconductor.org/packages/devel/bioc/vignettes/cola/inst/doc/cola.html#toc_13). The best k `2` is suggested by `cola` package due to its better statistical measures. However, in this practice, I think `3` or `6` is more suitable. I have the following strong reasons.
 
-The reasons for `k = 3`:
+There are many details about all statistical measures shown above at [cola vignette](http://bioconductor.org/packages/devel/bioc/vignettes/cola/inst/doc/cola.html#toc_13). The best k `2` is suggested by `cola` package due to its better statistical measures. However, in this practice, I think `5` is more suitable. 
 
-1. Measure `1 - PAC` reaches a local maximal at `k = 3` which indicates the subgroups are less due to ambiguously assigned.
-2. Measure `area_increased` drops sharply at `k = 3` which indicates increasing `k` won't change the consensus matrix too much.
-3. Measure `Jaccard` increases significantly at `k = 3` which indicate the subgroups at `k = 4` are highly similar as `k = 3`.
+I have the following reasons:
 
-The reasons for `k = 6`:
-
-1. Measure `1 - PAC` reaches top value at `k = 6`.
+1. Measure `1 - PAC` reaches convergence at `k = 5`.
 2. Measure `Jaccard` increases significantly at `k = 6` which indicate the subgroups at `k = 7` are highly similar as `k = 6`.
 3. Measure `Silhouette` start dropping at `k = 6`.
 
