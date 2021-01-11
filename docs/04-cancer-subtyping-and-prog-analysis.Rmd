@@ -309,20 +309,30 @@ We try all combinations with randomly selected `500` samples to explore the suit
 library(cola)
 library(tidyverse)
 
-df <- readRDS("../data/pcawg_sample_tidy_info.rds")
+act <- readRDS("../data/pcawg_cn_sigs_CN176_activity.rds")
 
-mat_abs <- df %>%
-  filter(keep) %>%
-  select(sample, starts_with("Abs_Sig")) %>%
+df <- purrr::reduce(
+  list(
+    act$absolute,
+    act$similarity
+  ),
+  dplyr::left_join,
+  by = "sample"
+)
+
+mat <- df %>%
+  filter(similarity > 0.75) %>%
+  select(sample, starts_with("CNS")) %>%
   column_to_rownames("sample") %>%
   t()
-mat_abs <- adjust_matrix(mat_abs)
-rownames(mat_abs)
+mat_adj <- adjust_matrix(mat)
+#1 rows have been removed with too low variance (sd < 0.05 quantile)
 
+rownames(mat_adj)
 
 # Select suitable parameters ----------------------------------------------
 
-ds <- colSums(mat_abs)
+ds <- colSums(mat_adj)
 boxplot(ds)
 
 set.seed(123)
@@ -330,8 +340,10 @@ select_samps <- sample(names(sort(ds)), 500)
 
 boxplot(ds[select_samps])
 
-rl_abs <- run_all_consensus_partition_methods(mat_abs[, select_samps], top_n = 10, mc.cores = 8, max_k = 10)
-cola_report(rl_abs, output_dir = "../output/cola_report/pcawg_abs_sigs_500_sampls", mc.cores = 8)
+rl_samp <- run_all_consensus_partition_methods(mat_adj[, select_samps], top_n = 13, mc.cores = 8, max_k = 10)
+cola_report(rl_samp, output_dir = "../output/cola_report/pcawg_sigs_500_sampls", mc.cores = 8)
+
+rm(rl_samp)
 ```
 
 The `cola` output report is very big and isn't suitable to show, here I only include key figures to determine the parameter setting.
@@ -359,16 +371,18 @@ knitr::include_graphics("cola-test-figs/tab-collect-stats-from-consensus-partiti
 
 ### Step 2: select suitable cluster number
 
-From figures above we do clearly see that the `skmeans` partition method fits our data and any `top_value_method` is okay. Finally, we choose combine `skmeans` (partition method) and `ATC` (top value method introduced firstly by `cola`) to run clustering for all samples.
+From figures above we do clearly see that the `skmeans` partition method fits our data and any `top_value_method` is okay (because all signatures are used). Finally, we choose combine `skmeans` (partition method) and `ATC` (top value method introduced firstly by `cola`) to run clustering for all samples.
 
 ```{r eval=FALSE}
-final_abs <- run_all_consensus_partition_methods(
-  mat_abs,
+final <- run_all_consensus_partition_methods(
+  mat_adj,
   top_value_method = "ATC",
   partition_method = "skmeans",
-  top_n = 10, mc.cores = 8, max_k = 10
+  top_n = 13, mc.cores = 8, max_k = 10
 )
-cola_report(final_abs, output_dir = "../output/cola_report/pcawg_abs_sigs_all_sampls_final", mc.cores = 8)
+cola_report(final, output_dir = "../output/cola_report/pcawg_sigs_all_sampls", mc.cores = 8)
+
+saveRDS(final, file = "../data/pcawg_cola_result.rds")
 ```
 
 The report can be viewed at [here](./pcawg_abs_sigs_all_sampls_final/cola_report.html).
