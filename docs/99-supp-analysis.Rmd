@@ -35,13 +35,332 @@ In this part, we will add some supplementary analyses.
 
 ## CNS validation
 
-The signature identification pipeline is adopted from @degasperiPracticalFrameworkOnline2020, we implemented the procedure in our package sigminer by following the method description. [A benchmark](https://github.com/ShixiangWang/sigminer#key-interfaces-and-their-performances) has been done to make sure our implementation works properly.
+### TCGA CNS
 
-The code above call 100 NMF runs (10 bootstrap catalogs and 10 NMF runs for each bootstrap catalog) for each signature number. Only 1000 NMF runs (20 bootstrap catalogs and 50 NMF runs for each bootstrap catalog) was applied for 176-component classification approach, which has the same arguments proposed by @degasperiPracticalFrameworkOnline2020. 
+TCGA has ~10, 000 tumors and we can obtain allele specific copy number data from GDC portal, so it is the good resource to validate the CNS discovered in PCAWG.
+
+Call signatures.
+
+`PBS` file content:
+
+```
+#PBS -l walltime=1000:00:00
+#PBS -l nodes=1:ppn=12
+#PBS -S /bin/bash
+#PBS -l mem=100gb
+#PBS -j oe
+#PBS -M w_shixiang@163.com
+#PBS -q pub_fast
+
+# Please set PBS arguments above
+cd /public/home/wangshx/wangshx/PCAWG-TCGA
+module load apps/R/3.6.1
+
+echo Extracting TCGA signatures...
+
+# Following are commands/scripts you want to run
+# If you do not know how to set this, please check README.md file 
+Rscript call_tcga.R
+```
+
+R script content:
+
+```r
+library(sigminer)
+
+tally_X <- readRDS("tcga_cn_tally_X.rds")
+
+sigprofiler_extract(tally_X$nmf_matrix, 
+                    output = "TCGA_CN176X", 
+                    range = 2:30, 
+                    nrun = 100,
+                    cores = 36,
+                    init_method = "random",
+                    is_exome = FALSE,
+                    use_conda = TRUE)
+```
+
+Metadata:
+
+```
+THIS FILE CONTAINS THE METADATA ABOUT SYSTEM AND RUNTIME
+
+
+-------System Info-------
+Operating System Name: Linux
+Nodename: node34
+Release: 3.10.0-693.el7.x86_64
+Version: #1 SMP Tue Aug 22 21:09:27 UTC 2017
+
+-------Python and Package Versions------- 
+Python Version: 3.8.5
+Sigproextractor Version: 1.0.17
+SigprofilerPlotting Version: 1.1.8
+SigprofilerMatrixGenerator Version: 1.1.20
+Pandas version: 1.1.2
+Numpy version: 1.19.2
+Scipy version: 1.5.2
+Scikit-learn version: 0.23.2
+
+--------------EXECUTION PARAMETERS--------------
+INPUT DATA
+	input_type: matrix
+	output: TCGA_CN176X
+	input_data: /tmp/RtmphYcBmk/dir852158ab0364/sigprofiler_input.txt
+	reference_genome: GRCh37
+	context_types: SBS176
+	exome: False
+NMF REPLICATES
+	minimum_signatures: 2
+	maximum_signatures: 30
+	NMF_replicates: 100
+NMF ENGINE
+	NMF_init: random
+	precision: single
+	matrix_normalization: gmm
+	resample: True
+	seeds: random
+	min_NMF_iterations: 10,000
+	max_NMF_iterations: 1,000,000
+	NMF_test_conv: 10,000
+	NMF_tolerance: 1e-15
+CLUSTERING
+	clustering_distance: cosine
+EXECUTION
+	cpu: 36; Maximum number of CPU is 36
+	gpu: False
+Solution Estimation
+	stability: 0.8
+	min_stability: 0.2
+	combined_stability: 1.0
+COSMIC MATCH
+	opportunity_genome: GRCh37
+	nnls_add_penalty: 0.05
+	nnls_remove_penalty: 0.01
+	initial_remove_penalty: 0.05
+	de_novo_fit_penalty: 0.02
+	refit_denovo_signatures: False
+
+-------Analysis Progress------- 
+[2020-11-29 17:39:12] Analysis started: 
+
+##################################
+
+[2020-11-29 17:39:18] Analysis started for SBS176. Matrix size [176 rows x 10851 columns]
+
+[2020-11-29 17:39:18] Normalization GMM with cutoff value set at 17600
+
+[2020-11-29 19:12:03] SBS176 de novo extraction completed for a total of 2 signatures! 
+Execution time:1:32:45
+
+[2020-11-29 23:58:10] SBS176 de novo extraction completed for a total of 3 signatures! 
+Execution time:4:46:06
+
+[2020-11-30 08:32:21] SBS176 de novo extraction completed for a total of 4 signatures! 
+Execution time:8:34:11
+
+[2020-11-30 19:51:18] SBS176 de novo extraction completed for a total of 5 signatures! 
+Execution time:11:18:56
+
+[2020-12-01 07:10:18] SBS176 de novo extraction completed for a total of 6 signatures! 
+Execution time:11:18:59
+
+[2020-12-01 21:14:24] SBS176 de novo extraction completed for a total of 7 signatures! 
+Execution time:14:04:06
+
+[2020-12-02 15:48:43] SBS176 de novo extraction completed for a total of 8 signatures! 
+Execution time:18:34:19
+
+[2020-12-03 12:53:25] SBS176 de novo extraction completed for a total of 9 signatures! 
+Execution time:21:04:41
+
+[2020-12-04 11:25:25] SBS176 de novo extraction completed for a total of 10 signatures! 
+Execution time:22:31:59
+
+[2020-12-05 10:20:15] SBS176 de novo extraction completed for a total of 11 signatures! 
+Execution time:22:54:50
+
+[2020-12-06 11:36:03] SBS176 de novo extraction completed for a total of 12 signatures! 
+Execution time:1 day, 1:15:48
+
+[2020-12-07 14:43:31] SBS176 de novo extraction completed for a total of 13 signatures! 
+Execution time:1 day, 3:07:28
+
+[2020-12-09 01:15:22] SBS176 de novo extraction completed for a total of 14 signatures! 
+Execution time:1 day, 10:31:50
+
+[2020-12-10 08:02:39] SBS176 de novo extraction completed for a total of 15 signatures! 
+Execution time:1 day, 6:47:17
+
+[2020-12-11 16:05:31] SBS176 de novo extraction completed for a total of 16 signatures! 
+Execution time:1 day, 8:02:51
+
+[2020-12-13 02:19:40] SBS176 de novo extraction completed for a total of 17 signatures! 
+Execution time:1 day, 10:14:09
+
+[2020-12-14 14:56:13] SBS176 de novo extraction completed for a total of 18 signatures! 
+Execution time:1 day, 12:36:32
+
+[2020-12-16 02:39:41] SBS176 de novo extraction completed for a total of 19 signatures! 
+Execution time:1 day, 11:43:27
+
+[2020-12-18 02:54:09] SBS176 de novo extraction completed for a total of 20 signatures! 
+Execution time:2 days, 0:14:28
+
+[2020-12-19 20:20:57] SBS176 de novo extraction completed for a total of 21 signatures! 
+Execution time:1 day, 17:26:47
+
+[2020-12-21 19:30:07] SBS176 de novo extraction completed for a total of 22 signatures! 
+Execution time:1 day, 23:09:10
+
+[2020-12-24 00:44:41] SBS176 de novo extraction completed for a total of 23 signatures! 
+Execution time:2 days, 5:14:34
+
+[2020-12-25 19:03:07] SBS176 de novo extraction completed for a total of 24 signatures! 
+Execution time:1 day, 18:18:25
+
+[2020-12-27 07:50:06] SBS176 de novo extraction completed for a total of 25 signatures! 
+Execution time:1 day, 12:46:58
+
+[2020-12-29 04:40:22] SBS176 de novo extraction completed for a total of 26 signatures! 
+Execution time:1 day, 20:50:16
+
+[2020-12-30 12:35:04] SBS176 de novo extraction completed for a total of 27 signatures! 
+Execution time:1 day, 7:54:41
+
+[2020-12-31 19:04:04] SBS176 de novo extraction completed for a total of 28 signatures! 
+Execution time:1 day, 6:29:00
+
+[2021-01-02 04:50:07] SBS176 de novo extraction completed for a total of 29 signatures! 
+Execution time:1 day, 9:46:02
+
+[2021-01-03 14:15:32] SBS176 de novo extraction completed for a total of 30 signatures! 
+Execution time:1 day, 9:25:25
+
+[2021-01-03 14:48:21] Analysis ended: 
+
+-------Job Status------- 
+Analysis of mutational signatures completed successfully! 
+Total execution time: 34 days, 21:09:09 
+Results can be found in:  TCGA_CN176X  folder
+```
+
+Next we determine the signature number.
+
+```{r eval=FALSE}
+library(sigminer)
+SP_TCGA <- sigprofiler_import("../SP/TCGA_CN176X/", order_by_expo = TRUE, type = "all")
+saveRDS(SP_TCGA, file = "../data/TCGA/tcga_cn_solutions_sp.rds")
+```
+
+
+```{r}
+SP_TCGA <- readRDS("../data/TCGA/tcga_cn_solutions_sp.rds")
+```
+
+```{r fig.width=9, fig.height=5}
+show_sig_number_survey(
+  SP_TCGA$all_stats %>%
+    dplyr::rename(
+      s = `Stability (Avg Silhouette)`,
+      e = `Mean Cosine Distance`
+    ) %>%
+    dplyr::mutate(
+      SignatureNumber = as.integer(gsub("[^0-9]", "", SignatureNumber))
+    ),
+  x = "SignatureNumber",
+  left_y = "s", right_y = "e",
+  left_name = "Stability (Avg Silhouette)",
+  right_name = "Mean Cosine Distance",
+  highlight = 20
+)
+```
+We pick up 20 signatures for TCGA data due to its relatively high stability and low distance.
+
+
+```{r eval=FALSE}
+tcga_sigs <- SP_TCGA$solution_list$S20
+saveRDS(tcga_sigs, file = "../data/TCGA/tcga_cn_sigs_CN176_signature.rds")
+```
+
+Let's go further check the similarities between PCAWG CNS and TCGA CNS.
+
+```{r}
+pcawg_sigs <- readRDS("../data/pcawg_cn_sigs_CN176_signature.rds")
+tcga_sigs <- readRDS("../data/TCGA/tcga_cn_sigs_CN176_signature.rds")
+```
+
+Run similarity analysis.
+
+```{r}
+sim <- get_sig_similarity(pcawg_sigs, tcga_sigs)
+```
+
+```{r}
+pheatmap::pheatmap(sim$similarity, cluster_rows = FALSE, cluster_cols = FALSE, display_numbers = TRUE)
+```
+From the pheatmap, we can see that:
+
+- Most of PCAWG copy number signatures can be matched to TCGA copy number signatures with `>0.8` similarity.
+- CNS4, CNS5, CNS6 and CNS14 from PCAWG has lower similarity to TCGA CNS. This indicates either they are not shared signatures or they have relatively different patterns in this two dataset.
+
+It is not surprising to see that TCGA has more copy number signatures than PCAWG due to about 4 times more sample number.
+
+This data remind us it is not easy to get perfect matched copy number signatures between different datasets due to the following reasons:
+
+- TCGA copy number data are generated from SNP array and PCAWG copy number data are generated from WGS. 
+- They also use different copy number calling softwares. Considering PCAWG data are consensus copy number data from many known calling software, the quality of PCAWG data is much higher than that of TCGA data.
+
+Let's get the summary of match similarity.
+
+```{r}
+summary(apply(sim$similarity, 1, max))
+```
+
+### Merged CNS from clustering of cancer-type associated CNS
+
+To further validate the CNS (stability) identified in PCAWG whole dataset. We also tried the Pan-Cancer signature identification pipeline from @degasperiPracticalFrameworkOnline2020, we implemented the procedure in our package sigminer by following the method description. [A benchmark](https://github.com/ShixiangWang/sigminer#key-interfaces-and-their-performances) has been done to make sure our implementation works properly.
+
+1000 NMF runs (20 bootstrap catalogs and 50 NMF runs for each bootstrap catalog) was applied for data from each cancer type, which is similar to @degasperiPracticalFrameworkOnline2020. 
+
+```{r eval=FALSE}
+# This script is running on HPC
+library(sigminer)
+
+tally_X <- readRDS("pcawg_cn_tally_X.rds")
+pcawg_types <- readRDS("pcawg_type_info.rds")
+
+for (i in unique(pcawg_types$cancer_type)) {
+  message("handling type: ", i)
+
+  fn <- file.path("BP", paste0("PCAWG_CN176_", gsub("/", "-", i), ".rds"))
+
+  if (!file.exists(fn)) {
+    type_samples <- pcawg_types %>%
+      dplyr::filter(cancer_type == i) %>%
+      dplyr::pull(sample)
+    message("Sample number: ", length(type_samples))
+
+    sigs <- bp_extract_signatures(
+      tally_X$nmf_matrix[type_samples, , drop = FALSE],
+      range = 2:min(20, length(type_samples)-1),
+      cores = 30,
+      cores_solution = 20,
+      cache_dir = "BP/BP_PCAWG_types",
+      keep_cache = TRUE,
+      only_core_stats = TRUE
+    )
+    saveRDS(sigs, file = fn)
+  }
+}
+```
+
 
 ## Signature association network construction and visualization
 
 > Try to learn from NC paper
+
+<!-- This is commented out. 
 
 ## TCGA CNS analysis
 
@@ -53,6 +372,8 @@ The code above call 100 NMF runs (10 bootstrap catalogs and 10 NMF runs for each
 
 ### Prognosis
 
-## Exploration of differnt signature extraction methods
+-->
+
+## Exploration of different signature extraction methods
 
 > Similarity for same number of signatures
