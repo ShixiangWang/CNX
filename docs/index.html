@@ -7,7 +7,7 @@
 
         <meta name="author" content="Shixiang Wang, Ziyu Tao, Tao Wu, Huimin Li, Xue-Song Liu (Corresponding author)" />
     
-        <meta name="date" content="2021-01-11" />
+        <meta name="date" content="2021-01-13" />
     
     <title>Pan-Cancer Copy Number Signature Identification and Analysis</title>
 
@@ -205,15 +205,11 @@
             </ul></li>
             <li><a href="#supplementary-analyses">Supplementary Analyses</a>
             <ul>
-            <li><a href="#cns-validation">CNS validation</a></li>
-            <li><a href="#signature-association-network-construction-and-visualization">Signature association network construction and visualization</a></li>
-            <li><a href="#tcga-cns-analysis">TCGA CNS analysis</a>
+            <li><a href="#cns-validation">CNS validation</a>
             <ul>
-            <li><a href="#copy-number-signatures">Copy number signatures</a></li>
-            <li><a href="#cancer-subtyping">Cancer subtyping</a></li>
-            <li><a href="#prognosis">Prognosis</a></li>
+            <li><a href="#tcga-cns">TCGA CNS</a></li>
+            <li><a href="#merged-cns-from-clustering-of-cancer-type-associated-cns">Merged CNS from clustering of cancer-type associated CNS</a></li>
             </ul></li>
-            <li><a href="#exploration-of-differnt-signature-extraction-methods">Exploration of differnt signature extraction methods</a></li>
             </ul></li>
             <li><a href="#r-session">R Session:</a></li>
             <li><a href="#references">References</a></li>
@@ -231,7 +227,7 @@
       <p class="authors">
            <span class="glyphicon glyphicon-user"></span> Shixiang Wang, Ziyu Tao, Tao Wu, Huimin Li, Xue-Song Liu (Corresponding author)
       </p>
-         <p class="date"><span class="glyphicon glyphicon-calendar"></span> 2021-01-11</p>
+         <p class="date"><span class="glyphicon glyphicon-calendar"></span> 2021-01-13</p>
            
 
    
@@ -1680,6 +1676,7 @@ left_annotation &lt;- rowAnnotation(foo = anno_text(paste0(&quot;CNS&quot;, 1:13
 * split rows into 4 groups by k-means clustering.
 * 13 signatures (100.0%) under fdr &lt; 0.05, group_diff &gt; 0.
 * making heatmaps for signatures.</code></pre>
+<pre><code>Error in getFromNamespace(device_info[3], ns = device_info[2])(temp_image): file is not in PNG format</code></pre>
 <p><img src="index_files/figure-html/unnamed-chunk-90-1.png" width="6600" style="display: block; margin: auto;" /></p>
 <p>Save to file.</p>
 <pre class="r"><code>pdf(file = &quot;../output/pcawg_cluster_heatmap.pdf&quot;, width = 22, height = 10, onefile = FALSE)
@@ -2407,35 +2404,545 @@ ggboxplot(df_sim,
 <p>In this part, we will add some supplementary analyses.</p>
 <div id="cns-validation" class="section level2">
 <h2>CNS validation</h2>
-<p>The signature identification pipeline is adopted from <span class="citation"><a href="#ref-degasperiPracticalFrameworkOnline2020" role="doc-biblioref">Degasperi et al.</a> (<a href="#ref-degasperiPracticalFrameworkOnline2020" role="doc-biblioref">2020</a>)</span>, we implemented the procedure in our package sigminer by following the method description. <a href="https://github.com/ShixiangWang/sigminer#key-interfaces-and-their-performances">A benchmark</a> has been done to make sure our implementation works properly.</p>
-<p>The code above call 100 NMF runs (10 bootstrap catalogs and 10 NMF runs for each bootstrap catalog) for each signature number. Only 1000 NMF runs (20 bootstrap catalogs and 50 NMF runs for each bootstrap catalog) was applied for 176-component classification approach, which has the same arguments proposed by <span class="citation"><a href="#ref-degasperiPracticalFrameworkOnline2020" role="doc-biblioref">Degasperi et al.</a> (<a href="#ref-degasperiPracticalFrameworkOnline2020" role="doc-biblioref">2020</a>)</span>.</p>
+<div id="tcga-cns" class="section level3">
+<h3>TCGA CNS</h3>
+<p>TCGA has ~10, 000 tumors and we can obtain allele specific copy number data from GDC portal, so it is the good resource to validate the CNS discovered in PCAWG.</p>
+<p>Call signatures.</p>
+<p><code>PBS</code> file content:</p>
+<pre><code>#PBS -l walltime=1000:00:00
+#PBS -l nodes=1:ppn=12
+#PBS -S /bin/bash
+#PBS -l mem=100gb
+#PBS -j oe
+#PBS -M w_shixiang@163.com
+#PBS -q pub_fast
+
+# Please set PBS arguments above
+cd /public/home/wangshx/wangshx/PCAWG-TCGA
+module load apps/R/3.6.1
+
+echo Extracting TCGA signatures...
+
+# Following are commands/scripts you want to run
+# If you do not know how to set this, please check README.md file 
+Rscript call_tcga.R</code></pre>
+<p>R script content:</p>
+<pre class="r"><code>library(sigminer)
+
+tally_X &lt;- readRDS(&quot;tcga_cn_tally_X.rds&quot;)
+
+sigprofiler_extract(tally_X$nmf_matrix, 
+                    output = &quot;TCGA_CN176X&quot;, 
+                    range = 2:30, 
+                    nrun = 100,
+                    cores = 36,
+                    init_method = &quot;random&quot;,
+                    is_exome = FALSE,
+                    use_conda = TRUE)</code></pre>
+<p>Metadata:</p>
+<pre><code>THIS FILE CONTAINS THE METADATA ABOUT SYSTEM AND RUNTIME
+
+
+-------System Info-------
+Operating System Name: Linux
+Nodename: node34
+Release: 3.10.0-693.el7.x86_64
+Version: #1 SMP Tue Aug 22 21:09:27 UTC 2017
+
+-------Python and Package Versions------- 
+Python Version: 3.8.5
+Sigproextractor Version: 1.0.17
+SigprofilerPlotting Version: 1.1.8
+SigprofilerMatrixGenerator Version: 1.1.20
+Pandas version: 1.1.2
+Numpy version: 1.19.2
+Scipy version: 1.5.2
+Scikit-learn version: 0.23.2
+
+--------------EXECUTION PARAMETERS--------------
+INPUT DATA
+    input_type: matrix
+    output: TCGA_CN176X
+    input_data: /tmp/RtmphYcBmk/dir852158ab0364/sigprofiler_input.txt
+    reference_genome: GRCh37
+    context_types: SBS176
+    exome: False
+NMF REPLICATES
+    minimum_signatures: 2
+    maximum_signatures: 30
+    NMF_replicates: 100
+NMF ENGINE
+    NMF_init: random
+    precision: single
+    matrix_normalization: gmm
+    resample: True
+    seeds: random
+    min_NMF_iterations: 10,000
+    max_NMF_iterations: 1,000,000
+    NMF_test_conv: 10,000
+    NMF_tolerance: 1e-15
+CLUSTERING
+    clustering_distance: cosine
+EXECUTION
+    cpu: 36; Maximum number of CPU is 36
+    gpu: False
+Solution Estimation
+    stability: 0.8
+    min_stability: 0.2
+    combined_stability: 1.0
+COSMIC MATCH
+    opportunity_genome: GRCh37
+    nnls_add_penalty: 0.05
+    nnls_remove_penalty: 0.01
+    initial_remove_penalty: 0.05
+    de_novo_fit_penalty: 0.02
+    refit_denovo_signatures: False
+
+-------Analysis Progress------- 
+[2020-11-29 17:39:12] Analysis started: 
+
+##################################
+
+[2020-11-29 17:39:18] Analysis started for SBS176. Matrix size [176 rows x 10851 columns]
+
+[2020-11-29 17:39:18] Normalization GMM with cutoff value set at 17600
+
+[2020-11-29 19:12:03] SBS176 de novo extraction completed for a total of 2 signatures! 
+Execution time:1:32:45
+
+[2020-11-29 23:58:10] SBS176 de novo extraction completed for a total of 3 signatures! 
+Execution time:4:46:06
+
+[2020-11-30 08:32:21] SBS176 de novo extraction completed for a total of 4 signatures! 
+Execution time:8:34:11
+
+[2020-11-30 19:51:18] SBS176 de novo extraction completed for a total of 5 signatures! 
+Execution time:11:18:56
+
+[2020-12-01 07:10:18] SBS176 de novo extraction completed for a total of 6 signatures! 
+Execution time:11:18:59
+
+[2020-12-01 21:14:24] SBS176 de novo extraction completed for a total of 7 signatures! 
+Execution time:14:04:06
+
+[2020-12-02 15:48:43] SBS176 de novo extraction completed for a total of 8 signatures! 
+Execution time:18:34:19
+
+[2020-12-03 12:53:25] SBS176 de novo extraction completed for a total of 9 signatures! 
+Execution time:21:04:41
+
+[2020-12-04 11:25:25] SBS176 de novo extraction completed for a total of 10 signatures! 
+Execution time:22:31:59
+
+[2020-12-05 10:20:15] SBS176 de novo extraction completed for a total of 11 signatures! 
+Execution time:22:54:50
+
+[2020-12-06 11:36:03] SBS176 de novo extraction completed for a total of 12 signatures! 
+Execution time:1 day, 1:15:48
+
+[2020-12-07 14:43:31] SBS176 de novo extraction completed for a total of 13 signatures! 
+Execution time:1 day, 3:07:28
+
+[2020-12-09 01:15:22] SBS176 de novo extraction completed for a total of 14 signatures! 
+Execution time:1 day, 10:31:50
+
+[2020-12-10 08:02:39] SBS176 de novo extraction completed for a total of 15 signatures! 
+Execution time:1 day, 6:47:17
+
+[2020-12-11 16:05:31] SBS176 de novo extraction completed for a total of 16 signatures! 
+Execution time:1 day, 8:02:51
+
+[2020-12-13 02:19:40] SBS176 de novo extraction completed for a total of 17 signatures! 
+Execution time:1 day, 10:14:09
+
+[2020-12-14 14:56:13] SBS176 de novo extraction completed for a total of 18 signatures! 
+Execution time:1 day, 12:36:32
+
+[2020-12-16 02:39:41] SBS176 de novo extraction completed for a total of 19 signatures! 
+Execution time:1 day, 11:43:27
+
+[2020-12-18 02:54:09] SBS176 de novo extraction completed for a total of 20 signatures! 
+Execution time:2 days, 0:14:28
+
+[2020-12-19 20:20:57] SBS176 de novo extraction completed for a total of 21 signatures! 
+Execution time:1 day, 17:26:47
+
+[2020-12-21 19:30:07] SBS176 de novo extraction completed for a total of 22 signatures! 
+Execution time:1 day, 23:09:10
+
+[2020-12-24 00:44:41] SBS176 de novo extraction completed for a total of 23 signatures! 
+Execution time:2 days, 5:14:34
+
+[2020-12-25 19:03:07] SBS176 de novo extraction completed for a total of 24 signatures! 
+Execution time:1 day, 18:18:25
+
+[2020-12-27 07:50:06] SBS176 de novo extraction completed for a total of 25 signatures! 
+Execution time:1 day, 12:46:58
+
+[2020-12-29 04:40:22] SBS176 de novo extraction completed for a total of 26 signatures! 
+Execution time:1 day, 20:50:16
+
+[2020-12-30 12:35:04] SBS176 de novo extraction completed for a total of 27 signatures! 
+Execution time:1 day, 7:54:41
+
+[2020-12-31 19:04:04] SBS176 de novo extraction completed for a total of 28 signatures! 
+Execution time:1 day, 6:29:00
+
+[2021-01-02 04:50:07] SBS176 de novo extraction completed for a total of 29 signatures! 
+Execution time:1 day, 9:46:02
+
+[2021-01-03 14:15:32] SBS176 de novo extraction completed for a total of 30 signatures! 
+Execution time:1 day, 9:25:25
+
+[2021-01-03 14:48:21] Analysis ended: 
+
+-------Job Status------- 
+Analysis of mutational signatures completed successfully! 
+Total execution time: 34 days, 21:09:09 
+Results can be found in:  TCGA_CN176X  folder</code></pre>
+<p>Next we determine the signature number.</p>
+<pre class="r"><code>library(sigminer)
+SP_TCGA &lt;- sigprofiler_import(&quot;../SP/TCGA_CN176X/&quot;, order_by_expo = TRUE, type = &quot;all&quot;)
+saveRDS(SP_TCGA, file = &quot;../data/TCGA/tcga_cn_solutions_sp.rds&quot;)</code></pre>
+<pre class="r"><code>SP_TCGA &lt;- readRDS(&quot;../data/TCGA/tcga_cn_solutions_sp.rds&quot;)</code></pre>
+<pre class="r"><code>show_sig_number_survey(
+  SP_TCGA$all_stats %&gt;%
+    dplyr::rename(
+      s = `Stability (Avg Silhouette)`,
+      e = `Mean Cosine Distance`
+    ) %&gt;%
+    dplyr::mutate(
+      SignatureNumber = as.integer(gsub(&quot;[^0-9]&quot;, &quot;&quot;, SignatureNumber))
+    ),
+  x = &quot;SignatureNumber&quot;,
+  left_y = &quot;s&quot;, right_y = &quot;e&quot;,
+  left_name = &quot;Stability (Avg Silhouette)&quot;,
+  right_name = &quot;Mean Cosine Distance&quot;,
+  highlight = 20
+)</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-156-1.png" width="2700" style="display: block; margin: auto;" /> We pick up 20 signatures for TCGA data due to its relatively high stability and low distance.</p>
+<pre class="r"><code>tcga_sigs &lt;- SP_TCGA$solution_list$S20
+saveRDS(tcga_sigs, file = &quot;../data/TCGA/tcga_cn_sigs_CN176_signature.rds&quot;)</code></pre>
+<p>Let’s go further check the similarities between PCAWG CNS and TCGA CNS.</p>
+<pre class="r"><code>pcawg_sigs &lt;- readRDS(&quot;../data/pcawg_cn_sigs_CN176_signature.rds&quot;)
+tcga_sigs &lt;- readRDS(&quot;../data/TCGA/tcga_cn_sigs_CN176_signature.rds&quot;)</code></pre>
+<p>Run similarity analysis.</p>
+<pre class="r"><code>sim &lt;- get_sig_similarity(pcawg_sigs, tcga_sigs)</code></pre>
+<pre class="r"><code>pheatmap::pheatmap(sim$similarity, cluster_rows = FALSE, cluster_cols = FALSE, display_numbers = TRUE)</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-160-1.png" width="2400" style="display: block; margin: auto;" /> From the pheatmap, we can see that:</p>
+<ul>
+<li>Most of PCAWG copy number signatures can be matched to TCGA copy number signatures with <code>&gt;0.8</code> similarity.</li>
+<li>CNS4, CNS5, CNS6 and CNS14 from PCAWG has lower similarity to TCGA CNS. This indicates either they are not shared signatures or they have relatively different patterns in this two dataset.</li>
+</ul>
+<p>It is not surprising to see that TCGA has more copy number signatures than PCAWG due to about 4 times more sample number.</p>
+<p>This data remind us it is not easy to get perfect matched copy number signatures between different datasets due to the following reasons:</p>
+<ul>
+<li>TCGA copy number data are generated from SNP array and PCAWG copy number data are generated from WGS.</li>
+<li>They also use different copy number calling softwares. Considering PCAWG data are consensus copy number data from many known calling software, the quality of PCAWG data is much higher than that of TCGA data.</li>
+</ul>
+<p>Let’s get the summary of match similarity.</p>
+<pre class="r"><code>summary(apply(sim$similarity, 1, max))</code></pre>
+<pre><code>   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+ 0.4670  0.6625  0.8380  0.7727  0.8705  0.9620 </code></pre>
 </div>
-<div id="signature-association-network-construction-and-visualization" class="section level2">
-<h2>Signature association network construction and visualization</h2>
+<div id="merged-cns-from-clustering-of-cancer-type-associated-cns" class="section level3">
+<h3>Merged CNS from clustering of cancer-type associated CNS</h3>
+<p>To further validate the CNS (stability) identified in PCAWG whole dataset. We also tried the cancer-type-wise signature identification pipeline from <span class="citation"><a href="#ref-degasperiPracticalFrameworkOnline2020" role="doc-biblioref">Degasperi et al.</a> (<a href="#ref-degasperiPracticalFrameworkOnline2020" role="doc-biblioref">2020</a>)</span>, we implemented the procedure in our package <code>sigminer</code> by following the method description. <a href="https://github.com/ShixiangWang/sigminer#key-interfaces-and-their-performances">A benchmark</a> has been done to make sure our implementation works properly.</p>
+<p>1000 NMF runs (20 bootstrap catalogs and 50 NMF runs for each bootstrap catalog) was applied for data from each cancer type, which is similar to <span class="citation"><a href="#ref-degasperiPracticalFrameworkOnline2020" role="doc-biblioref">Degasperi et al.</a> (<a href="#ref-degasperiPracticalFrameworkOnline2020" role="doc-biblioref">2020</a>)</span>.</p>
+<pre class="r"><code># This script is running on HPC
+library(sigminer)
+
+tally_X &lt;- readRDS(&quot;pcawg_cn_tally_X.rds&quot;)
+pcawg_types &lt;- readRDS(&quot;pcawg_type_info.rds&quot;)
+
+for (i in unique(pcawg_types$cancer_type)) {
+  message(&quot;handling type: &quot;, i)
+
+  fn &lt;- file.path(&quot;BP&quot;, paste0(&quot;PCAWG_CN176_&quot;, gsub(&quot;/&quot;, &quot;-&quot;, i), &quot;.rds&quot;))
+
+  if (!file.exists(fn)) {
+    type_samples &lt;- pcawg_types %&gt;%
+      dplyr::filter(cancer_type == i) %&gt;%
+      dplyr::pull(sample)
+    message(&quot;Sample number: &quot;, length(type_samples))
+
+    sigs &lt;- bp_extract_signatures(
+      tally_X$nmf_matrix[type_samples, , drop = FALSE],
+      range = 2:min(20, length(type_samples) - 1),
+      cores = 30,
+      cores_solution = 20,
+      cache_dir = &quot;BP/BP_PCAWG_types&quot;,
+      keep_cache = TRUE,
+      only_core_stats = TRUE
+    )
+    saveRDS(sigs, file = fn)
+  }
+}</code></pre>
+<p>We then load the result and do manual inspection to determine the proper signature number for each cancer type.</p>
+<pre class="r"><code>library(sigminer)
+
+cancer_type_files &lt;- list.files(&quot;../data/cancer_types/&quot;, pattern = &quot;PCAWG_CN176&quot;, full.names = TRUE)
+pcawg &lt;- lapply(cancer_type_files, readRDS)
+
+bp_show_survey2(pcawg[[1]]) # 11
+bp_show_survey2(pcawg[[2]]) # 14
+bp_show_survey2(pcawg[[3]]) # 13
+bp_show_survey2(pcawg[[4]]) # 8
+bp_show_survey2(pcawg[[5]]) # 14
+bp_show_survey2(pcawg[[6]]) # 11
+bp_show_survey2(pcawg[[7]]) # 12
+bp_show_survey2(pcawg[[8]]) # 8
+bp_show_survey2(pcawg[[9]]) # 7
+bp_show_survey2(pcawg[[10]]) # 5
+bp_show_survey2(pcawg[[11]]) # 13
+bp_show_survey2(pcawg[[12]]) # 9
+bp_show_survey2(pcawg[[13]]) # 15
+bp_show_survey2(pcawg[[14]]) # 7
+bp_show_survey2(pcawg[[15]]) # 11
+bp_show_survey2(pcawg[[16]]) # 12
+bp_show_survey2(pcawg[[17]]) # 12
+bp_show_survey2(pcawg[[18]]) # 17
+bp_show_survey2(pcawg[[19]]) # 12
+bp_show_survey2(pcawg[[20]]) # 6
+bp_show_survey2(pcawg[[21]]) # 3
+bp_show_survey2(pcawg[[22]]) # 7
+bp_show_survey2(pcawg[[23]]) # 11
+bp_show_survey2(pcawg[[24]]) # 19
+bp_show_survey2(pcawg[[25]]) # 8
+bp_show_survey2(pcawg[[26]]) # 10
+bp_show_survey2(pcawg[[27]]) # 11
+bp_show_survey2(pcawg[[28]]) # 9
+bp_show_survey2(pcawg[[29]]) # 9
+bp_show_survey2(pcawg[[30]]) # 15
+bp_show_survey2(pcawg[[31]]) # 6
+bp_show_survey2(pcawg[[32]]) # 17
+
+type_sig &lt;- data.frame(
+  cancer_type = sub(&quot;.*_CN176_([^_]+).rds&quot;, &quot;\\1&quot;, basename(cancer_type_files)),
+  signum = c(
+    11, 14, 13, 8, 14, 11, 12, 8,
+    7, 5, 13, 9, 15, 7, 11, 12,
+    12, 17, 12, 6, 3, 7, 11, 19,
+    8, 10, 11, 9, 9, 15, 6, 17
+  )
+)
+
+pcawg_sig_list &lt;- lapply(
+  seq_along(pcawg),
+  function(i) {
+    bp_get_sig_obj(pcawg[[i]], signum = type_sig$signum[i])
+  }
+)
+
+names(pcawg_sig_list) &lt;- type_sig$cancer_type
+saveRDS(pcawg_sig_list, file = &quot;data/pcawg_type_CNS.rds&quot;)</code></pre>
+<p>The signature number ranges from <code>3</code> to <code>19</code>.</p>
+<p>Next we need to collapse all shared signatures from cancer types. To do this, we cluster all signatures based their cosine dissimilarity.</p>
+<pre class="r"><code>library(sigminer)
+
+pcawg_sig_list &lt;- readRDS(&quot;../data/pcawg_type_CNS.rds&quot;)
+pcawg_sig_list$`Biliary-AdenoCA`</code></pre>
+<pre><code>$Signature
+                      Sig1         Sig2         Sig3         Sig4         Sig5
+E:HH:0:AA     1.919365e-17 1.836909e-17 1.862198e-17 1.876080e-17 1.826403e-17
+E:HH:0:BB     1.919365e-17 4.166667e-02 1.862198e-17 1.876080e-17 3.333333e-01
+E:HH:1:AA     1.439106e+00 2.676199e+01 5.001386e+01 1.133406e+01 3.832072e+01
+E:HH:1:BB     2.501214e+00 1.968315e+00 3.348985e+00 1.262798e+00 4.322378e+00
+E:HH:2:AA     4.466717e+00 1.547829e+02 2.642123e+01 5.648644e+00 1.748853e+01
+E:HH:2:BB     1.919365e-17 1.220585e+01 5.863062e-01 1.876080e-17 3.057059e+00
+                      Sig6         Sig7         Sig8         Sig9        Sig10
+E:HH:0:AA     1.782894e-17 1.822001e-17 1.780042e-17 1.780276e-17 1.754057e-17
+E:HH:0:BB     1.782894e-17 1.666667e-01 2.500000e-01 1.780276e-17 1.754057e-17
+E:HH:1:AA     1.965323e+01 2.988848e+01 3.066430e+01 1.351001e+01 1.994798e+01
+E:HH:1:BB     9.366926e-01 1.306594e+00 4.723706e+00 2.207346e+00 1.315582e+00
+E:HH:2:AA     8.329851e+01 1.482409e+01 3.108890e+01 1.371453e+01 1.312290e+01
+E:HH:2:BB     5.839599e+00 6.961702e-01 4.629335e+00 6.959860e-01 3.094529e-02
+                     Sig11
+E:HH:0:AA     1.718942e-17
+E:HH:0:BB     4.166667e-02
+E:HH:1:AA     4.299592e+00
+E:HH:1:BB     1.189723e+00
+E:HH:2:AA     4.768073e+00
+E:HH:2:BB     1.337466e-01
+ [ reached getOption(&quot;max.print&quot;) -- omitted 170 rows ]
+
+$Signature.norm
+                      Sig1         Sig2         Sig3         Sig4         Sig5
+E:HH:0:AA     4.170979e-20 4.025733e-20 4.219701e-20 4.560529e-20 4.546751e-20
+E:HH:0:BB     4.170979e-20 9.131585e-05 4.219701e-20 4.560529e-20 8.298187e-04
+E:HH:1:AA     3.127326e-03 5.865106e-02 1.133303e-01 2.755176e-02 9.539775e-02
+E:HH:1:BB     5.435396e-03 4.313720e-03 7.588728e-03 3.069712e-03 1.076037e-02
+E:HH:2:AA     9.706637e-03 3.392191e-01 5.986994e-02 1.373119e-02 4.353692e-02
+E:HH:2:BB     4.170979e-20 2.675010e-02 1.328557e-03 4.560529e-20 7.610416e-03
+                      Sig6         Sig7         Sig8         Sig9        Sig10
+E:HH:0:AA     4.505784e-20 4.702870e-20 4.662014e-20 4.735328e-20 4.690863e-20
+E:HH:0:BB     4.505784e-20 4.301928e-04 6.547619e-04 4.735328e-20 4.690863e-20
+E:HH:1:AA     4.966824e-02 7.714685e-02 8.031126e-02 3.593507e-02 5.334673e-02
+E:HH:1:BB     2.367237e-03 3.372525e-03 1.237161e-02 5.871284e-03 3.518252e-03
+E:HH:2:AA     2.105145e-01 3.826331e-02 8.142329e-02 3.647905e-02 3.509449e-02
+E:HH:2:BB     1.475801e-02 1.796925e-03 1.212445e-02 1.851242e-03 8.275678e-05
+                     Sig11
+E:HH:0:AA     4.743997e-20
+E:HH:0:BB     1.149931e-04
+E:HH:1:AA     1.186616e-02
+E:HH:1:BB     3.283438e-03
+E:HH:2:AA     1.315909e-02
+E:HH:2:BB     3.691185e-04
+ [ reached getOption(&quot;max.print&quot;) -- omitted 170 rows ]
+
+$Exposure
+        SP117017     SP117031     SP117332     SP117425     SP117556
+Sig1   0.1672924 1.197175e-12 1.197175e-12 6.971195e+01 1.197175e-12
+Sig2  16.5815545 5.832088e+00 3.089812e+01 9.958335e+00 1.191513e+01
+          SP117621     SP117627  SP117712     SP117759     SP117930
+Sig1  2.280120e+01 1.197175e-12 0.9674283 1.197175e-12 3.162089e+01
+Sig2  1.576648e-10 8.451208e+00 9.7202684 1.218155e+01 1.228684e-12
+           SP99113      SP99185   SP99209      SP99213      SP99221
+Sig1  1.197175e-12 1.859668e-01  1.036956 1.197175e-12 1.197175e-12
+Sig2  1.374978e+01 4.361682e+01 27.334544 1.639245e+00 1.437495e+01
+           SP99225      SP99241      SP99287      SP99297      SP99301
+Sig1  1.197175e-12 1.197175e-12 7.040598e-01 1.197175e-12 1.197175e-12
+Sig2  1.287393e+01 2.741258e+00 8.065416e+00 1.107821e+01 1.441029e+01
+           SP99305      SP99309      SP99313      SP99317      SP99321
+Sig1  1.197175e-12 1.197175e-12 1.582058e-11 1.197175e-12 1.197175e-12
+Sig2  4.729177e+00 3.679884e+01 5.166667e+00 2.669124e+01 1.138996e+01
+           SP99325    SP99329      SP99333      SP99337      SP99341
+Sig1  1.197175e-12  1.8473495 1.197175e-12 1.197175e-12 1.197175e-12
+Sig2  6.065915e+01  3.4707960 4.141006e+00 1.200774e+01 1.381966e+01
+           SP99345     SP117655    SP117775      SP99293
+Sig1  1.197175e-12 3.092667e+02  18.3954369 3.466154e+00
+Sig2  1.919694e+01 7.187344e-01   2.0791266 2.457368e-12
+ [ reached getOption(&quot;max.print&quot;) -- omitted 9 rows ]
+
+$Exposure.norm
+         SP117017     SP117031     SP117332     SP117425     SP117556
+Sig1  0.001779718 1.786838e-14 2.029149e-14 2.916822e-01 9.976572e-15
+Sig2  0.176400657 8.704661e-02 5.237070e-01 4.166673e-02 9.929391e-02
+          SP117621     SP117627    SP117712     SP117759     SP117930
+Sig1  1.398845e-01 6.107916e-15 0.017275519 4.450592e-15 1.681940e-01
+Sig2  9.672676e-13 4.311758e-02 0.173576348 4.528589e-02 6.535468e-15
+           SP99113      SP99185    SP99209      SP99213      SP99221
+Sig1  5.441786e-14 2.582919e-03 0.01329435 6.046194e-15 8.675074e-15
+Sig2  6.249994e-01 6.058002e-01 0.35044411 8.278819e-03 1.041650e-01
+           SP99225      SP99241      SP99287      SP99297      SP99301
+Sig1  2.720856e-14 1.686136e-14 6.579953e-03 1.900301e-14 3.990636e-14
+Sig2  2.925898e-01 3.860870e-02 7.537720e-02 1.758469e-01 4.803496e-01
+           SP99305      SP99309      SP99313      SP99317      SP99321
+Sig1  2.029128e-14 1.496494e-14 1.275835e-13 2.302295e-14 8.430798e-15
+Sig2  8.015629e-02 4.599934e-01 4.166609e-02 5.133011e-01 8.021093e-02
+           SP99325     SP99329      SP99333      SP99337      SP99341
+Sig1  4.926634e-15 0.014661689 1.930950e-14 2.137816e-14 1.059437e-14
+Sig2  2.496256e-01 0.027546348 6.679120e-02 2.144244e-01 1.222968e-01
+           SP99345     SP117655    SP117775      SP99293
+Sig1  3.861913e-14 6.608248e-01 0.054747947 1.229137e-02
+Sig2  6.192655e-01 1.535754e-03 0.006187834 8.714100e-15
+ [ reached getOption(&quot;max.print&quot;) -- omitted 9 rows ]
+
+$K
+[1] 11
+
+attr(,&quot;class&quot;)
+[1] &quot;Signature&quot;
+attr(,&quot;used_runs&quot;)
+[1] 24
+attr(,&quot;method&quot;)
+[1] &quot;brunet&quot;
+attr(,&quot;call_method&quot;)
+[1] &quot;NMF with best practice&quot;
+attr(,&quot;nrun&quot;)
+[1] 1000
+attr(,&quot;seed&quot;)
+[1] 123456</code></pre>
+<pre class="r"><code>cls &lt;- bp_cluster_iter_list(pcawg_sig_list, k = 2:30)</code></pre>
+<p>We try <code>2</code> to <code>30</code> signatures here to check how the silhouette changes in different cluster number <code>k</code>.</p>
+<pre class="r"><code>cls$sil_summary</code></pre>
+<pre><code>    k        min      mean       max        sd
+1   2 -0.4144666 0.2910101 0.5572367 0.1744367
+2   3 -0.7191056 0.2049187 0.8931134 0.2275587
+3   4 -0.7191056 0.1850721 0.8931134 0.2503893
+4   5 -0.6641900 0.2973617 0.8884523 0.2848243
+5   6 -0.6616768 0.2762899 0.8880718 0.2842627
+6   7 -0.6600962 0.2767034 0.8797653 0.2863463
+7   8 -0.6600962 0.2678768 0.8797653 0.2920637
+8   9 -0.6990881 0.2568783 0.8797653 0.3143687
+9  10 -0.6990881 0.2452582 0.8797653 0.3194973
+10 11 -0.6800734 0.2446516 0.8797653 0.3149417
+11 12 -0.6789815 0.2340692 0.8797653 0.3160896
+12 13 -0.6789815 0.2310671 0.8710570 0.3172617
+13 14 -0.6788359 0.2124811 0.8710570 0.3206350
+14 15 -0.6788359 0.2043917 0.8710570 0.3230532
+15 16 -0.6788359 0.1930057 0.8710570 0.3189946
+ [ reached &#39;max&#39; / getOption(&quot;max.print&quot;) -- omitted 14 rows ]</code></pre>
+<pre class="r"><code>plot(cls$sil_summary$k, cls$sil_summary$mean, type = &quot;b&quot;, xlab = &quot;Total signatures&quot;, ylab = &quot;Mean silhouette&quot;)</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-165-1.png" width="2400" style="display: block; margin: auto;" /></p>
+<p>In general, the mean silhouette is not high. But we can still see that <code>20</code> or <code>22</code> may be suitable. <code>k=5</code> is not considered because it is too small to explain our data.</p>
+<p>Signature similarity is the key parameter in our study. Here we use an average cosine distance <code>0.4</code> (i.e. signatures with similarity <code>&gt;=0.6</code> could be clustered as one) as a cutoff:</p>
+<pre class="r"><code>factoextra::fviz_dend(cls$cluster,
+  h = 0.4, cex = 0.15,
+  main = &quot;&quot;,
+  xlab = &quot;&quot;,
+  ylab = &quot;1 - cosine similarity, average linkage&quot;
+)</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-166-1.png" width="4500" style="display: block; margin: auto;" /></p>
+<p>Check the cluster number:</p>
+<pre class="r"><code>cls_tree &lt;- cutree(cls$cluster, h = 0.4)
+table(cls_tree)</code></pre>
+<pre><code>cls_tree
+  1   2   3   4   5   6   7   8   9  10  11  12  13  14  15  16  17  18  19  20 
+ 16  57  71 108  20   3   1  29   2   4   7   1   6   1   3   4   2   1   1   1 
+ 21  22  23  24 
+  1   1   1   1 </code></pre>
+<p>This is close to <code>22</code>. We observe there are a few isolated clusters with only one signature, they may be artifacts or should be assigned to other clusters but cannot due to low similarity to others.</p>
+<p>Next we obtain clustered (grouped) signatures by averaging signatures in a cluster.</p>
+<pre class="r"><code>grp_sigs &lt;- bp_get_clustered_sigs(cls, cls_tree)</code></pre>
+<p>Next we load PCAWG global CNS and check their similarity.</p>
+<pre class="r"><code>pcawg_sigs &lt;- readRDS(&quot;../data/pcawg_cn_sigs_CN176_signature.rds&quot;)</code></pre>
+<pre class="r"><code>sim1 &lt;- get_sig_similarity(pcawg_sigs, grp_sigs$grp_sigs)
+sim_mat &lt;- sim1$similarity
+colnames(sim_mat) &lt;- gsub(&quot;Sig&quot;, &quot;Group-Sig&quot;, colnames(sim_mat))
+pheatmap::pheatmap(sim_mat, cluster_rows = FALSE, cluster_cols = FALSE, display_numbers = TRUE)</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-170-1.png" width="2400" style="display: block; margin: auto;" /> We can see that most of PCAWG global signatures can be properly matched to group signatures. <code>CNS2</code> 和 <code>CNS13</code> seems not stable and tend to be easier affected by extraction procedure.</p>
+<p>Also, we observe almost all group signatures on the right side can be assigned to a PCAWG global signatures, although most of them have relatively low similarity. This data indicate the signatures may be redundant.</p>
+<p>Let’s check the similarity between group signatures and best matched global signatures.</p>
+<pre class="r"><code>mc &lt;- apply(sim1$similarity, 2, which.max)
+mc_sim &lt;- apply(sim1$similarity, 2, max)
+mc_sim</code></pre>
+<pre><code> Sig1 Sig14  Sig2  Sig5 Sig10  Sig7 Sig18  Sig6 Sig11 Sig21 Sig15 Sig13 Sig19 
+0.886 0.646 0.988 0.899 0.914 0.813 0.824 0.855 0.953 0.788 0.902 0.937 0.676 
+ Sig9  Sig3  Sig4  Sig8 Sig12 Sig16 Sig17 Sig20 Sig22 Sig23 Sig24 
+0.901 0.727 0.569 0.667 0.598 0.815 0.717 0.693 0.579 0.477 0.467 </code></pre>
+<p>Next let’s visualize the data along with the similarity of signatures within a group (cluster).</p>
+<pre class="r"><code>mc_df &lt;- data.frame(
+  grp_sig = names(mc),
+  global_sig = paste0(&quot;CNS&quot;, mc),
+  sim = as.numeric(mc_sim)
+) %&gt;%
+  dplyr::mutate(
+    label = paste0(grp_sig, &quot;(&quot;, global_sig, &quot;, &quot;, sim, &quot;)&quot;),
+    grp_sig = factor(grp_sig, levels = paste0(&quot;Sig&quot;, seq_len(nrow(.))))
+  ) %&gt;%
+  dplyr::arrange(grp_sig)</code></pre>
+<pre class="r"><code>ggpubr::ggboxplot(grp_sigs$sim_sig_to_grp_mean,
+  x = &quot;grp_sig&quot;, y = &quot;sim&quot;, width = 0.3,
+  xlab = FALSE, ylab = &quot;cosine similarity&quot;,
+  title = &quot;Cosine similarity between signatures in each group&quot;
+) +
+  ggpubr::rotate_x_text()</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-173-1.png" width="2400" style="display: block; margin: auto;" /></p>
+<p>Add labels:</p>
+<pre class="r"><code>ggpubr::ggboxplot(grp_sigs$sim_sig_to_grp_mean, # %&gt;%
+  # dplyr::filter(grp_sig %in% select_sigs),
+  x = &quot;grp_sig&quot;, y = &quot;sim&quot;, width = 0.3,
+  xlab = FALSE, ylab = &quot;Cosine similarity&quot;,
+  title = &quot;Cosine similarity between signatures in each group&quot;
+) +
+  ggpubr::rotate_x_text() +
+  scale_x_discrete(labels = mc_df$label)</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-174-1.png" width="2400" style="display: block; margin: auto;" /></p>
 <blockquote>
-<p>Try to learn from NC paper</p>
+<p>Here y axis indicates cosine similarity between the averaging signature of each group and the individual signatures that belong to each group.</p>
 </blockquote>
 </div>
-<div id="tcga-cns-analysis" class="section level2">
-<h2>TCGA CNS analysis</h2>
-<blockquote>
-<p>Think and check in future</p>
-</blockquote>
-<div id="copy-number-signatures" class="section level3">
-<h3>Copy number signatures</h3>
-</div>
-<div id="cancer-subtyping" class="section level3">
-<h3>Cancer subtyping</h3>
-</div>
-<div id="prognosis" class="section level3">
-<h3>Prognosis</h3>
-</div>
-</div>
-<div id="exploration-of-differnt-signature-extraction-methods" class="section level2">
-<h2>Exploration of differnt signature extraction methods</h2>
-<blockquote>
-<p>Similarity for same number of signatures</p>
-</blockquote>
 </div>
 </div>
 <div id="r-session" class="section level1">
@@ -2445,387 +2952,194 @@ ggboxplot(df_sim,
 <pre><code>─ Session info ───────────────────────────────────────────────────────────────
  setting  value                       
  version  R version 4.0.2 (2020-06-22)
- os       macOS High Sierra 10.13.6   
- system   x86_64, darwin17.0          
+ os       CentOS Linux 7 (Core)       
+ system   x86_64, linux-gnu           
  ui       X11                         
  language EN                          
- collate  zh_CN.UTF-8                 
- ctype    zh_CN.UTF-8                 
+ collate  en_US.UTF-8                 
+ ctype    en_US.UTF-8                 
  tz       Asia/Shanghai               
- date     2021-01-11                  
+ date     2021-01-13                  
 
 ─ Packages ───────────────────────────────────────────────────────────────────
- package        * version    date       lib
- abind            1.4-5      2016-07-21 [1]
- annotate         1.66.0     2020-04-28 [1]
- AnnotationDbi    1.50.3     2020-07-25 [1]
- assertthat       0.2.1      2019-03-21 [1]
- backports        1.2.1      2020-12-09 [1]
- bigmemory      * 4.5.36     2019-12-23 [1]
- bigmemory.sri    0.1.3      2014-08-18 [1]
- Biobase        * 2.48.0     2020-04-27 [1]
- BiocGenerics   * 0.34.0     2020-04-27 [1]
- BiocManager      1.30.10    2019-11-16 [1]
- bit              4.0.4      2020-08-04 [1]
- bit64            4.0.5      2020-08-30 [1]
- bitops           1.0-6      2013-08-17 [1]
- blob             1.2.1      2020-01-20 [1]
- bookdown         0.21       2020-10-13 [1]
- brew             1.0-6      2011-04-13 [1]
- broom            0.7.3      2020-12-16 [1]
- Cairo            1.5-12.2   2020-07-07 [1]
- callr            3.5.1      2020-10-13 [1]
- car              3.0-10     2020-09-29 [1]
- carData          3.0-4      2020-05-22 [1]
- cellranger       1.1.0      2016-07-27 [1]
- circlize         0.4.11     2020-10-31 [1]
- cli              2.2.0      2020-11-20 [1]
- clue             0.3-58     2020-12-03 [1]
- cluster          2.1.0      2019-06-19 [2]
- codetools        0.2-18     2020-11-04 [2]
- cola           * 1.9.0.1013 2021-01-08 [1]
- colorspace       2.0-0      2020-11-11 [1]
- ComplexHeatmap * 2.7.2.1000 2020-12-22 [1]
- cowplot        * 1.1.1      2020-12-30 [1]
- crayon           1.3.4      2017-09-16 [1]
- crosstalk        1.1.0.1    2020-03-13 [1]
- curl             4.3        2019-12-02 [1]
- data.table       1.13.6     2020-12-30 [1]
- DBI              1.1.0      2019-12-15 [1]
- dbplyr           2.0.0      2020-11-03 [1]
- dendextend       1.14.0     2020-08-26 [1]
- desc             1.2.0      2018-05-01 [1]
- devtools         2.3.2      2020-09-18 [1]
- digest           0.6.27     2020-10-24 [1]
- doParallel       1.0.16     2020-10-16 [1]
- dplyr          * 1.0.2      2020-08-18 [1]
- DT               0.17       2021-01-06 [1]
- ellipsis         0.3.1      2020-05-15 [1]
- eulerr           6.1.0      2020-03-09 [1]
- evaluate         0.14       2019-05-28 [1]
- ezcox          * 0.8.0      2020-09-25 [1]
- factoextra       1.0.7      2020-04-01 [1]
- fansi            0.4.1      2020-01-08 [1]
- farver           2.0.3      2020-01-16 [1]
- forcats        * 0.5.0      2020-03-01 [1]
- foreach          1.5.1      2020-10-15 [1]
- foreign          0.8-81     2020-12-22 [2]
- forestmodel      0.6.2      2020-07-19 [1]
- fs               1.5.0      2020-07-31 [1]
- furrr            0.2.1      2020-10-21 [1]
- future           1.21.0     2020-12-10 [1]
- genefilter       1.70.0     2020-04-27 [1]
- generics         0.1.0      2020-10-31 [1]
- GetoptLong       1.0.5      2020-12-15 [1]
- ggcorrplot       0.1.3      2019-05-19 [1]
- ggplot2        * 3.3.3      2020-12-30 [1]
- ggplotify        0.0.5      2020-03-12 [1]
- ggpubr         * 0.4.0      2020-06-27 [1]
- ggrepel          0.9.0      2020-12-16 [1]
- ggsci            2.9        2018-05-14 [1]
- ggsignif         0.6.0      2019-08-08 [1]
- ggwordcloud    * 0.5.0      2019-06-02 [1]
- GlobalOptions    0.1.2      2020-06-10 [1]
- globals          0.14.0     2020-11-22 [1]
- glue             1.4.2      2020-08-27 [1]
- gridBase         0.4-7      2014-02-24 [1]
- gridExtra        2.3        2017-09-09 [1]
- gridGraphics     0.5-1      2020-12-13 [1]
- gtable           0.3.0      2019-03-25 [1]
- haven            2.3.1      2020-06-01 [1]
- hms              0.5.3      2020-01-08 [1]
- htmltools        0.5.0      2020-06-16 [1]
- htmlwidgets      1.5.3      2020-12-10 [1]
- httr             1.4.2      2020-07-20 [1]
- impute           1.62.0     2020-04-27 [1]
- IRanges          2.22.2     2020-05-21 [1]
- iterators        1.0.13     2020-10-15 [1]
- jsonlite         1.7.2      2020-12-09 [1]
- km.ci            0.5-2      2009-08-30 [1]
- KMsurv           0.1-5      2012-12-03 [1]
- knitr          * 1.30       2020-09-22 [1]
- labeling         0.4.2      2020-10-20 [1]
- languageserver   0.3.9      2020-12-18 [1]
- lattice          0.20-41    2020-04-02 [2]
- lifecycle        0.2.0      2020-03-06 [1]
- listenv          0.8.0      2019-12-05 [1]
- lubridate        1.7.9.2    2020-11-13 [1]
- magick           2.5.2      2020-11-10 [1]
- magrittr         2.0.1      2020-11-17 [1]
- markdown         1.1        2019-08-07 [1]
- Matrix           1.3-2      2021-01-06 [2]
- matrixStats      0.57.0     2020-09-25 [1]
- mclust           5.4.7      2020-11-20 [1]
- memoise          1.1.0      2017-04-21 [1]
- microbenchmark   1.4-7      2019-09-24 [1]
- modelr           0.1.8      2020-05-19 [1]
- munsell          0.5.0      2018-06-12 [1]
- NMF              0.23.0     2020-08-01 [1]
- openxlsx         4.2.3      2020-10-27 [1]
- pacman         * 0.5.1      2019-03-11 [1]
- parallelly       1.23.0     2021-01-04 [1]
- patchwork        1.1.1      2020-12-17 [1]
- pheatmap         1.0.12     2019-01-04 [1]
- pillar           1.4.7      2020-11-20 [1]
- pkgbuild         1.2.0      2020-12-15 [1]
- pkgconfig        2.0.3      2019-09-22 [1]
- pkgload          1.1.0      2020-05-29 [1]
- pkgmaker         0.32.2     2020-10-20 [1]
- plyr             1.8.6      2020-03-03 [1]
- png              0.1-7      2013-12-03 [1]
- prettyunits      1.1.1      2020-01-24 [1]
- processx         3.4.5      2020-11-30 [1]
- ps               1.5.0      2020-12-05 [1]
- purrr          * 0.3.4      2020-04-17 [1]
- R.cache          0.14.0     2019-12-06 [1]
- R.methodsS3      1.8.1      2020-08-26 [1]
- R.oo             1.24.0     2020-08-26 [1]
- R.utils          2.10.1     2020-08-26 [1]
- R6               2.5.0      2020-10-28 [1]
- RColorBrewer     1.1-2      2014-12-07 [1]
- Rcpp             1.0.5      2020-07-06 [1]
- RCurl            1.98-1.2   2020-04-18 [1]
- readr          * 1.4.0      2020-10-05 [1]
- readxl           1.3.1      2019-03-13 [1]
- registry         0.5-1      2019-03-05 [1]
- rematch2         2.1.2      2020-05-01 [1]
- remotes          2.2.0      2020-07-21 [1]
- reprex           0.3.0      2019-05-16 [1]
- reshape2         1.4.4      2020-04-09 [1]
- rio              0.5.16     2018-11-26 [1]
- rjson            0.2.20     2018-06-08 [1]
- rlang            0.4.10     2020-12-30 [1]
- rmarkdown        2.6        2020-12-14 [1]
- rmdformats     * 1.0.0      2020-11-23 [1]
- rngtools         1.5        2020-01-23 [1]
- roxygen2         7.1.1      2020-06-27 [1]
- roxytest       * 0.0.1      2020-06-03 [1]
- rprojroot        2.0.2      2020-11-15 [1]
- RSQLite          2.2.1      2020-09-30 [1]
- rstatix          0.6.0      2020-06-18 [1]
- rstudioapi       0.13       2020-11-12 [1]
- rvcheck          0.1.8      2020-03-01 [1]
- rvest            0.3.6      2020-07-25 [1]
- S4Vectors        0.26.1     2020-05-16 [1]
- scales           1.1.1      2020-05-11 [1]
- sessioninfo      1.1.1      2018-11-05 [1]
- shape            1.4.5      2020-09-13 [1]
- sigminer       * 1.2.1.999  2021-01-11 [1]
- skmeans          0.2-13     2020-12-03 [1]
- slam             0.1-48     2020-12-03 [1]
- stringi          1.5.3      2020-09-09 [1]
- stringr        * 1.4.0      2019-02-10 [1]
- styler           1.3.2      2020-02-23 [1]
- survival       * 3.2-7      2020-09-28 [2]
- survminer      * 0.4.8      2020-07-25 [1]
- survMisc         0.5.5      2018-07-05 [1]
- synchronicity  * 1.3.5      2018-08-21 [1]
- testthat         3.0.1      2020-12-17 [1]
- tibble         * 3.0.4      2020-10-12 [1]
- tidyr          * 1.1.2      2020-08-27 [1]
- tidyselect       1.1.0      2020-05-11 [1]
- tidyverse      * 1.3.0      2019-11-21 [1]
- usethis          2.0.0      2020-12-10 [1]
- utf8             1.1.4      2018-05-24 [1]
- uuid             0.1-4      2020-02-26 [1]
- vctrs            0.3.6      2020-12-17 [1]
- viridis          0.5.1      2018-03-29 [1]
- viridisLite      0.3.0      2018-02-01 [1]
- withr            2.3.0      2020-09-22 [1]
- xfun             0.19       2020-10-30 [1]
- XML              3.99-0.5   2020-07-23 [1]
- xml2             1.3.2      2020-04-23 [1]
- xtable           1.8-4      2019-04-21 [1]
- yaml             2.2.1      2020-02-01 [1]
- zip              2.1.1      2020-08-27 [1]
- zoo              1.8-8      2020-05-02 [1]
- source                                  
- CRAN (R 4.0.0)                          
- Bioconductor                            
- Bioconductor                            
- CRAN (R 4.0.0)                          
- CRAN (R 4.0.2)                          
- CRAN (R 4.0.0)                          
- CRAN (R 4.0.0)                          
- Bioconductor                            
- Bioconductor                            
- CRAN (R 4.0.0)                          
- CRAN (R 4.0.2)                          
- CRAN (R 4.0.2)                          
- CRAN (R 4.0.0)                          
- CRAN (R 4.0.0)                          
- CRAN (R 4.0.2)                          
- CRAN (R 4.0.0)                          
- CRAN (R 4.0.2)                          
- CRAN (R 4.0.2)                          
- CRAN (R 4.0.2)                          
- CRAN (R 4.0.2)                          
- CRAN (R 4.0.0)                          
- CRAN (R 4.0.0)                          
- CRAN (R 4.0.2)                          
- CRAN (R 4.0.2)                          
- CRAN (R 4.0.2)                          
- CRAN (R 4.0.2)                          
- CRAN (R 4.0.2)                          
- Github (jokergoo/cola@422f3fe)          
- CRAN (R 4.0.2)                          
- Github (jokergoo/ComplexHeatmap@46b5212)
- CRAN (R 4.0.2)                          
- CRAN (R 4.0.0)                          
- CRAN (R 4.0.0)                          
- CRAN (R 4.0.0)                          
- CRAN (R 4.0.2)                          
- CRAN (R 4.0.0)                          
- CRAN (R 4.0.2)                          
- CRAN (R 4.0.0)                          
- CRAN (R 4.0.0)                          
- CRAN (R 4.0.2)                          
- CRAN (R 4.0.2)                          
- CRAN (R 4.0.2)                          
- CRAN (R 4.0.2)                          
- CRAN (R 4.0.2)                          
- CRAN (R 4.0.0)                          
- CRAN (R 4.0.2)                          
- CRAN (R 4.0.0)                          
- local                                   
- CRAN (R 4.0.2)                          
- CRAN (R 4.0.0)                          
- CRAN (R 4.0.0)                          
- CRAN (R 4.0.0)                          
- CRAN (R 4.0.2)                          
- CRAN (R 4.0.2)                          
- CRAN (R 4.0.2)                          
- CRAN (R 4.0.2)                          
- CRAN (R 4.0.2)                          
- CRAN (R 4.0.2)                          
- Bioconductor                            
- CRAN (R 4.0.2)                          
- CRAN (R 4.0.2)                          
- CRAN (R 4.0.2)                          
- CRAN (R 4.0.2)                          
- CRAN (R 4.0.0)                          
- CRAN (R 4.0.2)                          
- CRAN (R 4.0.2)                          
- CRAN (R 4.0.0)                          
- CRAN (R 4.0.0)                          
- CRAN (R 4.0.2)                          
- CRAN (R 4.0.0)                          
- CRAN (R 4.0.2)                          
- CRAN (R 4.0.2)                          
- CRAN (R 4.0.0)                          
- CRAN (R 4.0.0)                          
- CRAN (R 4.0.2)                          
- CRAN (R 4.0.0)                          
- CRAN (R 4.0.0)                          
- CRAN (R 4.0.0)                          
- CRAN (R 4.0.2)                          
- CRAN (R 4.0.2)                          
- CRAN (R 4.0.2)                          
- Bioconductor                            
- Bioconductor                            
- CRAN (R 4.0.2)                          
- CRAN (R 4.0.2)                          
- CRAN (R 4.0.0)                          
- CRAN (R 4.0.0)                          
- CRAN (R 4.0.2)                          
- CRAN (R 4.0.2)                          
- CRAN (R 4.0.2)                          
- CRAN (R 4.0.2)                          
- CRAN (R 4.0.0)                          
- CRAN (R 4.0.0)                          
- CRAN (R 4.0.2)                          
- CRAN (R 4.0.2)                          
- CRAN (R 4.0.2)                          
- CRAN (R 4.0.0)                          
- CRAN (R 4.0.2)                          
- CRAN (R 4.0.2)                          
- CRAN (R 4.0.2)                          
- CRAN (R 4.0.0)                          
- CRAN (R 4.0.0)                          
- CRAN (R 4.0.0)                          
- CRAN (R 4.0.0)                          
- CRAN (R 4.0.2)                          
- CRAN (R 4.0.2)                          
- CRAN (R 4.0.0)                          
- CRAN (R 4.0.2)                          
- CRAN (R 4.0.2)                          
- CRAN (R 4.0.0)                          
- CRAN (R 4.0.2)                          
- CRAN (R 4.0.2)                          
- CRAN (R 4.0.0)                          
- CRAN (R 4.0.0)                          
- CRAN (R 4.0.2)                          
- CRAN (R 4.0.0)                          
- CRAN (R 4.0.0)                          
- CRAN (R 4.0.0)                          
- CRAN (R 4.0.2)                          
- CRAN (R 4.0.2)                          
- CRAN (R 4.0.0)                          
- CRAN (R 4.0.0)                          
- CRAN (R 4.0.0)                          
- CRAN (R 4.0.0)                          
- CRAN (R 4.0.2)                          
- CRAN (R 4.0.2)                          
- CRAN (R 4.0.0)                          
- CRAN (R 4.0.2)                          
- CRAN (R 4.0.0)                          
- CRAN (R 4.0.2)                          
- CRAN (R 4.0.0)                          
- CRAN (R 4.0.0)                          
- CRAN (R 4.0.0)                          
- CRAN (R 4.0.2)                          
- CRAN (R 4.0.0)                          
- CRAN (R 4.0.0)                          
- CRAN (R 4.0.0)                          
- CRAN (R 4.0.0)                          
- CRAN (R 4.0.2)                          
- CRAN (R 4.0.2)                          
- CRAN (R 4.0.2)                          
- CRAN (R 4.0.0)                          
- CRAN (R 4.0.0)                          
- CRAN (R 4.0.2)                          
- CRAN (R 4.0.2)                          
- CRAN (R 4.0.2)                          
- CRAN (R 4.0.2)                          
- CRAN (R 4.0.2)                          
- CRAN (R 4.0.0)                          
- CRAN (R 4.0.2)                          
- Bioconductor                            
- CRAN (R 4.0.0)                          
- CRAN (R 4.0.0)                          
- CRAN (R 4.0.2)                          
- local                                   
- CRAN (R 4.0.2)                          
- CRAN (R 4.0.2)                          
- CRAN (R 4.0.2)                          
- CRAN (R 4.0.0)                          
- CRAN (R 4.0.0)                          
- CRAN (R 4.0.2)                          
- CRAN (R 4.0.2)                          
- CRAN (R 4.0.0)                          
- CRAN (R 4.0.2)                          
- CRAN (R 4.0.2)                          
- CRAN (R 4.0.2)                          
- CRAN (R 4.0.2)                          
- CRAN (R 4.0.0)                          
- CRAN (R 4.0.0)                          
- CRAN (R 4.0.2)                          
- CRAN (R 4.0.0)                          
- CRAN (R 4.0.0)                          
- CRAN (R 4.0.2)                          
- CRAN (R 4.0.0)                          
- CRAN (R 4.0.0)                          
- CRAN (R 4.0.2)                          
- CRAN (R 4.0.2)                          
- CRAN (R 4.0.2)                          
- CRAN (R 4.0.0)                          
- CRAN (R 4.0.0)                          
- CRAN (R 4.0.0)                          
- CRAN (R 4.0.2)                          
- CRAN (R 4.0.0)                          
+ package        * version    date       lib source          
+ abind            1.4-5      2016-07-21 [1] CRAN (R 4.0.2)  
+ annotate         1.68.0     2020-10-27 [1] Bioconductor    
+ AnnotationDbi    1.52.0     2020-10-27 [1] Bioconductor    
+ assertthat       0.2.1      2019-03-21 [1] CRAN (R 4.0.2)  
+ backports        1.2.1      2020-12-09 [1] CRAN (R 4.0.2)  
+ Biobase        * 2.50.0     2020-10-27 [1] Bioconductor    
+ BiocGenerics   * 0.36.0     2020-10-27 [1] Bioconductor    
+ BiocManager      1.30.10    2019-11-16 [1] CRAN (R 4.0.2)  
+ bit              4.0.4      2020-08-04 [1] CRAN (R 4.0.2)  
+ bit64            4.0.5      2020-08-30 [1] CRAN (R 4.0.2)  
+ blob             1.2.1      2020-01-20 [1] CRAN (R 4.0.2)  
+ bookdown         0.21       2020-10-13 [1] CRAN (R 4.0.2)  
+ brew             1.0-6      2011-04-13 [1] CRAN (R 4.0.2)  
+ broom            0.7.3      2020-12-16 [1] CRAN (R 4.0.2)  
+ Cairo            1.5-12.2   2020-07-07 [1] CRAN (R 4.0.2)  
+ callr            3.5.1      2020-10-13 [1] CRAN (R 4.0.2)  
+ car              3.0-10     2020-09-29 [1] CRAN (R 4.0.2)  
+ carData          3.0-4      2020-05-22 [1] CRAN (R 4.0.2)  
+ cellranger       1.1.0      2016-07-27 [1] CRAN (R 4.0.2)  
+ circlize         0.4.12     2021-01-08 [1] CRAN (R 4.0.2)  
+ cli              2.2.0      2020-11-20 [1] CRAN (R 4.0.2)  
+ clue             0.3-58     2020-12-03 [1] CRAN (R 4.0.2)  
+ cluster          2.1.0      2019-06-19 [1] CRAN (R 4.0.2)  
+ codetools        0.2-18     2020-11-04 [1] CRAN (R 4.0.2)  
+ cola           * 1.9.0.1013 2021-01-08 [1] Bioconductor    
+ colorspace       2.0-0      2020-11-11 [1] CRAN (R 4.0.2)  
+ ComplexHeatmap * 2.7.3      2020-12-27 [1] git2r (@3612bf5)
+ cowplot        * 1.1.1      2020-12-30 [1] CRAN (R 4.0.2)  
+ crayon           1.3.4      2017-09-16 [1] CRAN (R 4.0.2)  
+ crosstalk        1.1.0.1    2020-03-13 [1] CRAN (R 4.0.2)  
+ curl             4.3        2019-12-02 [1] CRAN (R 4.0.2)  
+ data.table       1.13.6     2020-12-30 [1] CRAN (R 4.0.2)  
+ DBI              1.1.0      2019-12-15 [1] CRAN (R 4.0.2)  
+ dbplyr           2.0.0      2020-11-03 [1] CRAN (R 4.0.2)  
+ dendextend       1.14.0     2020-08-26 [1] CRAN (R 4.0.2)  
+ desc             1.2.0      2018-05-01 [1] CRAN (R 4.0.2)  
+ devtools         2.3.2      2020-09-18 [1] CRAN (R 4.0.2)  
+ digest           0.6.27     2020-10-24 [1] CRAN (R 4.0.2)  
+ doParallel       1.0.16     2020-10-16 [2] CRAN (R 4.0.2)  
+ dplyr          * 1.0.2      2020-08-18 [1] CRAN (R 4.0.2)  
+ DT               0.17       2021-01-06 [1] CRAN (R 4.0.2)  
+ ellipsis         0.3.1      2020-05-15 [1] CRAN (R 4.0.2)  
+ eulerr           6.1.0      2020-03-09 [1] CRAN (R 4.0.2)  
+ evaluate         0.14       2019-05-28 [1] CRAN (R 4.0.2)  
+ ezcox          * 0.8.0      2020-09-25 [1] CRAN (R 4.0.2)  
+ factoextra       1.0.7      2020-04-01 [1] CRAN (R 4.0.2)  
+ fansi            0.4.1      2020-01-08 [1] CRAN (R 4.0.2)  
+ farver           2.0.3      2020-01-16 [1] CRAN (R 4.0.2)  
+ forcats        * 0.5.0      2020-03-01 [1] CRAN (R 4.0.2)  
+ foreach          1.5.1      2020-08-12 [2] local           
+ foreign          0.8-81     2020-12-22 [1] CRAN (R 4.0.2)  
+ forestmodel      0.6.2      2020-07-19 [1] CRAN (R 4.0.2)  
+ fs               1.5.0      2020-07-31 [1] CRAN (R 4.0.2)  
+ furrr            0.2.1      2020-10-21 [1] CRAN (R 4.0.2)  
+ future           1.21.0     2020-12-10 [1] CRAN (R 4.0.2)  
+ genefilter       1.72.0     2020-10-27 [1] Bioconductor    
+ generics         0.1.0      2020-10-31 [1] CRAN (R 4.0.2)  
+ GetoptLong       1.0.5      2020-12-15 [1] CRAN (R 4.0.2)  
+ ggcorrplot       0.1.3      2019-05-19 [1] CRAN (R 4.0.2)  
+ ggplot2        * 3.3.3      2020-12-30 [1] CRAN (R 4.0.2)  
+ ggplotify        0.0.5      2020-03-12 [1] CRAN (R 4.0.2)  
+ ggpubr         * 0.4.0      2020-06-27 [1] CRAN (R 4.0.2)  
+ ggrepel          0.9.0      2020-12-16 [1] CRAN (R 4.0.2)  
+ ggsci            2.9        2018-05-14 [1] CRAN (R 4.0.2)  
+ ggsignif         0.6.0      2019-08-08 [1] CRAN (R 4.0.2)  
+ ggwordcloud    * 0.5.0      2019-06-02 [1] CRAN (R 4.0.2)  
+ GlobalOptions    0.1.2      2020-06-10 [1] CRAN (R 4.0.2)  
+ globals          0.14.0     2020-11-22 [1] CRAN (R 4.0.2)  
+ glue             1.4.2      2020-08-27 [1] CRAN (R 4.0.2)  
+ gridBase         0.4-7      2014-02-24 [1] CRAN (R 4.0.2)  
+ gridExtra        2.3        2017-09-09 [1] CRAN (R 4.0.2)  
+ gridGraphics     0.5-1      2020-12-13 [1] CRAN (R 4.0.2)  
+ gtable           0.3.0      2019-03-25 [1] CRAN (R 4.0.2)  
+ haven            2.3.1      2020-06-01 [1] CRAN (R 4.0.2)  
+ hms              0.5.3      2020-01-08 [1] CRAN (R 4.0.2)  
+ htmltools        0.5.0      2020-06-16 [1] CRAN (R 4.0.2)  
+ htmlwidgets      1.5.3      2020-12-10 [1] CRAN (R 4.0.2)  
+ httr             1.4.2      2020-07-20 [1] CRAN (R 4.0.2)  
+ impute           1.64.0     2020-10-27 [1] Bioconductor    
+ IRanges          2.24.1     2020-12-12 [1] Bioconductor    
+ iterators        1.0.13     2020-10-15 [1] CRAN (R 4.0.2)  
+ jsonlite         1.7.2      2020-12-09 [1] CRAN (R 4.0.2)  
+ km.ci            0.5-2      2009-08-30 [1] CRAN (R 4.0.2)  
+ KMsurv           0.1-5      2012-12-03 [1] CRAN (R 4.0.2)  
+ knitr          * 1.30       2020-09-22 [1] CRAN (R 4.0.2)  
+ labeling         0.4.2      2020-10-20 [1] CRAN (R 4.0.2)  
+ lattice          0.20-41    2020-04-02 [1] CRAN (R 4.0.2)  
+ lifecycle        0.2.0      2020-03-06 [1] CRAN (R 4.0.2)  
+ listenv          0.8.0      2019-12-05 [1] CRAN (R 4.0.2)  
+ lubridate        1.7.9.2    2020-11-13 [1] CRAN (R 4.0.2)  
+ magrittr         2.0.1      2020-11-17 [1] CRAN (R 4.0.2)  
+ markdown         1.1        2019-08-07 [1] CRAN (R 4.0.2)  
+ Matrix           1.3-2      2021-01-06 [1] CRAN (R 4.0.2)  
+ matrixStats      0.57.0     2020-09-25 [1] CRAN (R 4.0.2)  
+ mclust           5.4.7      2020-11-20 [1] CRAN (R 4.0.2)  
+ memoise          1.1.0      2017-04-21 [1] CRAN (R 4.0.2)  
+ microbenchmark   1.4-7      2019-09-24 [1] CRAN (R 4.0.2)  
+ modelr           0.1.8      2020-05-19 [1] CRAN (R 4.0.2)  
+ munsell          0.5.0      2018-06-12 [1] CRAN (R 4.0.2)  
+ NMF              0.23.0     2020-08-01 [1] CRAN (R 4.0.2)  
+ openxlsx         4.2.3      2020-10-27 [1] CRAN (R 4.0.2)  
+ parallelly       1.23.0     2021-01-04 [1] CRAN (R 4.0.2)  
+ patchwork        1.1.1      2020-12-17 [1] CRAN (R 4.0.2)  
+ pheatmap         1.0.12     2019-01-04 [1] CRAN (R 4.0.2)  
+ pillar           1.4.7      2020-11-20 [1] CRAN (R 4.0.2)  
+ pkgbuild         1.2.0      2020-12-15 [1] CRAN (R 4.0.2)  
+ pkgconfig        2.0.3      2019-09-22 [1] CRAN (R 4.0.2)  
+ pkgload          1.1.0      2020-05-29 [1] CRAN (R 4.0.2)  
+ pkgmaker         0.32.2     2020-10-20 [1] CRAN (R 4.0.2)  
+ plyr             1.8.6      2020-03-03 [1] CRAN (R 4.0.2)  
+ png              0.1-7      2013-12-03 [2] CRAN (R 4.0.2)  
+ prettyunits      1.1.1      2020-01-24 [1] CRAN (R 4.0.2)  
+ processx         3.4.5      2020-11-30 [1] CRAN (R 4.0.2)  
+ ps               1.5.0      2020-12-05 [1] CRAN (R 4.0.2)  
+ purrr          * 0.3.4      2020-04-17 [1] CRAN (R 4.0.2)  
+ R.cache          0.14.0     2019-12-06 [1] CRAN (R 4.0.2)  
+ R.methodsS3      1.8.1      2020-08-26 [1] CRAN (R 4.0.2)  
+ R.oo             1.24.0     2020-08-26 [1] CRAN (R 4.0.2)  
+ R.utils          2.10.1     2020-08-26 [1] CRAN (R 4.0.2)  
+ R6               2.5.0      2020-10-28 [1] CRAN (R 4.0.2)  
+ RColorBrewer     1.1-2      2014-12-07 [1] CRAN (R 4.0.2)  
+ Rcpp             1.0.5      2020-07-06 [2] CRAN (R 4.0.2)  
+ readr          * 1.4.0      2020-10-05 [1] CRAN (R 4.0.2)  
+ readxl           1.3.1      2019-03-13 [1] CRAN (R 4.0.2)  
+ registry         0.5-1      2019-03-05 [1] CRAN (R 4.0.2)  
+ rematch2         2.1.2      2020-05-01 [1] CRAN (R 4.0.2)  
+ remotes          2.2.0      2020-07-21 [1] CRAN (R 4.0.2)  
+ reprex           0.3.0      2019-05-16 [1] CRAN (R 4.0.2)  
+ reshape2         1.4.4      2020-04-09 [1] CRAN (R 4.0.2)  
+ RevoUtils      * 11.0.2     2020-08-12 [2] local           
+ RevoUtilsMath  * 11.0.0     2020-08-12 [2] local           
+ rio              0.5.16     2018-11-26 [1] CRAN (R 4.0.2)  
+ rjson            0.2.20     2018-06-08 [1] CRAN (R 4.0.2)  
+ rlang            0.4.10     2020-12-30 [1] CRAN (R 4.0.2)  
+ rmarkdown        2.6        2020-12-14 [1] CRAN (R 4.0.2)  
+ rmdformats     * 1.0.0      2020-11-23 [1] CRAN (R 4.0.2)  
+ rngtools         1.5        2020-01-23 [1] CRAN (R 4.0.2)  
+ rprojroot        2.0.2      2020-11-15 [1] CRAN (R 4.0.2)  
+ RSQLite          2.2.2      2021-01-08 [1] CRAN (R 4.0.2)  
+ rstatix          0.6.0      2020-06-18 [1] CRAN (R 4.0.2)  
+ rstudioapi       0.13       2020-11-12 [1] CRAN (R 4.0.2)  
+ rvcheck          0.1.8      2020-03-01 [1] CRAN (R 4.0.2)  
+ rvest            0.3.6      2020-07-25 [1] CRAN (R 4.0.2)  
+ S4Vectors        0.28.1     2020-12-09 [1] Bioconductor    
+ scales           1.1.1      2020-05-11 [1] CRAN (R 4.0.2)  
+ sessioninfo      1.1.1      2018-11-05 [1] CRAN (R 4.0.2)  
+ shape            1.4.5      2020-09-13 [1] CRAN (R 4.0.2)  
+ sigminer       * 1.2.1.999  2021-01-13 [1] local           
+ skmeans          0.2-13     2020-12-03 [1] CRAN (R 4.0.2)  
+ slam             0.1-48     2020-12-03 [1] CRAN (R 4.0.2)  
+ stringi          1.5.3      2020-09-09 [1] CRAN (R 4.0.2)  
+ stringr        * 1.4.0      2019-02-10 [1] CRAN (R 4.0.2)  
+ styler           1.3.2      2020-02-23 [1] CRAN (R 4.0.2)  
+ survival       * 3.2-7      2020-09-28 [1] CRAN (R 4.0.2)  
+ survminer      * 0.4.8      2020-07-25 [1] CRAN (R 4.0.2)  
+ survMisc         0.5.5      2018-07-05 [1] CRAN (R 4.0.2)  
+ testthat         3.0.1      2020-12-17 [1] CRAN (R 4.0.2)  
+ tibble         * 3.0.4      2020-10-12 [1] CRAN (R 4.0.2)  
+ tidyr          * 1.1.2      2020-08-27 [1] CRAN (R 4.0.2)  
+ tidyselect       1.1.0      2020-05-11 [1] CRAN (R 4.0.2)  
+ tidyverse      * 1.3.0      2019-11-21 [1] CRAN (R 4.0.2)  
+ usethis          2.0.0      2020-12-10 [1] CRAN (R 4.0.2)  
+ utf8             1.1.4      2018-05-24 [1] CRAN (R 4.0.2)  
+ vctrs            0.3.6      2020-12-17 [1] CRAN (R 4.0.2)  
+ viridis          0.5.1      2018-03-29 [1] CRAN (R 4.0.2)  
+ viridisLite      0.3.0      2018-02-01 [1] CRAN (R 4.0.2)  
+ withr            2.3.0      2020-09-22 [1] CRAN (R 4.0.2)  
+ xfun             0.20       2021-01-06 [1] CRAN (R 4.0.2)  
+ XML              3.99-0.5   2020-07-23 [1] CRAN (R 4.0.2)  
+ xml2             1.3.2      2020-04-23 [1] CRAN (R 4.0.2)  
+ xtable           1.8-4      2019-04-21 [1] CRAN (R 4.0.2)  
+ yaml             2.2.1      2020-02-01 [1] CRAN (R 4.0.2)  
+ zip              2.1.1      2020-08-27 [1] CRAN (R 4.0.2)  
+ zoo              1.8-8      2020-05-02 [1] CRAN (R 4.0.2)  
 
-[1] /Users/wsx/R_library
-[2] /Library/Frameworks/R.framework/Versions/4.0/Resources/library</code></pre>
+[1] /home/public/R/library
+[2] /opt/microsoft/ropen/4.0.2/lib64/R/library</code></pre>
 </div>
 <div id="references" class="section level1 unnumbered">
 <h1 class="unnumbered">References</h1>

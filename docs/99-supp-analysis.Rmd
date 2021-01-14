@@ -319,7 +319,7 @@ summary(apply(sim$similarity, 1, max))
 
 ### Merged CNS from clustering of cancer-type associated CNS
 
-To further validate the CNS (stability) identified in PCAWG whole dataset. We also tried the Pan-Cancer signature identification pipeline from @degasperiPracticalFrameworkOnline2020, we implemented the procedure in our package sigminer by following the method description. [A benchmark](https://github.com/ShixiangWang/sigminer#key-interfaces-and-their-performances) has been done to make sure our implementation works properly.
+To further validate the CNS (stability) identified in PCAWG whole dataset. We also tried the cancer-type-wise signature identification pipeline from @degasperiPracticalFrameworkOnline2020, we implemented the procedure in our package `sigminer` by following the method description. [A benchmark](https://github.com/ShixiangWang/sigminer#key-interfaces-and-their-performances) has been done to make sure our implementation works properly.
 
 1000 NMF runs (20 bootstrap catalogs and 50 NMF runs for each bootstrap catalog) was applied for data from each cancer type, which is similar to @degasperiPracticalFrameworkOnline2020. 
 
@@ -355,25 +355,171 @@ for (i in unique(pcawg_types$cancer_type)) {
 }
 ```
 
+We then load the result and do manual inspection to determine the proper signature number for each cancer type.
 
-## Signature association network construction and visualization
+```{r eval=FALSE}
+library(sigminer)
 
-> Try to learn from NC paper
+cancer_type_files <- list.files("../data/cancer_types/", pattern = "PCAWG_CN176", full.names = TRUE)
+pcawg <- lapply(cancer_type_files, readRDS)
 
-<!-- This is commented out. 
+bp_show_survey2(pcawg[[1]]) # 11
+bp_show_survey2(pcawg[[2]]) # 14
+bp_show_survey2(pcawg[[3]]) # 13
+bp_show_survey2(pcawg[[4]]) # 8
+bp_show_survey2(pcawg[[5]]) # 14
+bp_show_survey2(pcawg[[6]]) # 11
+bp_show_survey2(pcawg[[7]]) # 12
+bp_show_survey2(pcawg[[8]]) # 8
+bp_show_survey2(pcawg[[9]]) # 7
+bp_show_survey2(pcawg[[10]]) # 5
+bp_show_survey2(pcawg[[11]]) # 13
+bp_show_survey2(pcawg[[12]]) # 9
+bp_show_survey2(pcawg[[13]]) # 15
+bp_show_survey2(pcawg[[14]]) # 7
+bp_show_survey2(pcawg[[15]]) # 11
+bp_show_survey2(pcawg[[16]]) # 12
+bp_show_survey2(pcawg[[17]]) # 12
+bp_show_survey2(pcawg[[18]]) # 17
+bp_show_survey2(pcawg[[19]]) # 12
+bp_show_survey2(pcawg[[20]]) # 6
+bp_show_survey2(pcawg[[21]]) # 3
+bp_show_survey2(pcawg[[22]]) # 7
+bp_show_survey2(pcawg[[23]]) # 11
+bp_show_survey2(pcawg[[24]]) # 19
+bp_show_survey2(pcawg[[25]]) # 8
+bp_show_survey2(pcawg[[26]]) # 10
+bp_show_survey2(pcawg[[27]]) # 11
+bp_show_survey2(pcawg[[28]]) # 9
+bp_show_survey2(pcawg[[29]]) # 9
+bp_show_survey2(pcawg[[30]]) # 15
+bp_show_survey2(pcawg[[31]]) # 6
+bp_show_survey2(pcawg[[32]]) # 17
 
-## TCGA CNS analysis
+type_sig <- data.frame(
+  cancer_type = sub(".*_CN176_([^_]+).rds", "\\1", basename(cancer_type_files)),
+  signum = c(11, 14, 13, 8, 14, 11, 12, 8,
+             7, 5, 13, 9, 15, 7, 11, 12,
+             12, 17, 12, 6, 3, 7, 11, 19,
+             8, 10, 11, 9, 9, 15, 6, 17)
+)
 
-> Think and check in future
+pcawg_sig_list <- lapply(
+  seq_along(pcawg),
+  function(i) {
+    bp_get_sig_obj(pcawg[[i]], signum = type_sig$signum[i])
+  }
+)
 
-### Copy number signatures
+names(pcawg_sig_list) <- type_sig$cancer_type
+saveRDS(pcawg_sig_list, file = "data/pcawg_type_CNS.rds")
+```
 
-### Cancer subtyping
+The signature number ranges from `3` to `19`.
 
-### Prognosis
+Next we need to collapse all shared signatures from cancer types. To do this, we cluster all signatures based their cosine dissimilarity.
 
--->
+```{r}
+library(sigminer)
 
-## Exploration of different signature extraction methods
+pcawg_sig_list <- readRDS("../data/pcawg_type_CNS.rds")
+pcawg_sig_list$`Biliary-AdenoCA`
 
-> Similarity for same number of signatures
+cls <- bp_cluster_iter_list(pcawg_sig_list, k = 2:30)
+```
+
+We try `2` to `30` signatures here to check how the silhouette changes in different cluster number `k`.
+
+```{r}
+cls$sil_summary
+plot(cls$sil_summary$k, cls$sil_summary$mean, type = "b", xlab = "Total signatures", ylab = "Mean silhouette")
+```
+
+In general, the mean silhouette is not high. But we can still see that `20` or `22` may be suitable. `k=5` is not considered because it is too small to explain our data.
+
+Signature similarity is the key parameter in our study. Here we use an average cosine distance `0.4` (i.e. signatures with similarity `>=0.6` could be clustered as one) as a cutoff:
+
+```{r fig.width=15}
+factoextra::fviz_dend(cls$cluster, h = 0.4, cex = 0.15,
+                      main = "",
+                      xlab = "",
+                      ylab = "1 - cosine similarity, average linkage")
+```
+
+Check the cluster number:
+
+```{r}
+cls_tree <- cutree(cls$cluster, h = 0.4)
+table(cls_tree)
+```
+
+This is close to `22`. We observe there are a few isolated clusters with only one signature, they may be artifacts or should be assigned to other clusters but cannot due to low similarity to others.
+
+Next we obtain clustered (grouped) signatures by averaging signatures in a cluster.
+
+```{r}
+grp_sigs <- bp_get_clustered_sigs(cls, cls_tree)
+```
+
+Next we load PCAWG global CNS and check their similarity.
+
+```{r}
+pcawg_sigs <- readRDS("../data/pcawg_cn_sigs_CN176_signature.rds")
+```
+
+```{r fig.width=8}
+sim1 <- get_sig_similarity(pcawg_sigs, grp_sigs$grp_sigs)
+sim_mat <- sim1$similarity
+colnames(sim_mat) <- gsub("Sig", "Group-Sig", colnames(sim_mat))
+pheatmap::pheatmap(sim_mat, cluster_rows = FALSE, cluster_cols = FALSE, display_numbers = TRUE)
+```
+We can see that most of PCAWG global signatures can be properly matched to group signatures.
+`CNS2` 和 `CNS13` seems not stable and tend to be easier affected by extraction procedure.
+
+Also, we observe almost all group signatures on the right side can be assigned to a PCAWG global signatures, although most of them have relatively low similarity. This data indicate the signatures may be redundant.
+
+Let's check the similarity between group signatures and best matched global signatures.
+
+```{r}
+mc <- apply(sim1$similarity, 2, which.max)
+mc_sim <- apply(sim1$similarity, 2, max)
+mc_sim
+```
+
+Next let's visualize the data along with the similarity of signatures within a group (cluster).
+
+```{r}
+mc_df <- data.frame(
+  grp_sig = names(mc),
+  global_sig = paste0("CNS", mc),
+  sim = as.numeric(mc_sim)
+) %>%
+  dplyr::mutate(
+    label = paste0(grp_sig, "(", global_sig, ", ", sim, ")"),
+    grp_sig = factor(grp_sig, levels = paste0("Sig", seq_len(nrow(.))))
+  ) %>%
+  dplyr::arrange(grp_sig)
+```
+
+```{r}
+ggpubr::ggboxplot(grp_sigs$sim_sig_to_grp_mean,
+                  x = "grp_sig", y = "sim", width = 0.3,
+                  xlab = FALSE, ylab = "cosine similarity",
+                  title = "Cosine similarity between signatures in each group") +
+  ggpubr::rotate_x_text()
+```
+
+Add labels:
+
+```{r}
+ggpubr::ggboxplot(grp_sigs$sim_sig_to_grp_mean, #%>%
+                  #dplyr::filter(grp_sig %in% select_sigs),
+                  x = "grp_sig", y = "sim", width = 0.3,
+                  xlab = FALSE, ylab = "Cosine similarity",
+                  title = "Cosine similarity between signatures in each group") +
+  ggpubr::rotate_x_text() +
+  scale_x_discrete(labels = mc_df$label)
+```
+
+> Here y axis indicates cosine similarity between the averaging signature of each group and the individual signatures that belong to each group.
+
