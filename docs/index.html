@@ -7,7 +7,7 @@
 
         <meta name="author" content="Shixiang Wang, Ziyu Tao, Tao Wu, Huimin Li, Xue-Song Liu (Corresponding author)" />
     
-        <meta name="date" content="2021-01-13" />
+        <meta name="date" content="2021-01-14" />
     
     <title>Pan-Cancer Copy Number Signature Identification and Analysis</title>
 
@@ -205,6 +205,11 @@
             </ul></li>
             <li><a href="#supplementary-analyses">Supplementary Analyses</a>
             <ul>
+            <li><a href="#copy-number-variation-distribution">Copy number variation distribution</a>
+            <ul>
+            <li><a href="#cnv-number">CNV number</a></li>
+            <li><a href="#cna-burden">CNA burden</a></li>
+            </ul></li>
             <li><a href="#cns-validation">CNS validation</a>
             <ul>
             <li><a href="#tcga-cns">TCGA CNS</a></li>
@@ -227,7 +232,7 @@
       <p class="authors">
            <span class="glyphicon glyphicon-user"></span> Shixiang Wang, Ziyu Tao, Tao Wu, Huimin Li, Xue-Song Liu (Corresponding author)
       </p>
-         <p class="date"><span class="glyphicon glyphicon-calendar"></span> 2021-01-13</p>
+         <p class="date"><span class="glyphicon glyphicon-calendar"></span> 2021-01-14</p>
            
 
    
@@ -2402,6 +2407,37 @@ ggboxplot(df_sim,
 <div id="supplementary-analyses" class="section level1">
 <h1>Supplementary Analyses</h1>
 <p>In this part, we will add some supplementary analyses.</p>
+<div id="copy-number-variation-distribution" class="section level2">
+<h2>Copy number variation distribution</h2>
+<pre class="r"><code>library(sigminer)
+pcawg_samp_info &lt;- readRDS(file = &quot;../data/pcawg_sample_tidy_info.rds&quot;)</code></pre>
+<div id="cnv-number" class="section level3">
+<h3>CNV number</h3>
+<pre class="r"><code>show_group_distribution(
+  pcawg_samp_info,
+  gvar = &quot;cancer_type&quot;,
+  dvar = &quot;n_of_cnv&quot;,
+  order_by_fun = FALSE,
+  g_angle = 90,
+  point_size = 0.3,
+  ylab = &quot;Number of CNV&quot;
+)</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-155-1.png" width="3600" style="display: block; margin: auto;" /></p>
+</div>
+<div id="cna-burden" class="section level3">
+<h3>CNA burden</h3>
+<pre class="r"><code>show_group_distribution(
+  pcawg_samp_info,
+  gvar = &quot;cancer_type&quot;,
+  dvar = &quot;cna_burden&quot;,
+  order_by_fun = FALSE,
+  g_angle = 90,
+  point_size = 0.3,
+  ylab = &quot;CNA burden&quot;
+)</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-156-1.png" width="3600" style="display: block; margin: auto;" /></p>
+</div>
+</div>
 <div id="cns-validation" class="section level2">
 <h2>CNS validation</h2>
 <div id="tcga-cns" class="section level3">
@@ -2620,7 +2656,7 @@ saveRDS(SP_TCGA, file = &quot;../data/TCGA/tcga_cn_solutions_sp.rds&quot;)</code
   right_name = &quot;Mean Cosine Distance&quot;,
   highlight = 20
 )</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-156-1.png" width="2700" style="display: block; margin: auto;" /> We pick up 20 signatures for TCGA data due to its relatively high stability and low distance.</p>
+<p><img src="index_files/figure-html/unnamed-chunk-159-1.png" width="2700" style="display: block; margin: auto;" /> We pick up 20 signatures for TCGA data due to its relatively high stability and low distance.</p>
 <pre class="r"><code>tcga_sigs &lt;- SP_TCGA$solution_list$S20
 saveRDS(tcga_sigs, file = &quot;../data/TCGA/tcga_cn_sigs_CN176_signature.rds&quot;)</code></pre>
 <p>Let’s go further check the similarities between PCAWG CNS and TCGA CNS.</p>
@@ -2629,7 +2665,7 @@ tcga_sigs &lt;- readRDS(&quot;../data/TCGA/tcga_cn_sigs_CN176_signature.rds&quot
 <p>Run similarity analysis.</p>
 <pre class="r"><code>sim &lt;- get_sig_similarity(pcawg_sigs, tcga_sigs)</code></pre>
 <pre class="r"><code>pheatmap::pheatmap(sim$similarity, cluster_rows = FALSE, cluster_cols = FALSE, display_numbers = TRUE)</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-160-1.png" width="2400" style="display: block; margin: auto;" /> From the pheatmap, we can see that:</p>
+<p><img src="index_files/figure-html/unnamed-chunk-163-1.png" width="2400" style="display: block; margin: auto;" /> From the pheatmap, we can see that:</p>
 <ul>
 <li>Most of PCAWG copy number signatures can be matched to TCGA copy number signatures with <code>&gt;0.8</code> similarity.</li>
 <li>CNS4, CNS5, CNS6 and CNS14 from PCAWG has lower similarity to TCGA CNS. This indicates either they are not shared signatures or they have relatively different patterns in this two dataset.</li>
@@ -2874,7 +2910,7 @@ attr(,&quot;seed&quot;)
 15 16 -0.6788359 0.1930057 0.8710570 0.3189946
  [ reached &#39;max&#39; / getOption(&quot;max.print&quot;) -- omitted 14 rows ]</code></pre>
 <pre class="r"><code>plot(cls$sil_summary$k, cls$sil_summary$mean, type = &quot;b&quot;, xlab = &quot;Total signatures&quot;, ylab = &quot;Mean silhouette&quot;)</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-165-1.png" width="2400" style="display: block; margin: auto;" /></p>
+<p><img src="index_files/figure-html/unnamed-chunk-168-1.png" width="2400" style="display: block; margin: auto;" /></p>
 <p>In general, the mean silhouette is not high. But we can still see that <code>20</code> or <code>22</code> may be suitable. <code>k=5</code> is not considered because it is too small to explain our data.</p>
 <p>Signature similarity is the key parameter in our study. Here we use an average cosine distance <code>0.4</code> (i.e. signatures with similarity <code>&gt;=0.6</code> could be clustered as one) as a cutoff:</p>
 <pre class="r"><code>factoextra::fviz_dend(cls$cluster,
@@ -2883,7 +2919,7 @@ attr(,&quot;seed&quot;)
   xlab = &quot;&quot;,
   ylab = &quot;1 - cosine similarity, average linkage&quot;
 )</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-166-1.png" width="4500" style="display: block; margin: auto;" /></p>
+<p><img src="index_files/figure-html/unnamed-chunk-169-1.png" width="4500" style="display: block; margin: auto;" /></p>
 <p>Check the cluster number:</p>
 <pre class="r"><code>cls_tree &lt;- cutree(cls$cluster, h = 0.4)
 table(cls_tree)</code></pre>
@@ -2901,7 +2937,7 @@ table(cls_tree)</code></pre>
 sim_mat &lt;- sim1$similarity
 colnames(sim_mat) &lt;- gsub(&quot;Sig&quot;, &quot;Group-Sig&quot;, colnames(sim_mat))
 pheatmap::pheatmap(sim_mat, cluster_rows = FALSE, cluster_cols = FALSE, display_numbers = TRUE)</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-170-1.png" width="2400" style="display: block; margin: auto;" /> We can see that most of PCAWG global signatures can be properly matched to group signatures. <code>CNS2</code> 和 <code>CNS13</code> seems not stable and tend to be easier affected by extraction procedure.</p>
+<p><img src="index_files/figure-html/unnamed-chunk-173-1.png" width="2400" style="display: block; margin: auto;" /> We can see that most of PCAWG global signatures can be properly matched to group signatures. <code>CNS2</code> 和 <code>CNS13</code> seems not stable and tend to be easier affected by extraction procedure.</p>
 <p>Also, we observe almost all group signatures on the right side can be assigned to a PCAWG global signatures, although most of them have relatively low similarity. This data indicate the signatures may be redundant.</p>
 <p>Let’s check the similarity between group signatures and best matched global signatures.</p>
 <pre class="r"><code>mc &lt;- apply(sim1$similarity, 2, which.max)
@@ -2928,7 +2964,7 @@ mc_sim</code></pre>
   title = &quot;Cosine similarity between signatures in each group&quot;
 ) +
   ggpubr::rotate_x_text()</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-173-1.png" width="2400" style="display: block; margin: auto;" /></p>
+<p><img src="index_files/figure-html/unnamed-chunk-176-1.png" width="2400" style="display: block; margin: auto;" /></p>
 <p>Add labels:</p>
 <pre class="r"><code>ggpubr::ggboxplot(grp_sigs$sim_sig_to_grp_mean, # %&gt;%
   # dplyr::filter(grp_sig %in% select_sigs),
@@ -2938,7 +2974,7 @@ mc_sim</code></pre>
 ) +
   ggpubr::rotate_x_text() +
   scale_x_discrete(labels = mc_df$label)</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-174-1.png" width="2400" style="display: block; margin: auto;" /></p>
+<p><img src="index_files/figure-html/unnamed-chunk-177-1.png" width="2400" style="display: block; margin: auto;" /></p>
 <blockquote>
 <p>Here y axis indicates cosine similarity between the averaging signature of each group and the individual signatures that belong to each group.</p>
 </blockquote>
@@ -2959,7 +2995,7 @@ mc_sim</code></pre>
  collate  en_US.UTF-8                 
  ctype    en_US.UTF-8                 
  tz       Asia/Shanghai               
- date     2021-01-13                  
+ date     2021-01-14                  
 
 ─ Packages ───────────────────────────────────────────────────────────────────
  package        * version    date       lib source          

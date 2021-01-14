@@ -33,6 +33,42 @@ Sys.setenv("LANGUAGE" = "EN")
 
 In this part, we will add some supplementary analyses.
 
+## Copy number variation distribution
+
+```{r}
+library(sigminer)
+pcawg_samp_info <- readRDS(file = "../data/pcawg_sample_tidy_info.rds")
+```
+
+### CNV number
+
+```{r fig.width=12, fig.height=6}
+show_group_distribution(
+  pcawg_samp_info,
+  gvar = "cancer_type",
+  dvar = "n_of_cnv",
+  order_by_fun = FALSE,
+  g_angle = 90,
+  point_size = 0.3,
+  ylab = "Number of CNV"
+)
+```
+
+
+### CNA burden
+
+```{r fig.width=12, fig.height=6}
+show_group_distribution(
+  pcawg_samp_info,
+  gvar = "cancer_type",
+  dvar = "cna_burden",
+  order_by_fun = FALSE,
+  g_angle = 90,
+  point_size = 0.3,
+  ylab = "CNA burden"
+)
+```
+
 ## CNS validation
 
 ### TCGA CNS
