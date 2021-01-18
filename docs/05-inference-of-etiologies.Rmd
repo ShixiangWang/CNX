@@ -104,7 +104,46 @@ For relative signature activity.
 show_cor(dplyr::select(df_merged, starts_with("Rel_CNS")) %>% 
            dplyr::rename_all(~sub("Rel_", "", .)))
 ```
+
 We can find that most the signatures are correlated. Therefore, it will add difficulty in understanding etiologies by association analysis.
+
+#### Visualize with partial correlation network
+
+For absolute signature activity.
+
+```{r fig.width=8, fig.height=7}
+library(see)
+library(ggraph)
+library(correlation)
+
+cc <- dplyr::select(df_merged, starts_with("CNS")) %>% 
+  correlation(partial = TRUE, method = "spearman") %>% 
+  dplyr::rename(r = rho)
+plot(cc)
+```
+
+The relative activity cannot use partial correlation.
+
+#### Visualize with full correlation network
+
+Absolute:
+
+```{r fig.width=8, fig.height=7}
+cc <- dplyr::select(df_merged, starts_with("CNS")) %>% 
+  correlation(partial = FALSE, method = "spearman") %>% 
+  dplyr::rename(r = rho)
+plot(cc)
+```
+
+Relative:
+
+```{r fig.width=8, fig.height=7}
+cc <- dplyr::select(df_merged, starts_with("Rel_CNS")) %>% 
+           dplyr::rename_all(~sub("Rel_", "", .)) %>% 
+  correlation(partial = FALSE, method = "spearman") %>% 
+  dplyr::rename(r = rho)
+plot(cc)
+```
 
 ### Copy number signatures and COSMIC signatures
 
@@ -211,6 +250,32 @@ p_cn_others <- show_cor(
 p_cn_others
 ```
 
+Visualize it with partial correlation network one by one.
+
+```{r fig.width=6, fig.height=5}
+var_names <- colnames(df_merged)[c(30:44, 125:127)]
+df_mut <- df_merged[, var_names] %>% 
+  dplyr::rename(
+    Telomere_Content = `Telomere_Content(log2)`
+  )
+var_names <- colnames(df_mut)
+
+#dir.create("../output/cor_network")
+
+for (i in var_names) {
+  #pdf(file.path("../output/cor_network", paste0(i, ".pdf")), width = 6, height = 5)
+  print(i)
+  correlation(
+    df_mut[, i, drop = FALSE],
+    df_merged[, colnames(df_merged)[2:15]],
+    partial = TRUE, method = "spearman") %>% 
+    dplyr::rename(r = rho) %>% 
+    plot() -> p
+  print(p)
+  #dev.off()
+}
+```
+
 #### Association between CNS and discrete variables
 
 Here we directly compare the CNS activity between different discrete variable groups.
@@ -263,6 +328,8 @@ ggboxplot(
   stat_compare_means(aes(group = WGD_Status), label = "p.signif") +
   rotate_x_text()
 ```
+CNS3 and CNS9 are highly associated with WGD.
+
 For HRD.
 
 ```{r}
@@ -277,6 +344,9 @@ ggboxplot(
   stat_compare_means(aes(group = HRD_Status), label = "p.signif") +
   rotate_x_text()
 ```
+CNS14 is highly associated with HRD status.
+
+See supplementary analysis for HRD and WGD prediction analysis.
 
 For tumor stage.
 
