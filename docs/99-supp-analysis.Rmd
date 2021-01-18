@@ -12,6 +12,10 @@ link-citations: yes
 
 
 ```{r setup-99, include=FALSE}
+library(sigminer)
+library(ggplot2)
+library(ggpubr)
+
 library(knitr)
 library(rmdformats)
 ## Global options
@@ -32,42 +36,6 @@ Sys.setenv("LANGUAGE" = "EN")
 ```
 
 In this part, we will add some supplementary analyses.
-
-## Copy number variation distribution
-
-```{r}
-library(sigminer)
-pcawg_samp_info <- readRDS(file = "../data/pcawg_sample_tidy_info.rds")
-```
-
-### CNV number
-
-```{r fig.width=12, fig.height=6}
-show_group_distribution(
-  pcawg_samp_info,
-  gvar = "cancer_type",
-  dvar = "n_of_cnv",
-  order_by_fun = FALSE,
-  g_angle = 90,
-  point_size = 0.3,
-  ylab = "Number of CNV"
-)
-```
-
-
-### CNA burden
-
-```{r fig.width=12, fig.height=6}
-show_group_distribution(
-  pcawg_samp_info,
-  gvar = "cancer_type",
-  dvar = "cna_burden",
-  order_by_fun = FALSE,
-  g_angle = 90,
-  point_size = 0.3,
-  ylab = "CNA burden"
-)
-```
 
 ## CNS validation
 
@@ -558,4 +526,445 @@ ggpubr::ggboxplot(grp_sigs$sim_sig_to_grp_mean, #%>%
 ```
 
 > Here y axis indicates cosine similarity between the averaging signature of each group and the individual signatures that belong to each group.
+
+## PCAWG and TCGA Pan-Cancer copy number alteration profile and analysis
+
+```{r}
+library(sigminer)
+
+pcawg_cn <- readRDS("../data/pcawg_cn_obj.rds")
+pcawg_type <- readRDS("../data/pcawg_type_info.rds")
+pcawg_sbs <- data.table::fread("../data/PCAWG/PCAWG_sigProfiler_SBS_signatures_in_samples.csv")
+pcawg_sbs <- pcawg_sbs %>% 
+  dplyr::mutate(
+    sbs = rowSums(pcawg_sbs[, grepl("SBS", colnames(pcawg_sbs)), with = FALSE], na.rm = TRUE)
+  ) %>% 
+  dplyr::rename(
+    sample = `Sample Names`
+  ) %>% 
+  dplyr::select(sample, sbs)
+pcawg_ids <- data.table::fread("../data/PCAWG/PCAWG_SigProfiler_ID_signatures_in_samples.csv")
+pcawg_ids <- pcawg_ids %>% 
+  dplyr::mutate(
+    ids = rowSums(pcawg_ids[, grepl("ID", colnames(pcawg_ids)), with = FALSE], na.rm = TRUE)
+  ) %>% 
+  dplyr::rename(
+    sample = `Sample Names`
+  ) %>% 
+  dplyr::select(sample, ids)
+
+
+pcawg_summary <- purrr::reduce(
+  list(
+    pcawg_cn@summary.per.sample,
+    pcawg_sbs,
+    pcawg_ids,
+    pcawg_type
+  ), dplyr::left_join, by = "sample")
+
+tcga_cn <- readRDS("../data/TCGA/tcga_cn_obj.rds")
+tcga_type <- readRDS("../data/TCGA/TCGA_type_info.rds")
+tcga_sbs <- data.table::fread("../data/PCAWG/TCGA_WES_sigProfiler_SBS_signatures_in_samples.csv")
+tcga_sbs <- tcga_sbs %>% 
+  dplyr::mutate(
+    sbs = rowSums(tcga_sbs[, grepl("SBS", colnames(tcga_sbs)), with = FALSE], na.rm = TRUE)
+  ) %>% 
+  dplyr::rename(
+    sample = `Sample Names`
+  ) %>% 
+  dplyr::mutate(sample = substr(sample, 1, 15)) %>% 
+  dplyr::select(sample, sbs)
+tcga_ids <- data.table::fread("../data/PCAWG/TCGA_WES_sigProfiler_ID_signatures_in_samples.csv")
+tcga_ids <- tcga_ids %>% 
+  dplyr::mutate(
+    ids = rowSums(tcga_ids[, grepl("ID", colnames(tcga_ids)), with = FALSE], na.rm = TRUE)
+  ) %>% 
+  dplyr::rename(
+    sample = `Sample Names`
+  ) %>% 
+  dplyr::mutate(
+    sample = substr(sample, 1, 15)
+  ) %>% 
+  dplyr::select(sample, ids)
+
+tcga_summary <- purrr::reduce(
+  list(
+    tcga_cn@summary.per.sample,
+    tcga_sbs,
+    tcga_ids,
+    tcga_type
+  ), dplyr::left_join, by = "sample")
+```
+
+### Summary
+
+#### SCNA length distribution
+
+PCAWG:
+
+```{r fig.width=6, fig.height=4}
+show_cn_distribution(pcawg_cn)
+```
+
+TCGA:
+
+```{r fig.width=6, fig.height=4}
+show_cn_distribution(tcga_cn)
+```
+
+#### SCNA chromosome distribution
+
+PCAWG:
+
+```{r fig.width=8, fig.height=4}
+show_cn_distribution(pcawg_cn, mode = "cd", fill = TRUE)
+```
+
+TCGA:
+
+```{r fig.width=8, fig.height=4}
+show_cn_distribution(tcga_cn, mode = "cd", fill = TRUE)
+```
+
+#### SCNA variation frequency
+
+PCAWG:
+
+```{r fig.width=8, fig.height=4}
+show_cn_group_profile(pcawg_cn)
+```
+
+TCGA:
+
+```{r fig.width=8, fig.height=4}
+show_cn_group_profile(tcga_cn)
+```
+
+### Summary data analysis
+
+```{r}
+library(ggpubr)
+```
+
+#### Distribution
+
+```{r}
+data <- pcawg_summary %>% 
+  dplyr::select(sample, n_of_cnv, cna_burden, sbs, ids) %>% 
+  dplyr::mutate(
+    n_of_cnv = log10(n_of_cnv + 1),
+    sbs = log10(sbs + 1),
+    ids = log10(ids + 1)
+  ) %>% 
+  setNames(c("sample", "Total CNVs (log10)", "CNA burden", "Total SNVs (log10)", "Total Indels (log10)")) %>% 
+  tidyr::pivot_longer(colnames(.)[-1])
+
+ggplot(data, aes(x = name, y = value)) +
+  geom_violin() +
+  geom_boxplot(width = 0.1, fill = "gold") +
+  facet_wrap(~name, scales = "free") +
+  labs(x = NULL, y = NULL) +
+  theme(
+    axis.text.x = element_blank(),
+    axis.ticks.x = element_blank()
+  )
+```
+
+```{r}
+library(ggridges)
+
+ggplot(data, aes(x = value, y = name, fill = name)) +
+  geom_density_ridges() +
+  labs(x = NULL, y = NULL) +
+  theme_ridges() +
+  theme(legend.position = "none")
+```
+
+
+```{r}
+data <- tcga_summary %>% 
+  dplyr::select(sample, n_of_cnv, cna_burden, sbs, ids) %>% 
+  dplyr::mutate(
+    n_of_cnv = log10(n_of_cnv + 1),
+    sbs = log10(sbs + 1),
+    ids = log10(ids + 1)
+  ) %>% 
+  setNames(c("sample", "Total CNVs (log10)", "CNA burden", "Total SNVs (log10)", "Total Indels (log10)")) %>% 
+  tidyr::pivot_longer(colnames(.)[-1])
+
+ggplot(data, aes(x = name, y = value)) +
+  geom_violin() +
+  geom_boxplot(width = 0.1, fill = "gold") +
+  facet_wrap(~name, scales = "free") +
+  labs(x = NULL, y = NULL) +
+  theme(
+    axis.text.x = element_blank(),
+    axis.ticks.x = element_blank()
+  )
+```
+
+```{r}
+ggplot(data, aes(x = value, y = name, fill = name)) +
+  geom_density_ridges() +
+  labs(x = NULL, y = NULL) +
+  theme_ridges() +
+  theme(legend.position = "none")
+```
+
+#### Correlation
+
+PCAWG:
+
+```{r}
+data <- pcawg_summary %>% 
+  dplyr::select(n_of_cnv, cna_burden, sbs, ids) %>% 
+  dplyr::mutate(
+    n_of_cnv = log10(n_of_cnv + 1),
+    sbs = log10(sbs + 1),
+    ids = log10(ids + 1)
+  ) %>% 
+  setNames(c("Total CNVs (log10)", "CNA burden", "Total SNVs (log10)", "Total Indels (log10)"))
+```
+
+```{r}
+show_cor(data)
+```
+Show some detail scatter plots.
+
+```{r}
+library(ggpubr)
+
+ggscatter(data, x = "Total CNVs (log10)", y = "Total SNVs (log10)",
+   color = "black", shape = 21, size = 1, # Points color, shape and size
+   add = "reg.line",  # Add regressin line
+   add.params = list(color = "blue", fill = "lightgray"), # Customize reg. line
+   conf.int = TRUE, # Add confidence interval
+   cor.coef = TRUE, # Add correlation coefficient. see ?stat_cor
+   cor.coeff.args = list(method = "spearman", label.x = 1.5, label.sep = "\n")
+   )
+
+```
+
+```{r}
+ggscatter(data, x = "Total CNVs (log10)", y = "Total Indels (log10)",
+   color = "black", shape = 21, size = 1, # Points color, shape and size
+   add = "reg.line",  # Add regressin line
+   add.params = list(color = "blue", fill = "lightgray"), # Customize reg. line
+   conf.int = TRUE, # Add confidence interval
+   cor.coef = TRUE, # Add correlation coefficient. see ?stat_cor
+   cor.coeff.args = list(method = "spearman", label.x = 2.5, label.sep = "\n")
+   )
+
+```
+
+
+```{r}
+data <- tcga_summary %>% 
+  dplyr::select(n_of_cnv, cna_burden, sbs, ids) %>% 
+  dplyr::mutate(
+    n_of_cnv = log10(n_of_cnv + 1),
+    sbs = log10(sbs + 1),
+    ids = log10(ids + 1)
+  ) %>% 
+  setNames(c("Total CNVs (log10)", "CNA burden", "Total SNVs (log10)", "Total Indels (log10)"))
+```
+
+```{r}
+show_cor(data)
+```
+Show some detail scatter plots.
+
+```{r}
+ggscatter(data, x = "Total CNVs (log10)", y = "Total SNVs (log10)",
+   color = "black", shape = 21, size = 1, # Points color, shape and size
+   add = "reg.line",  # Add regressin line
+   add.params = list(color = "blue", fill = "lightgray"), # Customize reg. line
+   conf.int = TRUE, # Add confidence interval
+   cor.coef = TRUE, # Add correlation coefficient. see ?stat_cor
+   cor.coeff.args = list(method = "spearman", label.x = 0.5, label.sep = "\n")
+   )
+
+```
+
+```{r}
+ggscatter(data, x = "Total CNVs (log10)", y = "Total Indels (log10)",
+   color = "black", shape = 21, size = 1, # Points color, shape and size
+   add = "reg.line",  # Add regressin line
+   add.params = list(color = "blue", fill = "lightgray"), # Customize reg. line
+   conf.int = TRUE, # Add confidence interval
+   cor.coef = TRUE, # Add correlation coefficient. see ?stat_cor
+   cor.coeff.args = list(method = "spearman", label.x = 0.5, label.sep = "\n")
+   )
+
+```
+
+### Cancer type 
+
+
+#### PCAWG CNV number
+
+```{r fig.width=12, fig.height=6}
+show_group_distribution(
+  pcawg_summary,
+  gvar = "cancer_type",
+  dvar = "n_of_cnv",
+  order_by_fun = FALSE,
+  g_angle = 90,
+  point_size = 0.3,
+  ylab = "Number of CNV"
+)
+```
+
+
+#### PCAWG CNA burden
+
+```{r fig.width=12, fig.height=6}
+show_group_distribution(
+  pcawg_summary,
+  gvar = "cancer_type",
+  dvar = "cna_burden",
+  order_by_fun = FALSE,
+  g_angle = 90,
+  point_size = 0.3,
+  ylab = "CNA burden"
+)
+```
+
+#### PCAWG SBS number
+
+```{r fig.width=12, fig.height=6}
+show_group_distribution(
+  pcawg_summary %>% dplyr::mutate(sbs = log10(sbs + 1)),
+  gvar = "cancer_type",
+  dvar = "sbs",
+  order_by_fun = FALSE,
+  g_angle = 90,
+  point_size = 0.3,
+  ylab = "Number of SBS (log10)"
+)
+```
+
+#### PCAWG Indel number
+
+```{r fig.width=12, fig.height=6}
+show_group_distribution(
+  pcawg_summary %>% dplyr::mutate(ids = log10(ids + 1)),
+  gvar = "cancer_type",
+  dvar = "ids",
+  order_by_fun = FALSE,
+  g_angle = 90,
+  point_size = 0.3,
+  ylab = "Number of Indel (log10)"
+)
+```
+
+
+
+#### TCGA CNV number
+
+```{r fig.width=15, fig.height=6}
+show_group_distribution(
+  tcga_summary %>% dplyr::filter(!is.na(cancer_type)),
+  gvar = "cancer_type",
+  dvar = "n_of_cnv",
+  order_by_fun = FALSE,
+  g_angle = 90,
+  point_size = 0.3,
+  ylab = "Number of CNV"
+)
+```
+
+
+#### TCGA CNA burden
+
+```{r fig.width=15, fig.height=6}
+show_group_distribution(
+  tcga_summary %>% dplyr::filter(!is.na(cancer_type)),
+  gvar = "cancer_type",
+  dvar = "cna_burden",
+  order_by_fun = FALSE,
+  g_angle = 90,
+  point_size = 0.3,
+  ylab = "CNA burden"
+)
+```
+
+#### TCGA SBS number
+
+```{r fig.width=15, fig.height=6}
+show_group_distribution(
+  tcga_summary %>% dplyr::filter(!is.na(cancer_type)) %>% 
+    dplyr::mutate(sbs = log10(sbs + 1)),
+  gvar = "cancer_type",
+  dvar = "sbs",
+  order_by_fun = FALSE,
+  g_angle = 90,
+  point_size = 0.3,
+  ylab = "Number of SBS (log10)"
+)
+```
+
+#### TCGA Indel number
+
+```{r fig.width=15, fig.height=6}
+show_group_distribution(
+  tcga_summary %>% dplyr::filter(!is.na(cancer_type)) %>% 
+    dplyr::mutate(
+      ids = ifelse(is.na(ids), 0, ids),
+      ids = log10(ids + 1)),
+  gvar = "cancer_type",
+  dvar = "ids",
+  order_by_fun = FALSE,
+  g_angle = 90,
+  point_size = 0.3,
+  ylab = "Number of Indel (log10)"
+)
+```
+
+### Variation enrichment in cancer types
+
+```{r}
+enrich_pcawg <- group_enrichment(
+  pcawg_summary %>% 
+    dplyr::rename(
+      `CNA burden` = cna_burden,
+      `Total CNVs` = n_of_cnv,
+      `Total SNVs` = sbs,
+      `Total Indels` = ids
+    ),
+  grp_vars = "cancer_type",
+  enrich_vars = c("CNA burden", "Total CNVs", "Total SNVs", "Total Indels"),
+  co_method = "wilcox.test"
+)
+```
+
+```{r fig.height=8, fig.width=5}
+p <- show_group_enrichment(enrich_pcawg, cut_p_value = TRUE, return_list = TRUE)
+p$cancer_type + labs(x = NULL, y = NULL) + ggpubr::rotate_x_text(angle = 45)
+```
+
+
+```{r}
+enrich_tcga <- group_enrichment(
+  tcga_summary %>% 
+    dplyr::rename(
+      `CNA burden` = cna_burden,
+      `Total CNVs` = n_of_cnv,
+      `Total SNVs` = sbs,
+      `Total Indels` = ids
+    ),
+  grp_vars = "cancer_type",
+  enrich_vars = c("CNA burden", "Total CNVs", "Total SNVs", "Total Indels"),
+  co_method = "wilcox.test"
+)
+```
+
+```{r fig.height=8, fig.width=5}
+p <- show_group_enrichment(enrich_tcga, cut_p_value = TRUE, return_list = TRUE)
+p$cancer_type + labs(x = NULL, y = NULL) + ggpubr::rotate_x_text(angle = 45)
+```
+
+```{r include=FALSE}
+rm(list = ls()); gc()
+```
 
