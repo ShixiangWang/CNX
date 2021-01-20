@@ -160,6 +160,53 @@ p_cosmic <- show_cor(
 p_cosmic
 ```
 
+Just show specified signatures:
+
+```{r fig.height=8, fig.width=8}
+p_cosmic2 <- show_cor(
+  data = df_merged,
+  x_vars = colnames(df_merged)[grepl("^CNS", colnames(df_merged))],
+  y_vars = c("SBS1", "SBS2", "SBS3", "SBS5", "SBS13", "SBS17a", "SBS17b",
+             "SBS18", "DBS2", "DBS4", "DBS6", "ID1", "ID2", "ID6", "ID8",
+             "ID12", "ID14"),
+  hc_order = FALSE,
+  test = FALSE,
+  lab_size = 2
+)
+
+p_cosmic2
+```
+
+
+Visualize signature with similar trends with network.
+
+```{r fig.width=8, fig.height=7}
+siglist <- list(
+  c("SBS1", "SBS5"),
+  c("SBS2", "SBS13"),
+  c("SBS3", "ID6"),
+  c("SBS18"),
+  c("DBS2"),
+  c("ID1", "ID2"),
+  c("ID8"),
+  c("SBS17a", "SBS17b"),
+  c("DBS4"),
+  c("DBS6"),
+  c("ID12"),
+  c("ID14")
+)
+
+for (i in siglist) {
+  cc <- correlation(
+    dplyr::select(df_merged, starts_with("CNS")),
+    dplyr::select_at(df_merged, i),
+    partial = FALSE, method = "spearman") %>% 
+    dplyr::rename(r = rho) %>% 
+    plot()
+  print(cc)
+}
+```
+
 
 ### Signature clustering
 
@@ -250,7 +297,7 @@ p_cn_others <- show_cor(
 p_cn_others
 ```
 
-Visualize it with partial correlation network one by one.
+Visualize it with correlation network one by one.
 
 ```{r fig.width=6, fig.height=5}
 var_names <- colnames(df_merged)[c(30:44, 125:127)]
@@ -268,7 +315,7 @@ for (i in var_names) {
   correlation(
     df_mut[, i, drop = FALSE],
     df_merged[, colnames(df_merged)[2:15]],
-    partial = TRUE, method = "spearman") %>% 
+    partial = FALSE, method = "spearman") %>% 
     dplyr::rename(r = rho) %>% 
     plot() -> p
   print(p)

@@ -7,7 +7,7 @@
 
         <meta name="author" content="Shixiang Wang, Ziyu Tao, Tao Wu, Huimin Li, Xue-Song Liu (Corresponding author)" />
     
-        <meta name="date" content="2021-01-18" />
+        <meta name="date" content="2021-01-19" />
     
     <title>Pan-Cancer Copy Number Signature Identification and Analysis</title>
 
@@ -234,7 +234,7 @@
       <p class="authors">
            <span class="glyphicon glyphicon-user"></span> Shixiang Wang, Ziyu Tao, Tao Wu, Huimin Li, Xue-Song Liu (Corresponding author)
       </p>
-         <p class="date"><span class="glyphicon glyphicon-calendar"></span> 2021-01-18</p>
+         <p class="date"><span class="glyphicon glyphicon-calendar"></span> 2021-01-19</p>
            
 
    
@@ -2145,6 +2145,49 @@ plot(cc)</code></pre>
 
 p_cosmic</code></pre>
 <p><img src="index_files/figure-html/unnamed-chunk-133-1.png" width="2400" style="display: block; margin: auto;" /></p>
+<p>Just show specified signatures:</p>
+<pre class="r"><code>p_cosmic2 &lt;- show_cor(
+  data = df_merged,
+  x_vars = colnames(df_merged)[grepl(&quot;^CNS&quot;, colnames(df_merged))],
+  y_vars = c(
+    &quot;SBS1&quot;, &quot;SBS2&quot;, &quot;SBS3&quot;, &quot;SBS5&quot;, &quot;SBS13&quot;, &quot;SBS17a&quot;, &quot;SBS17b&quot;,
+    &quot;SBS18&quot;, &quot;DBS2&quot;, &quot;DBS4&quot;, &quot;DBS6&quot;, &quot;ID1&quot;, &quot;ID2&quot;, &quot;ID6&quot;, &quot;ID8&quot;,
+    &quot;ID12&quot;, &quot;ID14&quot;
+  ),
+  hc_order = FALSE,
+  test = FALSE,
+  lab_size = 2
+)
+
+p_cosmic2</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-134-1.png" width="2400" style="display: block; margin: auto;" /></p>
+<p>Visualize signature with similar trends with network.</p>
+<pre class="r"><code>siglist &lt;- list(
+  c(&quot;SBS1&quot;, &quot;SBS5&quot;),
+  c(&quot;SBS2&quot;, &quot;SBS13&quot;),
+  c(&quot;SBS3&quot;, &quot;ID6&quot;),
+  c(&quot;SBS18&quot;),
+  c(&quot;DBS2&quot;),
+  c(&quot;ID1&quot;, &quot;ID2&quot;),
+  c(&quot;ID8&quot;),
+  c(&quot;SBS17a&quot;, &quot;SBS17b&quot;),
+  c(&quot;DBS4&quot;),
+  c(&quot;DBS6&quot;),
+  c(&quot;ID12&quot;),
+  c(&quot;ID14&quot;)
+)
+
+for (i in siglist) {
+  cc &lt;- correlation(
+    dplyr::select(df_merged, starts_with(&quot;CNS&quot;)),
+    dplyr::select_at(df_merged, i),
+    partial = FALSE, method = &quot;spearman&quot;
+  ) %&gt;%
+    dplyr::rename(r = rho) %&gt;%
+    plot()
+  print(cc)
+}</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-135-1.png" width="2400" style="display: block; margin: auto;" /><img src="index_files/figure-html/unnamed-chunk-135-2.png" width="2400" style="display: block; margin: auto;" /><img src="index_files/figure-html/unnamed-chunk-135-3.png" width="2400" style="display: block; margin: auto;" /><img src="index_files/figure-html/unnamed-chunk-135-4.png" width="2400" style="display: block; margin: auto;" /><img src="index_files/figure-html/unnamed-chunk-135-5.png" width="2400" style="display: block; margin: auto;" /><img src="index_files/figure-html/unnamed-chunk-135-6.png" width="2400" style="display: block; margin: auto;" /><img src="index_files/figure-html/unnamed-chunk-135-7.png" width="2400" style="display: block; margin: auto;" /><img src="index_files/figure-html/unnamed-chunk-135-8.png" width="2400" style="display: block; margin: auto;" /><img src="index_files/figure-html/unnamed-chunk-135-9.png" width="2400" style="display: block; margin: auto;" /><img src="index_files/figure-html/unnamed-chunk-135-10.png" width="2400" style="display: block; margin: auto;" /><img src="index_files/figure-html/unnamed-chunk-135-11.png" width="2400" style="display: block; margin: auto;" /><img src="index_files/figure-html/unnamed-chunk-135-12.png" width="2400" style="display: block; margin: auto;" /></p>
 </div>
 <div id="signature-clustering" class="section level3">
 <h3>Signature clustering</h3>
@@ -2168,17 +2211,17 @@ all_dist[is.na(all_dist)] &lt;- 2</code></pre>
 <pre class="r"><code>dist_cn &lt;- as.dist(all_dist[1:14, 1:14])
 hc_cn &lt;- hclust(dist_cn)
 plot(hc_cn)</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-136-1.png" width="2400" style="display: block; margin: auto;" /></p>
+<p><img src="index_files/figure-html/unnamed-chunk-138-1.png" width="2400" style="display: block; margin: auto;" /></p>
 <p>Roughly there is 3 clusters.</p>
 <pre class="r"><code>factoextra::fviz_dend(hc_cn, k = 3, rect = T)</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-137-1.png" width="2400" style="display: block; margin: auto;" /></p>
+<p><img src="index_files/figure-html/unnamed-chunk-139-1.png" width="2400" style="display: block; margin: auto;" /></p>
 </div>
 <div id="all-signatures" class="section level4">
 <h4>All signatures</h4>
 <pre class="r"><code>dist_all &lt;- as.dist(all_dist)
 hc_all &lt;- hclust(dist_all)
 plot(hc_all)</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-138-1.png" width="3600" style="display: block; margin: auto;" /> Here we manually set 10 clusters for better visualization.</p>
+<p><img src="index_files/figure-html/unnamed-chunk-140-1.png" width="3600" style="display: block; margin: auto;" /> Here we manually set 10 clusters for better visualization.</p>
 <pre class="r"><code>factoextra::fviz_dend(
   hc_all,
   k = 10,
@@ -2188,7 +2231,7 @@ plot(hc_all)</code></pre>
   theme(
     panel.border = element_blank()
   )</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-139-1.png" width="2400" style="display: block; margin: auto;" /></p>
+<p><img src="index_files/figure-html/unnamed-chunk-141-1.png" width="2400" style="display: block; margin: auto;" /></p>
 <pre class="r"><code># theme(
 #   panel.background = element_rect(fill = &quot;transparent&quot;, colour = NA),
 #   plot.background = element_rect(fill = &quot;transparent&quot;, colour = NA),
@@ -2218,8 +2261,8 @@ plot(hc_all)</code></pre>
   lab_size = 3
 )
 p_cn_others</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-140-1.png" width="2700" style="display: block; margin: auto;" /></p>
-<p>Visualize it with partial correlation network one by one.</p>
+<p><img src="index_files/figure-html/unnamed-chunk-142-1.png" width="2700" style="display: block; margin: auto;" /></p>
+<p>Visualize it with correlation network one by one.</p>
 <pre class="r"><code>var_names &lt;- colnames(df_merged)[c(30:44, 125:127)]
 df_mut &lt;- df_merged[, var_names] %&gt;%
   dplyr::rename(
@@ -2235,7 +2278,7 @@ for (i in var_names) {
   correlation(
     df_mut[, i, drop = FALSE],
     df_merged[, colnames(df_merged)[2:15]],
-    partial = TRUE, method = &quot;spearman&quot;
+    partial = FALSE, method = &quot;spearman&quot;
   ) %&gt;%
     dplyr::rename(r = rho) %&gt;%
     plot() -&gt; p
@@ -2243,41 +2286,41 @@ for (i in var_names) {
   # dev.off()
 }</code></pre>
 <pre><code>[1] &quot;Age&quot;</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-141-1.png" width="1800" style="display: block; margin: auto;" /></p>
+<p><img src="index_files/figure-html/unnamed-chunk-143-1.png" width="1800" style="display: block; margin: auto;" /></p>
 <pre><code>[1] &quot;AMPs&quot;</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-141-2.png" width="1800" style="display: block; margin: auto;" /></p>
+<p><img src="index_files/figure-html/unnamed-chunk-143-2.png" width="1800" style="display: block; margin: auto;" /></p>
 <pre><code>[1] &quot;DELs&quot;</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-141-3.png" width="1800" style="display: block; margin: auto;" /></p>
+<p><img src="index_files/figure-html/unnamed-chunk-143-3.png" width="1800" style="display: block; margin: auto;" /></p>
 <pre><code>[1] &quot;Affected_Chrs&quot;</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-141-4.png" width="1800" style="display: block; margin: auto;" /></p>
+<p><img src="index_files/figure-html/unnamed-chunk-143-4.png" width="1800" style="display: block; margin: auto;" /></p>
 <pre><code>[1] &quot;CNA_Burden&quot;</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-141-5.png" width="1800" style="display: block; margin: auto;" /></p>
+<p><img src="index_files/figure-html/unnamed-chunk-143-5.png" width="1800" style="display: block; margin: auto;" /></p>
 <pre><code>[1] &quot;Purity&quot;</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-141-6.png" width="1800" style="display: block; margin: auto;" /></p>
+<p><img src="index_files/figure-html/unnamed-chunk-143-6.png" width="1800" style="display: block; margin: auto;" /></p>
 <pre><code>[1] &quot;Ploidy&quot;</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-141-7.png" width="1800" style="display: block; margin: auto;" /></p>
+<p><img src="index_files/figure-html/unnamed-chunk-143-7.png" width="1800" style="display: block; margin: auto;" /></p>
 <pre><code>[1] &quot;LOHs&quot;</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-141-8.png" width="1800" style="display: block; margin: auto;" /></p>
+<p><img src="index_files/figure-html/unnamed-chunk-143-8.png" width="1800" style="display: block; margin: auto;" /></p>
 <pre><code>[1] &quot;Fusions&quot;</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-141-9.png" width="1800" style="display: block; margin: auto;" /></p>
+<p><img src="index_files/figure-html/unnamed-chunk-143-9.png" width="1800" style="display: block; margin: auto;" /></p>
 <pre><code>[1] &quot;Chromothripsis&quot;</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-141-10.png" width="1800" style="display: block; margin: auto;" /></p>
+<p><img src="index_files/figure-html/unnamed-chunk-143-10.png" width="1800" style="display: block; margin: auto;" /></p>
 <pre><code>[1] &quot;BFBs&quot;</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-141-11.png" width="1800" style="display: block; margin: auto;" /></p>
+<p><img src="index_files/figure-html/unnamed-chunk-143-11.png" width="1800" style="display: block; margin: auto;" /></p>
 <pre><code>[1] &quot;ecDNAs&quot;</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-141-12.png" width="1800" style="display: block; margin: auto;" /></p>
+<p><img src="index_files/figure-html/unnamed-chunk-143-12.png" width="1800" style="display: block; margin: auto;" /></p>
 <pre><code>[1] &quot;HRs&quot;</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-141-13.png" width="1800" style="display: block; margin: auto;" /></p>
+<p><img src="index_files/figure-html/unnamed-chunk-143-13.png" width="1800" style="display: block; margin: auto;" /></p>
 <pre><code>[1] &quot;Linear_Amplicons&quot;</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-141-14.png" width="1800" style="display: block; margin: auto;" /></p>
+<p><img src="index_files/figure-html/unnamed-chunk-143-14.png" width="1800" style="display: block; margin: auto;" /></p>
 <pre><code>[1] &quot;Telomere_Content&quot;</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-141-15.png" width="1800" style="display: block; margin: auto;" /></p>
+<p><img src="index_files/figure-html/unnamed-chunk-143-15.png" width="1800" style="display: block; margin: auto;" /></p>
 <pre><code>[1] &quot;Driver_variants&quot;</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-141-16.png" width="1800" style="display: block; margin: auto;" /></p>
+<p><img src="index_files/figure-html/unnamed-chunk-143-16.png" width="1800" style="display: block; margin: auto;" /></p>
 <pre><code>[1] &quot;Act_genes&quot;</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-141-17.png" width="1800" style="display: block; margin: auto;" /></p>
+<p><img src="index_files/figure-html/unnamed-chunk-143-17.png" width="1800" style="display: block; margin: auto;" /></p>
 <pre><code>[1] &quot;LoF_genes&quot;</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-141-18.png" width="1800" style="display: block; margin: auto;" /></p>
+<p><img src="index_files/figure-html/unnamed-chunk-143-18.png" width="1800" style="display: block; margin: auto;" /></p>
 </div>
 <div id="association-between-cns-and-discrete-variables" class="section level4">
 <h4>Association between CNS and discrete variables</h4>
@@ -2314,7 +2357,7 @@ df_ds &lt;- df_ds2 %&gt;%
 ) +
   stat_compare_means(aes(group = WGD_Status), label = &quot;p.signif&quot;) +
   rotate_x_text()</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-145-1.png" width="2400" style="display: block; margin: auto;" /> CNS3 and CNS9 are highly associated with WGD.</p>
+<p><img src="index_files/figure-html/unnamed-chunk-147-1.png" width="2400" style="display: block; margin: auto;" /> CNS3 and CNS9 are highly associated with WGD.</p>
 <p>For HRD.</p>
 <pre class="r"><code>ggboxplot(
   df_ds %&gt;%
@@ -2327,7 +2370,7 @@ df_ds &lt;- df_ds2 %&gt;%
 ) +
   stat_compare_means(aes(group = HRD_Status), label = &quot;p.signif&quot;) +
   rotate_x_text()</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-146-1.png" width="2400" style="display: block; margin: auto;" /> CNS14 is highly associated with HRD status.</p>
+<p><img src="index_files/figure-html/unnamed-chunk-148-1.png" width="2400" style="display: block; margin: auto;" /> CNS14 is highly associated with HRD status.</p>
 <p>See supplementary analysis for HRD and WGD prediction analysis.</p>
 <p>For tumor stage.</p>
 <pre class="r"><code>ggboxplot(
@@ -2343,7 +2386,7 @@ df_ds &lt;- df_ds2 %&gt;%
     method = &quot;anova&quot;
   ) +
   rotate_x_text()</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-147-1.png" width="2400" style="display: block; margin: auto;" /></p>
+<p><img src="index_files/figure-html/unnamed-chunk-149-1.png" width="2400" style="display: block; margin: auto;" /></p>
 </div>
 <div id="association-between-cns-and-driver-gene-mutation" class="section level4">
 <h4>Association between CNS and driver gene mutation</h4>
@@ -2367,7 +2410,7 @@ asso_res_tidy &lt;- get_tidy_association(asso_res)</code></pre>
 ) + ggpubr::rotate_x_text(0, hjust = 0.5) +
   labs(color = &quot;Difference\nin means of\nactivity&quot;) +
   ggpubr::rotate_x_text()</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-149-1.png" width="2700" style="display: block; margin: auto;" /></p>
+<p><img src="index_files/figure-html/unnamed-chunk-151-1.png" width="2700" style="display: block; margin: auto;" /></p>
 </div>
 </div>
 <div id="association-between-cns-and-patients-prognosis" class="section level3">
@@ -2409,7 +2452,7 @@ df_surv &lt;- tidy_info %&gt;%
   merge_models = TRUE, add_caption = FALSE, point_size = 2
 )
 p1</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-151-1.png" width="2400" style="display: block; margin: auto;" /></p>
+<p><img src="index_files/figure-html/unnamed-chunk-153-1.png" width="2400" style="display: block; margin: auto;" /></p>
 </div>
 <div id="multivariate-cox-analysis-for-cns" class="section level4">
 <h4>Multivariate cox analysis for CNS</h4>
@@ -2419,7 +2462,7 @@ p1</code></pre>
   merge_models = TRUE, add_caption = FALSE, point_size = 2
 )
 p2</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-152-1.png" width="2400" style="display: block; margin: auto;" /></p>
+<p><img src="index_files/figure-html/unnamed-chunk-154-1.png" width="2400" style="display: block; margin: auto;" /></p>
 </div>
 </div>
 </div>
@@ -2487,7 +2530,7 @@ ggboxplot(df_sim,
     label = &quot;p.signif&quot;, method = &quot;wilcox.test&quot;,
     ref.group = &quot;CNS&quot;
   )</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-157-1.png" width="1200" style="display: block; margin: auto;" /> We can see that signature type CNS has lowest similarity level and CNS signatures are not likely similar to others. CNS has much lower similarity level than all other signature types except DBS.</p>
+<p><img src="index_files/figure-html/unnamed-chunk-159-1.png" width="1200" style="display: block; margin: auto;" /> We can see that signature type CNS has lowest similarity level and CNS signatures are not likely similar to others. CNS has much lower similarity level than all other signature types except DBS.</p>
 </div>
 <div id="data-summary-and-inference-of-signature-etiologies" class="section level2">
 <h2>Data summary and inference of signature etiologies</h2>
@@ -2719,7 +2762,7 @@ saveRDS(SP_TCGA, file = &quot;../data/TCGA/tcga_cn_solutions_sp.rds&quot;)</code
   right_name = &quot;Mean Cosine Distance&quot;,
   highlight = 20
 )</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-160-1.png" width="2700" style="display: block; margin: auto;" /> We pick up 20 signatures for TCGA data due to its relatively high stability and low distance.</p>
+<p><img src="index_files/figure-html/unnamed-chunk-162-1.png" width="2700" style="display: block; margin: auto;" /> We pick up 20 signatures for TCGA data due to its relatively high stability and low distance.</p>
 <pre class="r"><code>tcga_sigs &lt;- SP_TCGA$solution_list$S20
 saveRDS(tcga_sigs, file = &quot;../data/TCGA/tcga_cn_sigs_CN176_signature.rds&quot;)</code></pre>
 <p>Let’s go further check the similarities between PCAWG CNS and TCGA CNS.</p>
@@ -2728,7 +2771,7 @@ tcga_sigs &lt;- readRDS(&quot;../data/TCGA/tcga_cn_sigs_CN176_signature.rds&quot
 <p>Run similarity analysis.</p>
 <pre class="r"><code>sim &lt;- get_sig_similarity(pcawg_sigs, tcga_sigs)</code></pre>
 <pre class="r"><code>pheatmap::pheatmap(sim$similarity, cluster_rows = FALSE, cluster_cols = FALSE, display_numbers = TRUE)</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-164-1.png" width="2400" style="display: block; margin: auto;" /> From the pheatmap, we can see that:</p>
+<p><img src="index_files/figure-html/unnamed-chunk-166-1.png" width="2400" style="display: block; margin: auto;" /> From the pheatmap, we can see that:</p>
 <ul>
 <li>Most of PCAWG copy number signatures can be matched to TCGA copy number signatures with <code>&gt;0.8</code> similarity.</li>
 <li>CNS4, CNS5, CNS6 and CNS14 from PCAWG has lower similarity to TCGA CNS. This indicates either they are not shared signatures or they have relatively different patterns in this two dataset.</li>
@@ -2973,7 +3016,7 @@ attr(,&quot;seed&quot;)
 15 16 -0.6788359 0.1930057 0.8710570 0.3189946
  [ reached &#39;max&#39; / getOption(&quot;max.print&quot;) -- omitted 14 rows ]</code></pre>
 <pre class="r"><code>plot(cls$sil_summary$k, cls$sil_summary$mean, type = &quot;b&quot;, xlab = &quot;Total signatures&quot;, ylab = &quot;Mean silhouette&quot;)</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-169-1.png" width="2400" style="display: block; margin: auto;" /></p>
+<p><img src="index_files/figure-html/unnamed-chunk-171-1.png" width="2400" style="display: block; margin: auto;" /></p>
 <p>In general, the mean silhouette is not high. But we can still see that <code>20</code> or <code>22</code> may be suitable. <code>k=5</code> is not considered because it is too small to explain our data.</p>
 <p>Signature similarity is the key parameter in our study. Here we use an average cosine distance <code>0.4</code> (i.e. signatures with similarity <code>&gt;=0.6</code> could be clustered as one) as a cutoff:</p>
 <pre class="r"><code>factoextra::fviz_dend(cls$cluster,
@@ -2982,7 +3025,7 @@ attr(,&quot;seed&quot;)
   xlab = &quot;&quot;,
   ylab = &quot;1 - cosine similarity, average linkage&quot;
 )</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-170-1.png" width="4500" style="display: block; margin: auto;" /></p>
+<p><img src="index_files/figure-html/unnamed-chunk-172-1.png" width="4500" style="display: block; margin: auto;" /></p>
 <p>Check the cluster number:</p>
 <pre class="r"><code>cls_tree &lt;- cutree(cls$cluster, h = 0.4)
 table(cls_tree)</code></pre>
@@ -3000,7 +3043,7 @@ table(cls_tree)</code></pre>
 sim_mat &lt;- sim1$similarity
 colnames(sim_mat) &lt;- gsub(&quot;Sig&quot;, &quot;Group-Sig&quot;, colnames(sim_mat))
 pheatmap::pheatmap(sim_mat, cluster_rows = FALSE, cluster_cols = FALSE, display_numbers = TRUE)</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-174-1.png" width="2400" style="display: block; margin: auto;" /> We can see that most of PCAWG global signatures can be properly matched to group signatures. <code>CNS2</code> 和 <code>CNS13</code> seems not stable and tend to be easier affected by extraction procedure.</p>
+<p><img src="index_files/figure-html/unnamed-chunk-176-1.png" width="2400" style="display: block; margin: auto;" /> We can see that most of PCAWG global signatures can be properly matched to group signatures. <code>CNS2</code> 和 <code>CNS13</code> seems not stable and tend to be easier affected by extraction procedure.</p>
 <p>Also, we observe almost all group signatures on the right side can be assigned to a PCAWG global signatures, although most of them have relatively low similarity. This data indicate the signatures may be redundant.</p>
 <p>Let’s check the similarity between group signatures and best matched global signatures.</p>
 <pre class="r"><code>mc &lt;- apply(sim1$similarity, 2, which.max)
@@ -3027,7 +3070,7 @@ mc_sim</code></pre>
   title = &quot;Cosine similarity between signatures in each group&quot;
 ) +
   ggpubr::rotate_x_text()</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-177-1.png" width="2400" style="display: block; margin: auto;" /></p>
+<p><img src="index_files/figure-html/unnamed-chunk-179-1.png" width="2400" style="display: block; margin: auto;" /></p>
 <p>Add labels:</p>
 <pre class="r"><code>ggpubr::ggboxplot(grp_sigs$sim_sig_to_grp_mean, # %&gt;%
   # dplyr::filter(grp_sig %in% select_sigs),
@@ -3037,7 +3080,7 @@ mc_sim</code></pre>
 ) +
   ggpubr::rotate_x_text() +
   scale_x_discrete(labels = mc_df$label)</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-178-1.png" width="2400" style="display: block; margin: auto;" /></p>
+<p><img src="index_files/figure-html/unnamed-chunk-180-1.png" width="2400" style="display: block; margin: auto;" /></p>
 <blockquote>
 <p>Here y axis indicates cosine similarity between the averaging signature of each group and the individual signatures that belong to each group.</p>
 </blockquote>
@@ -3119,28 +3162,28 @@ tcga_summary &lt;- purrr::reduce(
 <h4>SCNA length distribution</h4>
 <p>PCAWG:</p>
 <pre class="r"><code>show_cn_distribution(pcawg_cn)</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-180-1.png" width="1800" style="display: block; margin: auto;" /></p>
+<p><img src="index_files/figure-html/unnamed-chunk-182-1.png" width="1800" style="display: block; margin: auto;" /></p>
 <p>TCGA:</p>
 <pre class="r"><code>show_cn_distribution(tcga_cn)</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-181-1.png" width="1800" style="display: block; margin: auto;" /></p>
+<p><img src="index_files/figure-html/unnamed-chunk-183-1.png" width="1800" style="display: block; margin: auto;" /></p>
 </div>
 <div id="scna-chromosome-distribution" class="section level4">
 <h4>SCNA chromosome distribution</h4>
 <p>PCAWG:</p>
 <pre class="r"><code>show_cn_distribution(pcawg_cn, mode = &quot;cd&quot;, fill = TRUE)</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-182-1.png" width="2400" style="display: block; margin: auto;" /></p>
+<p><img src="index_files/figure-html/unnamed-chunk-184-1.png" width="2400" style="display: block; margin: auto;" /></p>
 <p>TCGA:</p>
 <pre class="r"><code>show_cn_distribution(tcga_cn, mode = &quot;cd&quot;, fill = TRUE)</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-183-1.png" width="2400" style="display: block; margin: auto;" /></p>
+<p><img src="index_files/figure-html/unnamed-chunk-185-1.png" width="2400" style="display: block; margin: auto;" /></p>
 </div>
 <div id="scna-variation-frequency" class="section level4">
 <h4>SCNA variation frequency</h4>
 <p>PCAWG:</p>
 <pre class="r"><code>show_cn_group_profile(pcawg_cn)</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-184-1.png" width="2400" style="display: block; margin: auto;" /></p>
+<p><img src="index_files/figure-html/unnamed-chunk-186-1.png" width="2400" style="display: block; margin: auto;" /></p>
 <p>TCGA:</p>
 <pre class="r"><code>show_cn_group_profile(tcga_cn)</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-185-1.png" width="2400" style="display: block; margin: auto;" /></p>
+<p><img src="index_files/figure-html/unnamed-chunk-187-1.png" width="2400" style="display: block; margin: auto;" /></p>
 </div>
 </div>
 <div id="summary-data-analysis" class="section level3">
@@ -3167,7 +3210,7 @@ ggplot(data, aes(x = name, y = value)) +
     axis.text.x = element_blank(),
     axis.ticks.x = element_blank()
   )</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-187-1.png" width="2400" style="display: block; margin: auto;" /></p>
+<p><img src="index_files/figure-html/unnamed-chunk-189-1.png" width="2400" style="display: block; margin: auto;" /></p>
 <pre class="r"><code>library(ggridges)
 
 ggplot(data, aes(x = value, y = name, fill = name)) +
@@ -3175,7 +3218,7 @@ ggplot(data, aes(x = value, y = name, fill = name)) +
   labs(x = NULL, y = NULL) +
   theme_ridges() +
   theme(legend.position = &quot;none&quot;)</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-188-1.png" width="2400" style="display: block; margin: auto;" /></p>
+<p><img src="index_files/figure-html/unnamed-chunk-190-1.png" width="2400" style="display: block; margin: auto;" /></p>
 <pre class="r"><code>data &lt;- tcga_summary %&gt;%
   dplyr::select(sample, n_of_cnv, cna_burden, sbs, ids) %&gt;%
   dplyr::mutate(
@@ -3195,13 +3238,13 @@ ggplot(data, aes(x = name, y = value)) +
     axis.text.x = element_blank(),
     axis.ticks.x = element_blank()
   )</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-189-1.png" width="2400" style="display: block; margin: auto;" /></p>
+<p><img src="index_files/figure-html/unnamed-chunk-191-1.png" width="2400" style="display: block; margin: auto;" /></p>
 <pre class="r"><code>ggplot(data, aes(x = value, y = name, fill = name)) +
   geom_density_ridges() +
   labs(x = NULL, y = NULL) +
   theme_ridges() +
   theme(legend.position = &quot;none&quot;)</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-190-1.png" width="2400" style="display: block; margin: auto;" /></p>
+<p><img src="index_files/figure-html/unnamed-chunk-192-1.png" width="2400" style="display: block; margin: auto;" /></p>
 </div>
 <div id="correlation" class="section level4">
 <h4>Correlation</h4>
@@ -3215,7 +3258,7 @@ ggplot(data, aes(x = name, y = value)) +
   ) %&gt;%
   setNames(c(&quot;Total CNVs (log10)&quot;, &quot;CNA burden&quot;, &quot;Total SNVs (log10)&quot;, &quot;Total Indels (log10)&quot;))</code></pre>
 <pre class="r"><code>show_cor(data)</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-192-1.png" width="2400" style="display: block; margin: auto;" /> Show some detail scatter plots.</p>
+<p><img src="index_files/figure-html/unnamed-chunk-194-1.png" width="2400" style="display: block; margin: auto;" /> Show some detail scatter plots.</p>
 <pre class="r"><code>library(ggpubr)
 
 ggscatter(data,
@@ -3227,7 +3270,7 @@ ggscatter(data,
   cor.coef = TRUE, # Add correlation coefficient. see ?stat_cor
   cor.coeff.args = list(method = &quot;spearman&quot;, label.x = 1.5, label.sep = &quot;\n&quot;)
 )</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-193-1.png" width="2400" style="display: block; margin: auto;" /></p>
+<p><img src="index_files/figure-html/unnamed-chunk-195-1.png" width="2400" style="display: block; margin: auto;" /></p>
 <pre class="r"><code>ggscatter(data,
   x = &quot;Total CNVs (log10)&quot;, y = &quot;Total Indels (log10)&quot;,
   color = &quot;black&quot;, shape = 21, size = 1, # Points color, shape and size
@@ -3237,7 +3280,7 @@ ggscatter(data,
   cor.coef = TRUE, # Add correlation coefficient. see ?stat_cor
   cor.coeff.args = list(method = &quot;spearman&quot;, label.x = 2.5, label.sep = &quot;\n&quot;)
 )</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-194-1.png" width="2400" style="display: block; margin: auto;" /></p>
+<p><img src="index_files/figure-html/unnamed-chunk-196-1.png" width="2400" style="display: block; margin: auto;" /></p>
 <pre class="r"><code>data &lt;- tcga_summary %&gt;%
   dplyr::select(n_of_cnv, cna_burden, sbs, ids) %&gt;%
   dplyr::mutate(
@@ -3247,7 +3290,7 @@ ggscatter(data,
   ) %&gt;%
   setNames(c(&quot;Total CNVs (log10)&quot;, &quot;CNA burden&quot;, &quot;Total SNVs (log10)&quot;, &quot;Total Indels (log10)&quot;))</code></pre>
 <pre class="r"><code>show_cor(data)</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-196-1.png" width="2400" style="display: block; margin: auto;" /> Show some detail scatter plots.</p>
+<p><img src="index_files/figure-html/unnamed-chunk-198-1.png" width="2400" style="display: block; margin: auto;" /> Show some detail scatter plots.</p>
 <pre class="r"><code>ggscatter(data,
   x = &quot;Total CNVs (log10)&quot;, y = &quot;Total SNVs (log10)&quot;,
   color = &quot;black&quot;, shape = 21, size = 1, # Points color, shape and size
@@ -3257,7 +3300,7 @@ ggscatter(data,
   cor.coef = TRUE, # Add correlation coefficient. see ?stat_cor
   cor.coeff.args = list(method = &quot;spearman&quot;, label.x = 0.5, label.sep = &quot;\n&quot;)
 )</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-197-1.png" width="2400" style="display: block; margin: auto;" /></p>
+<p><img src="index_files/figure-html/unnamed-chunk-199-1.png" width="2400" style="display: block; margin: auto;" /></p>
 <pre class="r"><code>ggscatter(data,
   x = &quot;Total CNVs (log10)&quot;, y = &quot;Total Indels (log10)&quot;,
   color = &quot;black&quot;, shape = 21, size = 1, # Points color, shape and size
@@ -3267,7 +3310,7 @@ ggscatter(data,
   cor.coef = TRUE, # Add correlation coefficient. see ?stat_cor
   cor.coeff.args = list(method = &quot;spearman&quot;, label.x = 0.5, label.sep = &quot;\n&quot;)
 )</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-198-1.png" width="2400" style="display: block; margin: auto;" /></p>
+<p><img src="index_files/figure-html/unnamed-chunk-200-1.png" width="2400" style="display: block; margin: auto;" /></p>
 </div>
 </div>
 <div id="cancer-type" class="section level3">
@@ -3283,7 +3326,7 @@ ggscatter(data,
   point_size = 0.3,
   ylab = &quot;Number of CNV&quot;
 )</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-199-1.png" width="3600" style="display: block; margin: auto;" /></p>
+<p><img src="index_files/figure-html/unnamed-chunk-201-1.png" width="3600" style="display: block; margin: auto;" /></p>
 </div>
 <div id="pcawg-cna-burden" class="section level4">
 <h4>PCAWG CNA burden</h4>
@@ -3296,7 +3339,7 @@ ggscatter(data,
   point_size = 0.3,
   ylab = &quot;CNA burden&quot;
 )</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-200-1.png" width="3600" style="display: block; margin: auto;" /></p>
+<p><img src="index_files/figure-html/unnamed-chunk-202-1.png" width="3600" style="display: block; margin: auto;" /></p>
 </div>
 <div id="pcawg-sbs-number" class="section level4">
 <h4>PCAWG SBS number</h4>
@@ -3309,7 +3352,7 @@ ggscatter(data,
   point_size = 0.3,
   ylab = &quot;Number of SBS (log10)&quot;
 )</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-201-1.png" width="3600" style="display: block; margin: auto;" /></p>
+<p><img src="index_files/figure-html/unnamed-chunk-203-1.png" width="3600" style="display: block; margin: auto;" /></p>
 </div>
 <div id="pcawg-indel-number" class="section level4">
 <h4>PCAWG Indel number</h4>
@@ -3322,7 +3365,7 @@ ggscatter(data,
   point_size = 0.3,
   ylab = &quot;Number of Indel (log10)&quot;
 )</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-202-1.png" width="3600" style="display: block; margin: auto;" /></p>
+<p><img src="index_files/figure-html/unnamed-chunk-204-1.png" width="3600" style="display: block; margin: auto;" /></p>
 </div>
 <div id="tcga-cnv-number" class="section level4">
 <h4>TCGA CNV number</h4>
@@ -3335,7 +3378,7 @@ ggscatter(data,
   point_size = 0.3,
   ylab = &quot;Number of CNV&quot;
 )</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-203-1.png" width="4500" style="display: block; margin: auto;" /></p>
+<p><img src="index_files/figure-html/unnamed-chunk-205-1.png" width="4500" style="display: block; margin: auto;" /></p>
 </div>
 <div id="tcga-cna-burden" class="section level4">
 <h4>TCGA CNA burden</h4>
@@ -3348,7 +3391,7 @@ ggscatter(data,
   point_size = 0.3,
   ylab = &quot;CNA burden&quot;
 )</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-204-1.png" width="4500" style="display: block; margin: auto;" /></p>
+<p><img src="index_files/figure-html/unnamed-chunk-206-1.png" width="4500" style="display: block; margin: auto;" /></p>
 </div>
 <div id="tcga-sbs-number" class="section level4">
 <h4>TCGA SBS number</h4>
@@ -3362,7 +3405,7 @@ ggscatter(data,
   point_size = 0.3,
   ylab = &quot;Number of SBS (log10)&quot;
 )</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-205-1.png" width="4500" style="display: block; margin: auto;" /></p>
+<p><img src="index_files/figure-html/unnamed-chunk-207-1.png" width="4500" style="display: block; margin: auto;" /></p>
 </div>
 <div id="tcga-indel-number" class="section level4">
 <h4>TCGA Indel number</h4>
@@ -3379,7 +3422,7 @@ ggscatter(data,
   point_size = 0.3,
   ylab = &quot;Number of Indel (log10)&quot;
 )</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-206-1.png" width="4500" style="display: block; margin: auto;" /></p>
+<p><img src="index_files/figure-html/unnamed-chunk-208-1.png" width="4500" style="display: block; margin: auto;" /></p>
 </div>
 </div>
 <div id="variation-enrichment-in-cancer-types" class="section level3">
@@ -3398,7 +3441,7 @@ ggscatter(data,
 )</code></pre>
 <pre class="r"><code>p &lt;- show_group_enrichment(enrich_pcawg, cut_p_value = TRUE, return_list = TRUE)
 p$cancer_type + labs(x = NULL, y = NULL) + ggpubr::rotate_x_text(angle = 45)</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-208-1.png" width="1500" style="display: block; margin: auto;" /></p>
+<p><img src="index_files/figure-html/unnamed-chunk-210-1.png" width="1500" style="display: block; margin: auto;" /></p>
 <pre class="r"><code>enrich_tcga &lt;- group_enrichment(
   tcga_summary %&gt;%
     dplyr::rename(
@@ -3413,7 +3456,7 @@ p$cancer_type + labs(x = NULL, y = NULL) + ggpubr::rotate_x_text(angle = 45)</co
 )</code></pre>
 <pre class="r"><code>p &lt;- show_group_enrichment(enrich_tcga, cut_p_value = TRUE, return_list = TRUE)
 p$cancer_type + labs(x = NULL, y = NULL) + ggpubr::rotate_x_text(angle = 45)</code></pre>
-<p><img src="index_files/figure-html/unnamed-chunk-210-1.png" width="1500" style="display: block; margin: auto;" /></p>
+<p><img src="index_files/figure-html/unnamed-chunk-212-1.png" width="1500" style="display: block; margin: auto;" /></p>
 </div>
 </div>
 </div>
@@ -3431,7 +3474,7 @@ p$cancer_type + labs(x = NULL, y = NULL) + ggpubr::rotate_x_text(angle = 45)</co
  collate  en_US.UTF-8                 
  ctype    en_US.UTF-8                 
  tz       Asia/Shanghai               
- date     2021-01-18                  
+ date     2021-01-19                  
 
 ─ Packages ───────────────────────────────────────────────────────────────────
  package        * version    date       lib source          
