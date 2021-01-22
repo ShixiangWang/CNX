@@ -1,4 +1,5 @@
 library(sigminer)
+library(pheatmap)
 # Compare 176-components signatures ------------------------------------------
 
 ## SP
@@ -92,7 +93,7 @@ pheatmap(sim$similarity, display_numbers = TRUE, cluster_rows = FALSE, cluster_c
 
 mean(diag(sim$similarity))
 
-sim <- get_sig_similarity(SP_PCAWG2$solution_list$S14, SP_TCGA2$solution_list$S20)
+sim <- get_sig_similarity(SP_PCAWG2$solution_list$S13, SP_TCGA2$solution_list$S20)
 pheatmap(sim$similarity, display_numbers = TRUE, cluster_rows = FALSE, cluster_cols = FALSE)
 mean(diag(sim$similarity))
 

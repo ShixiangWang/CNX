@@ -141,7 +141,7 @@ Here we will draw copy number profile of 2 representative samples for each signa
 
 ```{r}
 get_sample_from_sig <- function(dt, sig) {
-  res = head(dt[order(dt[[sig]], decreasing = TRUE)], 2L)
+  res = head(dt[order(dt[[sig]], dt[[paste0("ABS_", sig)]], decreasing = TRUE)], 2L)
   res
 }
 ```
@@ -152,7 +152,15 @@ Read `CopyNumber` object for PCAWG data.
 pcawg_cn_obj <- readRDS("../data/pcawg_cn_obj.rds")
 samp_summary <- pcawg_cn_obj@summary.per.sample
 rel_activity <- get_sig_exposure(pcawg_sigs, type = "relative", rel_threshold = 0)
-rel_activity <- rel_activity[, lapply(.SD, function(x) {if (is.numeric(x)) round(x, 3) else x})]
+abs_activity <- get_sig_exposure(pcawg_sigs, type = "absolute")
+
+rel_activity <- rel_activity[, lapply(.SD, function(x) {if (is.numeric(x)) round(x, 2) else x})]
+# all(rownames(abs_activity) == rownames(rel_activity))
+colnames(abs_activity) <- c("sample", paste0("ABS_CNS", 1:14))
+act <- merge(
+  rel_activity, abs_activity,
+  by = "sample"
+)
 ```
 
 
@@ -160,7 +168,7 @@ rel_activity <- rel_activity[, lapply(.SD, function(x) {if (is.numeric(x)) round
 dir.create("../output/enrich_samples/", showWarnings = FALSE)
 for (i in paste0("CNS", 1:14)) {
   cat(paste0("Most enriched in ", i, "\n"))
-  s = get_sample_from_sig(rel_activity, i)
+  s = get_sample_from_sig(act, i)
   print(s)
   plist = show_cn_profile(pcawg_cn_obj, samples = s$sample,
                           show_title = TRUE,
@@ -170,10 +178,12 @@ for (i in paste0("CNS", 1:14)) {
     text = paste0(
       "n_of_seg:", s$n_of_seg, "\n",
       "n_of_amp:", s$n_of_amp, "\n",
-      "n_of_del:", s$n_of_del, "\n"
+      "n_of_del:", s$n_of_del, "\n",
+      "rel:", act[sample == x][[i]], "\n",
+      "abs:", act[sample == x][[paste0("ABS_", i)]], "\n"
     )
     p <- p + annotate("text", x = Inf, y = Inf, hjust = 1, vjust = 1,
-                      label = text)
+                      label = text, color = "gray50")
     p
   })
   p = cowplot::plot_grid(plotlist = plist, nrow = 2)
