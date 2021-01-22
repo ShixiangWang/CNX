@@ -40,6 +40,12 @@ p <- show_catalogue(tally_X, mode = "copynumber", method = "X",
 p
 ggplot2::ggsave("output/pcawg_catalogs_tally_X.pdf", plot = p, width = 16, height = 2.5)
 
+p <- show_catalogue(tally_X, mode = "copynumber", method = "X",
+                    style = "cosmic", y_tr = function(x) log10(x + 1),
+                    y_lab = "log10(count +1)", by_context = TRUE)
+p
+ggplot2::ggsave("output/pcawg_catalogs_tally_X_by_context.pdf", plot = p, width = 16, height = 2.5)
+
 head(sort(colSums(tally_X$nmf_matrix)), n = 50)
 
 ## classes without LOH labels
