@@ -6,7 +6,7 @@ p <- show_sig_profile(pcawg_sig, style = "cosmic", mode = "copynumber", method =
 ggplot2::ggsave("output/pcawg_cn_sigs_c176.pdf", plot = p, width = 14, height = 8)
 
 p <- show_sig_profile(pcawg_sig, style = "cosmic", mode = "copynumber", method = "X", font_scale = 0.7, by_context = TRUE, x_lab = NULL)
-ggplot2::ggsave("output/pcawg_cn_sigs_c176_by_context.pdf", plot = p, width = 14, height = 8)
+ggplot2::ggsave("output/pcawg_cn_sigs_c176_by_context.pdf", plot = p, width = 14, height = 10)
 
 p2 <- show_sig_profile(pcawg_sig, style = "cosmic", mode = "copynumber", method = "X", font_scale = 0.6,
                        rm_axis_text = TRUE, x_lab = NULL)
@@ -31,6 +31,6 @@ p <- show_sig_profile_loop(pcawg_sig,
                            style = "cosmic",
                            mode = "copynumber",
                            method = "X",
-                           font_scale = 0.7, by_context = TRUE)
+                           font_scale = 0.6, by_context = TRUE)
 
-ggplot2::ggsave("output/pcawg_cn_sigs_loop_c176_by_context.pdf", plot = p, width = 14, height = 30, )
+ggplot2::ggsave("output/pcawg_cn_sigs_loop_c176_by_context.pdf", plot = p, width = 14, height = 30)
