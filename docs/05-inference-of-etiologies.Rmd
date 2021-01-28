@@ -45,6 +45,27 @@ tidy_mut <- readRDS("../data/pcawg_mut_df.rds")
 pcawg_sbs <- read_csv("../data/PCAWG/PCAWG_sigProfiler_SBS_signatures_in_samples.csv")
 pcawg_dbs <- read_csv("../data/PCAWG/PCAWG_sigProfiler_DBS_signatures_in_samples.csv")
 pcawg_id <- read_csv("../data/PCAWG/PCAWG_SigProfiler_ID_signatures_in_samples.csv")
+
+# Use signature relative contribution for analysis
+pcawg_sbs <- pcawg_sbs[, -c(1, 3)] %>%
+  dplyr::rename(sample = `Sample Names`) %>% 
+  dplyr::mutate(s = rowSums(.[, -1])) %>% 
+  dplyr::mutate_at(vars(starts_with("SBS")), ~./s) %>% 
+  dplyr::select(-s) %>% 
+  # Drop Possible sequencing artefact associated signatures
+  dplyr::select(-SBS43, -c(SBS45:SBS60))
+
+pcawg_dbs <- pcawg_dbs[, -c(1, 3)] %>%
+  dplyr::rename(sample = `Sample Names`) %>% 
+  dplyr::mutate(s = rowSums(.[, -1])) %>% 
+  dplyr::mutate_at(vars(starts_with("DBS")), ~./s) %>% 
+  dplyr::select(-s)
+
+pcawg_id <- pcawg_id[, -c(1, 3)] %>%
+  dplyr::rename(sample = `Sample Names`) %>% 
+  dplyr::mutate(s = rowSums(.[, -1])) %>% 
+  dplyr::mutate_at(vars(starts_with("ID")), ~./s) %>% 
+  dplyr::select(-s)
 ```
 
 Merge data.
@@ -68,11 +89,9 @@ df_merged <- purrr::reduce(
         isHRD = HRD_Status == "hrd"
       ) %>% 
       dplyr::select(-c(Sex, WGD_Status, HRD_Status)),
-    pcawg_sbs[, -c(1, 3)] %>% dplyr::rename(sample = `Sample Names`) %>% 
-      # Drop Possible sequencing artefact associated signatures
-      dplyr::select(-SBS43, -c(SBS45:SBS60)),
-    pcawg_dbs[, -c(1, 3)] %>% dplyr::rename(sample = `Sample Names`),
-    pcawg_id[, -c(1, 3)] %>% dplyr::rename(sample = `Sample Names`),
+    pcawg_sbs,
+    pcawg_dbs,
+    pcawg_id,
     tidy_mut %>% dplyr::select(-cluster)
   ),
   dplyr::left_join,
@@ -83,7 +102,7 @@ df_merged <- purrr::reduce(
     ~ifelse(is.na(.), FALSE, .)
   )
 
-colnames(df_merged) <- gsub("Abs_", "", colnames(df_merged))
+colnames(df_merged) <- gsub("Rel_", "", colnames(df_merged))
 
 saveRDS(df_merged, file = "../data/pcawg_merged_df.rds")
 ```
@@ -92,24 +111,17 @@ saveRDS(df_merged, file = "../data/pcawg_merged_df.rds")
 
 ### Copy number signature activity self-association
 
-For absolute signature activity.
 
 ```{r fig.width=8, fig.height=7}
 show_cor(dplyr::select(df_merged, starts_with("CNS")))
 ```
 
-For relative signature activity.
-
-```{r fig.width=8, fig.height=7}
-show_cor(dplyr::select(df_merged, starts_with("Rel_CNS")) %>% 
-           dplyr::rename_all(~sub("Rel_", "", .)))
-```
 
 We can find that most the signatures are correlated. Therefore, it will add difficulty in understanding etiologies by association analysis.
 
-#### Visualize with partial correlation network
 
-For absolute signature activity.
+#### Visualize with full correlation network
+
 
 ```{r fig.width=8, fig.height=7}
 library(see)
@@ -117,33 +129,11 @@ library(ggraph)
 library(correlation)
 
 cc <- dplyr::select(df_merged, starts_with("CNS")) %>% 
-  correlation(partial = TRUE, method = "spearman") %>% 
-  dplyr::rename(r = rho)
-plot(cc)
-```
-
-The relative activity cannot use partial correlation.
-
-#### Visualize with full correlation network
-
-Absolute:
-
-```{r fig.width=8, fig.height=7}
-cc <- dplyr::select(df_merged, starts_with("CNS")) %>% 
   correlation(partial = FALSE, method = "spearman") %>% 
   dplyr::rename(r = rho)
 plot(cc)
 ```
 
-Relative:
-
-```{r fig.width=8, fig.height=7}
-cc <- dplyr::select(df_merged, starts_with("Rel_CNS")) %>% 
-           dplyr::rename_all(~sub("Rel_", "", .)) %>% 
-  correlation(partial = FALSE, method = "spearman") %>% 
-  dplyr::rename(r = rho)
-plot(cc)
-```
 
 ### Copy number signatures and COSMIC signatures
 
@@ -166,9 +156,14 @@ Just show specified signatures:
 p_cosmic2 <- show_cor(
   data = df_merged,
   x_vars = colnames(df_merged)[grepl("^CNS", colnames(df_merged))],
-  y_vars = c("SBS1", "SBS2", "SBS3", "SBS5", "SBS13", "SBS17a", "SBS17b",
-             "SBS18", "DBS2", "DBS4", "DBS6", "ID1", "ID2", "ID6", "ID8",
-             "ID12", "ID14"),
+  y_vars = c("SBS1", "SBS5",
+             "SBS2", "SBS13", "DBS11",
+             "SBS3", "ID6", "ID8",
+             "SBS4", "DBS2",
+             "SBS9",
+             "SBS18",
+             "DBS7", "ID1", "ID2",
+             "SBS12", "SBS17a", "SBS17b", "DBS6", "ID5", "ID12"),
   hc_order = FALSE,
   test = FALSE,
   lab_size = 2
@@ -183,17 +178,13 @@ Visualize signature with similar trends with network.
 ```{r fig.width=8, fig.height=7}
 siglist <- list(
   c("SBS1", "SBS5"),
-  c("SBS2", "SBS13"),
-  c("SBS3", "ID6"),
+  c("SBS2", "SBS13", "DBS11"),
+  c("SBS3", "ID6", "ID8"),
+  c("SBS4", "DBS2"),
+  c("SBS9"),
   c("SBS18"),
-  c("DBS2"),
-  c("ID1", "ID2"),
-  c("ID8"),
-  c("SBS17a", "SBS17b"),
-  c("DBS4"),
-  c("DBS6"),
-  c("ID12"),
-  c("ID14")
+  c("DBS7", "ID1", "ID2"),
+  c("SBS12", "SBS17a", "SBS17b", "DBS6", "ID5", "ID12")
 )
 
 for (i in siglist) {
@@ -255,6 +246,7 @@ dist_all <- as.dist(all_dist)
 hc_all <- hclust(dist_all)
 plot(hc_all)
 ```
+
 Here we manually set 10 clusters for better visualization.
 
 ```{r fig.width=8, fig.height=8}
@@ -290,7 +282,7 @@ factoextra::fviz_dend(
 ```{r fig.width=9, fig.height=8}
 p_cn_others <- show_cor(
   data = df_merged,
-  x_vars = colnames(df_merged)[2:15],
+  x_vars = colnames(df_merged)[16:29],
   y_vars = colnames(df_merged)[c(30:44, 125:127)],
   lab_size = 3
 )
@@ -314,7 +306,7 @@ for (i in var_names) {
   print(i)
   correlation(
     df_mut[, i, drop = FALSE],
-    df_merged[, colnames(df_merged)[2:15]],
+    df_merged[, colnames(df_merged)[16:29]],
     partial = FALSE, method = "spearman") %>% 
     dplyr::rename(r = rho) %>% 
     plot() -> p
@@ -375,6 +367,7 @@ ggboxplot(
   stat_compare_means(aes(group = WGD_Status), label = "p.signif") +
   rotate_x_text()
 ```
+
 CNS3 and CNS9 are highly associated with WGD.
 
 For HRD.
@@ -391,6 +384,7 @@ ggboxplot(
   stat_compare_means(aes(group = HRD_Status), label = "p.signif") +
   rotate_x_text()
 ```
+
 CNS14 is highly associated with HRD status.
 
 See supplementary analysis for HRD and WGD prediction analysis.
