@@ -34,3 +34,32 @@ p <- show_sig_profile_loop(pcawg_sig,
                            font_scale = 0.6, by_context = TRUE)
 
 ggplot2::ggsave("output/pcawg_cn_sigs_loop_c176_by_context.pdf", plot = p, width = 14, height = 30)
+
+
+# One representative sample -----------------------------------------------
+
+s <- "SP112845"
+obj <- readRDS("data/pcawg_cn_obj.rds")
+tally_x <- readRDS("data/pcawg_cn_tally_X.rds")
+
+show_cn_profile(obj, sample = s)
+p <- show_catalogue(t(tally_x$nmf_matrix), samples = s,
+               style = "cosmic", mode = "copynumber", method = "X",
+               by_context = TRUE, font_scale = 0.7, normalize = "row")
+ggplot2::ggsave("output/showcase_catalog_profile.pdf", plot = p, width = 14, height = 2.5)
+
+reconstructed_mat <- pcawg_sig$Signature.norm %*% pcawg_sig$Exposure
+p <- show_catalogue(reconstructed_mat, samples = s,
+                    style = "cosmic", mode = "copynumber", method = "X",
+                    by_context = TRUE, font_scale = 0.7, normalize = "row")
+ggplot2::ggsave("output/showcase_rect_catalog_profile.pdf", plot = p, width = 14, height = 2.5)
+
+cosine(reconstructed_mat[, s], t(tally_x$nmf_matrix)[, s])
+
+act <- readRDS("data/pcawg_cn_sigs_CN176_activity.rds")
+round(act$relative[sample == s][, -1], 3)
+
+p <- show_sig_profile(pcawg_sig, sig_names = paste0("CNS", c(3, 8, 10, 11, 14)),
+                      style = "cosmic", mode = "copynumber", method = "X",
+                      by_context = TRUE,  font_scale = 0.7)
+ggplot2::ggsave("output/showcase_sig_profile.pdf", plot = p, width = 14, height = 5)

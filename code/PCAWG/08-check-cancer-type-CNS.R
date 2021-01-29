@@ -1,4 +1,16 @@
 library(sigminer)
+# NOTE: the silhouette reported by BP seems strange, need to take a check the clustering with match algo
+# sig number 大于 5 左右之后轮廓系数下降的很严重
+
+# test <- sig_estimate(
+#   t(pcawg[[5]]$catalog_matrix),
+#   range = 2:20, cores = 10, nrun = 100,
+#   verbose = TRUE
+# )
+bp_show_survey2(pcawg[[5]]) # 14
+
+bp_extract_signatures(t(pcawg[[5]]$catalog_matrix), range = 7, n_bootstrap = 5, n_nmf_run = 2,
+                      cores = 10, only_core_stats = TRUE)
 
 cancer_type_files <- list.files("data/cancer_types/", pattern = "PCAWG_CN176", full.names = TRUE)
 pcawg <- lapply(cancer_type_files, readRDS)
