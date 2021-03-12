@@ -1,4 +1,4 @@
-# Use PCAWG Breast and OV data as example datasets to
+# Use PCAWG Breast and OV, etc. data as example datasets to
 # compare method W and X in
 # 1) the difference between estimated segments and observed segments
 # 2) the mean similarity within copy number signatures

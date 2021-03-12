@@ -491,6 +491,27 @@ p2 <- show_forest(df_surv,
 p2
 ```
 
+Control the cancer types, and run Cox for each signatures:
+
+```{r}
+p3 <- show_forest(df_surv,
+  covariates = paste0("CNS", 1:14), controls = "cancer_type",
+  vars_to_show = paste0("CNS", 1:14),
+  merge_models = TRUE, add_caption = FALSE, point_size = 2, 
+)
+p3
+```
+
+Control the cancer types, and run Cox for all signatures in one model:
+
+```{r}
+p4 <- show_forest(df_surv,
+  covariates = "CNS1", controls = c(paste0("CNS", 2:14), "cancer_type"),
+  vars_to_show = paste0("CNS", 1:14),
+  merge_models = TRUE, add_caption = FALSE, point_size = 2, 
+)
+p4
+```
 
 ## Signature similarity comparison between different types of signatures
 
