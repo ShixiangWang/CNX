@@ -279,19 +279,45 @@ show_sig_number_survey(
   highlight = 20
 )
 ```
-We pick up 20 signatures for TCGA data due to its relatively high stability and low distance.
 
+We pick up 20 signatures for TCGA data due to its relatively high stability and low distance.
 
 ```{r eval=FALSE}
 tcga_sigs <- SP_TCGA$solution_list$S20
 saveRDS(tcga_sigs, file = "../data/TCGA/tcga_cn_sigs_CN176_signature.rds")
 ```
 
+Here we try know how well each sample catalog profile can be constructed from the signature combination.
+
+Firstly we get the activity data.
+
+```{r}
+tcga_sigs <- readRDS("../data/TCGA/tcga_cn_sigs_CN176_signature.rds")
+tcga_act <- list(
+  absolute = get_sig_exposure(tcga_sigs, type = "absolute"),
+  relative = get_sig_exposure(tcga_sigs, type = "relative", rel_threshold = 0),
+  similarity = tcga_sigs$Stats$samples[, .(Samples, `Cosine Similarity`)]
+)
+
+colnames(tcga_act$similarity) <- c("sample", "similarity")
+
+saveRDS(tcga_act, file = "../data/TCGA/tcga_cn_sigs_CN176_activity.rds")
+```
+
+Check the stat summary of reconstructed Cosine similarity.
+
+```{r}
+summary(tcga_act$similarity$similarity)
+```
+```{r}
+hist(tcga_act$similarity$similarity, breaks = 100, xlab = "Reconstructed similarity", main = NA)
+```
+
+
 Let's go further check the similarities between PCAWG CNS and TCGA CNS.
 
 ```{r}
 pcawg_sigs <- readRDS("../data/pcawg_cn_sigs_CN176_signature.rds")
-tcga_sigs <- readRDS("../data/TCGA/tcga_cn_sigs_CN176_signature.rds")
 ```
 
 Run similarity analysis.
@@ -723,7 +749,9 @@ p
 ```
 
 ```{r fig.width=6, fig.height=7}
-p2 <- ggplot(tcga_summary, aes(x = cna_burden, y = cancer_type, fill = cancer_type)) +
+p2 <- ggplot(tcga_summary %>% 
+               dplyr::filter(!is.na(cancer_type)),
+             aes(x = cna_burden, y = cancer_type, fill = cancer_type)) +
   geom_density_ridges() +
   labs(x = "CNA burden", y = NULL) +
   theme_ridges() +
