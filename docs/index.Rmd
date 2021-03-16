@@ -3,10 +3,11 @@ title: "Pan-Cancer Copy Number Signature Identification and Analysis"
 author: ["Shixiang Wang, Ziyu Tao, Tao Wu, Huimin Li, Xue-Song Liu (Corresponding author)"]
 date: "`r Sys.Date()`"
 output:
-  rmdformats::downcute:
+  rmdformats::html_clean:
     self_contained: false
     toc_depth: 3
     gallery: true
+    thumbnails: false
 bibliography: ref.bib
 link-citations: yes
 ---

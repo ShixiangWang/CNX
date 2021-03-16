@@ -326,9 +326,10 @@ Run similarity analysis.
 sim <- get_sig_similarity(pcawg_sigs, tcga_sigs)
 ```
 
-```{r}
+```{r fig.height=6, fig.width=7}
 pheatmap::pheatmap(sim$similarity, cluster_rows = FALSE, cluster_cols = FALSE, display_numbers = TRUE)
 ```
+
 From the pheatmap, we can see that:
 
 - Most of PCAWG copy number signatures can be matched to TCGA copy number signatures with `>0.8` similarity.
@@ -346,6 +347,217 @@ Let's get the summary of match similarity.
 ```{r}
 summary(apply(sim$similarity, 1, max))
 ```
+
+### TCGA CNS labeling and analysis
+
+To better integrate PCAWG and TCGA result, here we use PCAWG CNS as reference and label TCGA copy number signatures by following the rule:
+
+- Define the signature similarity level: >=0.8 (High, H), >=0.5(Medium, M), >=0.3(Low, L).
+
+Based on the rule, we can get the labels for TCGA signatures according to the similarity matrix heatmap.
+
+```{r message=FALSE}
+label_df <- readr::read_csv("../data/PCAWG_TCGA_CNS_match.csv")
+label_df$label = paste(label_df$TCGA, label_df$match, sep = "-")
+```
+
+```{r}
+DT::datatable(label_df)
+```
+
+#### TCGA survival analysis
+
+Obtain signature activity and survival data.
+
+Update TCGA signature names.
+
+```{r}
+label_map <- label_df$label
+names(label_map) <- label_df$TCGA
+colnames(tcga_act$absolute)[-1] <- label_map[colnames(tcga_act$absolute)[-1]]
+colnames(tcga_act$relative)[-1] <- label_map[colnames(tcga_act$relative)[-1]]
+```
+
+Do same operation like PCAWG: keep only samples with >75% reconstructed similarity and divide activity value by 10.
+
+```{r}
+df_act <- data.table::copy(tcga_act$absolute)
+df_act <- df_act %>% 
+  mutate(across(where(is.numeric), ~./10))
+
+keep_tcga_samples <- tcga_act$similarity %>% 
+  filter(similarity > 0.75) %>% 
+  pull(sample)
+```
+
+Read phenotype data.
+
+```{r}
+#tcga_act <- readRDS(file = "../data/TCGA/tcga_cn_sigs_CN176_activity.rds")
+tcga_cli <- readRDS("../data/TCGA/tcga_cli.rds")
+tcga_type <- readRDS("../data/TCGA/TCGA_type_info.rds")
+```
+
+Merge the data.
+
+```{r}
+tcga_surv_df <- reduce(list(
+  tcga_type,
+  tcga_cli,
+  df_act
+), left_join, by = "sample") %>% 
+  filter(sample %in% keep_tcga_samples) %>% 
+  filter(!is.na(cancer_type))
+```
+
+Same as for PCAWG data, we build two multi-variable cox model here. However,  we handle "OS" and "PFI" data here.
+
+Control the cancer types, and run Cox for each signatures:
+
+```{r fig.width=8, fig.height=7}
+p1 <- show_forest(tcga_surv_df,
+  covariates = label_df$label, controls = "cancer_type",
+  vars_to_show = label_df$label,
+  merge_models = TRUE, add_caption = FALSE, point_size = 2,
+  time = "OS.time", status = "OS"
+)
+p1
+```
+
+Control the cancer types, and run Cox for all signatures in one model:
+
+```{r fig.width=8, fig.height=7}
+p2 <- show_forest(tcga_surv_df,
+  covariates = label_df$label[1], controls = c(label_df$label[-1], "cancer_type"),
+  vars_to_show = label_df$label,
+  merge_models = TRUE, add_caption = FALSE, point_size = 2,
+  time = "OS.time", status = "OS"
+)
+p2
+```
+
+Control the cancer types, and run Cox for each signatures:
+
+```{r fig.width=8, fig.height=7}
+p3 <- show_forest(tcga_surv_df %>% filter(!is.na(PFI.time)),
+  covariates = label_df$label, controls = "cancer_type",
+  vars_to_show = label_df$label,
+  merge_models = TRUE, add_caption = FALSE, point_size = 2,
+  time = "PFI.time", status = "PFI"
+)
+p3
+```
+
+Control the cancer types, and run Cox for all signatures in one model:
+
+```{r fig.width=8, fig.height=7}
+p4 <- show_forest(tcga_surv_df %>% filter(!is.na(PFI.time)),
+  covariates = label_df$label[1], controls = c(label_df$label[-1], "cancer_type"),
+  vars_to_show = label_df$label,
+  merge_models = TRUE, add_caption = FALSE, point_size = 2,
+  time = "PFI.time", status = "PFI"
+)
+p4
+```
+
+#### Show signature profile for unmatched/low-matched signatures
+
+```{r}
+library(tidyverse)
+
+tcga_sig_mat <- sig_signature(tcga_sigs)
+
+um_df <- label_df %>% filter(
+  match %in% c("CNS6(L)_3", "CNS13(L)_2", "UNMATCH1", "UNMATCH2"))
+um_names <- um_df$label
+names(um_names) <- um_df$TCGA
+
+um_sig_mat <- tcga_sig_mat[, names(um_names)]
+colnames(um_sig_mat) <- as.character(um_names)
+```
+
+```{r, fig.width=14, fig.height=5}
+p <- show_sig_profile(um_sig_mat, mode = "copynumber", method = "X", 
+                      check_sig_names = FALSE, style = "cosmic", 
+                      by_context = TRUE, font_scale = 0.6,
+                      sig_orders = c(2, 3, 1, 4))
+p
+```
+
+Save the profile.
+
+```{r, fig.width=14, fig.height=5}
+p <- show_sig_profile_loop(um_sig_mat[, c(2, 3, 1, 4)], mode = "copynumber", method = "X", 
+                           check_sig_names = FALSE, style = "cosmic", 
+                           by_context = TRUE, font_scale = 0.6)
+ggsave("../output/TCGA_unmatched_sig_profile_c176_by_context.pdf", plot = p,
+       width = 14, height = 8)
+```
+
+#### Show representative sample profile for unmatched signatures
+
+Here we will draw copy number profile of 2 representative samples for each signature.
+
+```{r}
+get_sample_from_sig <- function(dt, sig) {
+  res <- head(dt[order(dt[[sig]], dt[[paste0("ABS_", sig)]], decreasing = TRUE)], 2L)
+  res
+}
+```
+
+Read CopyNumber object for TCGA data.
+
+```{r}
+tcga_cn_obj <- readRDS("../data/TCGA/tcga_cn_obj.rds")
+samp_summary <- tcga_cn_obj@summary.per.sample
+rel_activity <- tcga_act$relative
+abs_activity <- tcga_act$absolute
+
+rel_activity <- rel_activity[, lapply(.SD, function(x) {
+  if (is.numeric(x)) round(x, 2) else x
+})]
+
+colnames(abs_activity)[-1] <- paste0("ABS_", colnames(abs_activity)[-1])
+act <- merge(
+  rel_activity, abs_activity,
+  by = "sample"
+)
+```
+
+```{r}
+dir.create("../output/enrich_samples_tcga/", showWarnings = FALSE)
+for (i in colnames(rel_activity)[-1]) {
+  cat(paste0("Most enriched in ", i, "\n"))
+  s <- get_sample_from_sig(act, i)
+  print(s)
+  plist <- show_cn_profile(tcga_cn_obj,
+    samples = s$sample,
+    show_title = TRUE,
+    return_plotlist = TRUE
+  )
+  plist <- purrr::map2(plist, s$sample, function(p, x) {
+    s <- samp_summary[sample == x]
+    text <- paste0(
+      "n_of_seg:", s$n_of_seg, "\n",
+      "n_of_amp:", s$n_of_amp, "\n",
+      "n_of_del:", s$n_of_del, "\n",
+      "rel:", act[sample == x][[i]], "\n",
+      "abs:", act[sample == x][[paste0("ABS_", i)]], "\n"
+    )
+    p <- p + annotate("text",
+      x = Inf, y = Inf, hjust = 1, vjust = 1,
+      label = text, color = "gray50"
+    )
+    p
+  })
+  p <- cowplot::plot_grid(plotlist = plist, nrow = 2)
+  print(p)
+  ggplot2::ggsave(file.path("../output/enrich_samples_tcga/", paste0(gsub("/","_",i), ".pdf")),
+    plot = p, width = 12, height = 6
+  )
+}
+```
+
 
 ### Merged CNS from clustering of cancer-type associated CNS
 
