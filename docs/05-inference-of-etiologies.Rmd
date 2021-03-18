@@ -356,7 +356,7 @@ library(ggpubr)
 
 For WGD.
 
-```{r}
+```{r fig.height=4, fig.width=6}
 ggboxplot(
   df_ds, 
   x = "sig_name", y = "activity",
@@ -372,7 +372,7 @@ CNS3 and CNS9 are highly associated with WGD.
 
 For HRD.
 
-```{r}
+```{r fig.height=4, fig.width=6}
 ggboxplot(
   df_ds %>% 
     dplyr::mutate(HRD_Status = factor(HRD_Status, c("no_hrd", "hrd"))), 
@@ -391,7 +391,7 @@ See supplementary analysis for HRD and WGD prediction analysis.
 
 For tumor stage.
 
-```{r}
+```{r fig.height=4, fig.width=6}
 ggboxplot(
   df_ds %>% dplyr::filter(!is.na(Tumor_Stage)), 
   x = "sig_name", y = "activity",
@@ -589,8 +589,6 @@ We can see that signature type CNS has lowest similarity level and CNS signature
 
 ## Data summary and inference of signature etiologies
 
-This is a summary section, we utilize all data we got from analyses in this study and infer how should we explore each copy number signature.
+See our manuscript for the inference.
 
-We will list all CNSs, and their features, associations and our inferences here.
 
-> TODO

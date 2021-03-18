@@ -7,7 +7,7 @@
 
         <meta name="author" content="Shixiang Wang, Ziyu Tao, Tao Wu, Huimin Li, Xue-Song Liu (Corresponding author)" />
     
-        <meta name="date" content="2021-03-16" />
+        <meta name="date" content="2021-03-18" />
     
     <title>Pan-Cancer Copy Number Signature Identification and Analysis</title>
 
@@ -198,7 +198,7 @@
 
       <!-- html_clean authors -->
          <h4 class="author"><em>Shixiang Wang, Ziyu Tao, Tao Wu, Huimin Li, Xue-Song Liu (Corresponding author)</em></h4>
-            <h4 class="date"><em>2021-03-16</em></h4>
+            <h4 class="date"><em>2021-03-18</em></h4>
       
       
    
@@ -732,7 +732,7 @@ Results can be found in:  TCGA_CN176X  folder</code></pre>
  0.5130  0.8980  0.9490  0.9326  0.9850  1.0000 </code></pre>
 <p>Visualize with plot</p>
 <div class="sourceCode" id="cb23"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="fu">hist</span>(pcawg_act<span class="sc">$</span>similarity<span class="sc">$</span>similarity, <span class="at">breaks =</span> <span class="dv">100</span>, <span class="at">xlab =</span> <span class="st">&quot;Reconstructed similarity&quot;</span>, <span class="at">main =</span> <span class="cn">NA</span>)</span></code></pre></div>
-<p><img src="index_files/figure-html/unnamed-chunk-23-1.png" width="1800" style="display: block; margin: auto;" /></p>
+<p><img src="index_files/figure-html/unnamed-chunk-23-1.png" width="1500" style="display: block; margin: auto;" /></p>
 <p>Most of samples are well constructed. Next we will use a similarity threshold <code>0.75</code> to filter out some samples for removing their effects on the following analysis.</p>
 </div>
 </div>
@@ -2641,11 +2641,7 @@ Following methods can be applied to this &#39;ConsensusPartition&#39; object:
 </div>
 <div id="data-summary-and-inference-of-signature-etiologies" class="section level2">
 <h2>Data summary and inference of signature etiologies</h2>
-<p>This is a summary section, we utilize all data we got from analyses in this study and infer how should we explore each copy number signature.</p>
-<p>We will list all CNSs, and their features, associations and our inferences here.</p>
-<blockquote>
-<p>TODO</p>
-</blockquote>
+<p>See our manuscript for the inference.</p>
 </div>
 </div>
 <div id="supplementary-analyses" class="section level1">
@@ -2890,7 +2886,7 @@ Results can be found in:  TCGA_CN176X  folder</code></pre>
 <pre><code>   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
  0.4350  0.9010  0.9430  0.9318  0.9710  0.9980 </code></pre>
 <div class="sourceCode" id="cb218"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb218-1"><a href="#cb218-1" aria-hidden="true" tabindex="-1"></a><span class="fu">hist</span>(tcga_act<span class="sc">$</span>similarity<span class="sc">$</span>similarity, <span class="at">breaks =</span> <span class="dv">100</span>, <span class="at">xlab =</span> <span class="st">&quot;Reconstructed similarity&quot;</span>, <span class="at">main =</span> <span class="cn">NA</span>)</span></code></pre></div>
-<p><img src="index_files/figure-html/unnamed-chunk-171-1.png" width="1800" style="display: block; margin: auto;" /></p>
+<p><img src="index_files/figure-html/unnamed-chunk-171-1.png" width="1500" style="display: block; margin: auto;" /></p>
 <p>Let’s go further check the similarities between PCAWG CNS and TCGA CNS.</p>
 <div class="sourceCode" id="cb219"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb219-1"><a href="#cb219-1" aria-hidden="true" tabindex="-1"></a>pcawg_sigs <span class="ot">&lt;-</span> <span class="fu">readRDS</span>(<span class="st">&quot;../data/pcawg_cn_sigs_CN176_signature.rds&quot;</span>)</span></code></pre></div>
 <p>Run similarity analysis.</p>
@@ -4440,7 +4436,7 @@ attr(,&quot;seed&quot;)
  collate  en_US.UTF-8                 
  ctype    en_US.UTF-8                 
  tz       Asia/Shanghai               
- date     2021-03-16                  
+ date     2021-03-18                  
 
 ─ Packages ───────────────────────────────────────────────────────────────────
  package        * version    date       lib source          
@@ -4633,7 +4629,7 @@ attr(,&quot;seed&quot;)
  tidyselect       1.1.0      2020-05-11 [1] CRAN (R 4.0.2)  
  tidyverse      * 1.3.0      2019-11-21 [1] CRAN (R 4.0.2)  
  tweenr           1.0.1      2018-12-14 [1] CRAN (R 4.0.2)  
- usethis          2.0.0      2020-12-10 [1] CRAN (R 4.0.2)  
+ usethis          2.0.1      2021-02-10 [1] CRAN (R 4.0.4)  
  utf8             1.1.4      2018-05-24 [1] CRAN (R 4.0.2)  
  vctrs            0.3.6      2020-12-17 [1] CRAN (R 4.0.2)  
  viridis          0.5.1      2018-03-29 [1] CRAN (R 4.0.2)  
@@ -4645,7 +4641,7 @@ attr(,&quot;seed&quot;)
  xtable           1.8-4      2019-04-21 [1] CRAN (R 4.0.2)  
  yaml             2.2.1      2020-02-01 [1] CRAN (R 4.0.2)  
  zip              2.1.1      2020-08-27 [1] CRAN (R 4.0.2)  
- zoo              1.8-8      2020-05-02 [1] CRAN (R 4.0.2)  
+ zoo              1.8-9      2021-03-09 [1] CRAN (R 4.0.4)  
 
 [1] /home/public/R/library
 [2] /home/wt/software/R_4/lib64/R/library</code></pre>

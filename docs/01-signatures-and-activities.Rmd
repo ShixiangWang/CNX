@@ -339,7 +339,7 @@ summary(pcawg_act$similarity$similarity)
 
 Visualize with plot
 
-```{r}
+```{r fig.height=3.5, fig.width=5}
 hist(pcawg_act$similarity$similarity, breaks = 100, xlab = "Reconstructed similarity", main = NA)
 ```
 

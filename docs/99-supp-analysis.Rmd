@@ -309,7 +309,7 @@ Check the stat summary of reconstructed Cosine similarity.
 ```{r}
 summary(tcga_act$similarity$similarity)
 ```
-```{r}
+```{r fig.height=3.5, fig.width=5}
 hist(tcga_act$similarity$similarity, breaks = 100, xlab = "Reconstructed similarity", main = NA)
 ```
 
